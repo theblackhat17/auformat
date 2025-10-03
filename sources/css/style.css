@@ -431,3 +431,152 @@ footer{ background:var(--noir); color:var(--blanc); padding:3rem 2rem 1rem; }
   .timeline-step{ padding-left:60px; }
   .stats-grid{ grid-template-columns:1fr; }
 }
+/*-----------------
+----------------- */
+
+/* PAGE CONTACT */
+
+.page-hero--contact{
+  background:
+    linear-gradient(rgba(43,43,43,.5), rgba(43,43,43,.5)),
+    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><circle fill="%23D4A574" cx="300" cy="200" r="100" opacity="0.3"/><circle fill="%23C19A6B" cx="700" cy="300" r="120" opacity="0.3"/><circle fill="%23D4A574" cx="1000" cy="250" r="90" opacity="0.3"/><path fill="%23A0826A" d="M0 450 Q 300 400 600 450 T 1200 450 V 600 H 0 Z"/></svg>');
+  background-size: cover; background-position: center;
+}
+
+/* Section Contact */
+.contact-section{ padding:5rem 2rem; max-width:1400px; margin:0 auto; }
+.contact-container{ display:grid; grid-template-columns:1fr 1fr; gap:4rem; }
+
+/* Formulaire */
+.form-container{
+  background:var(--blanc); padding:3rem; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+.form-header{ margin-bottom:2rem; }
+.form-header h2{ font-size:2rem; color:var(--bois-fonce); margin-bottom:.5rem; }
+.form-header p{ color:#666; font-size:1.05rem; }
+
+.form-group{ margin-bottom:1.5rem; }
+.form-group label{
+  display:block; font-weight:600; color:var(--bois-fonce); margin-bottom:.5rem; font-size:.95rem;
+}
+.required{ color:#e74c3c; }
+
+.form-group input,
+.form-group select,
+.form-group textarea{
+  width:100%; padding:.9rem; border:2px solid var(--beige); border-radius:8px;
+  font-size:1rem; font-family:inherit; transition:all .3s;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus{
+  outline:none; border-color:var(--vert-foret); box-shadow:0 0 0 3px rgba(44,95,45,.1);
+}
+.form-group textarea{ resize:vertical; min-height:120px; }
+
+.form-row{ display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+
+/* Upload */
+.file-upload{ position:relative; margin-top:.5rem; }
+.file-upload input[type="file"]{ display:none; }
+.file-upload-label{
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  padding:1rem; border:2px dashed var(--bois-clair); border-radius:8px; cursor:pointer;
+  transition:all .3s; color:var(--bois-fonce); font-weight:500;
+}
+.file-upload-label:hover{ border-color:var(--vert-foret); background:var(--beige); }
+.file-name{ font-size:.9rem; color:#666; margin-top:.5rem; }
+
+/* Consentement */
+.checkbox-group{ display:flex; align-items:start; gap:.5rem; margin-top:1rem; }
+.checkbox-group input[type="checkbox"]{ width:auto; margin-top:.3rem; }
+.checkbox-group label{ font-weight:normal; font-size:.9rem; color:#666; }
+
+/* Bouton submit (utilise palette globale) */
+.submit-btn{
+  width:100%; padding:1.2rem; background:var(--vert-foret); color:var(--blanc);
+  border:none; border-radius:8px; font-size:1.1rem; font-weight:600; cursor:pointer;
+  transition:all .3s; margin-top:1rem;
+}
+.submit-btn:hover{ background:#234a24; transform:translateY(-2px); box-shadow:0 5px 15px rgba(44,95,45,.4); }
+.submit-btn:disabled{ background:#ccc; cursor:not-allowed; transform:none; }
+
+/* Infos Contact */
+.contact-info{ display:flex; flex-direction:column; gap:2rem; }
+.info-card{ background:var(--beige); padding:2rem; border-radius:15px; border-left:5px solid var(--vert-foret); }
+.info-card h3{
+  font-size:1.5rem; color:var(--bois-fonce); margin-bottom:1.5rem; display:flex; align-items:center; gap:.5rem;
+}
+.info-icon{ font-size:1.8rem; }
+.info-item{
+  display:flex; align-items:start; gap:1rem; margin-bottom:1rem; padding:.8rem; background:var(--blanc); border-radius:8px;
+}
+.info-item-icon{ font-size:1.5rem; color:var(--vert-foret); min-width:30px; }
+.info-item-content h4{ font-size:1rem; color:var(--bois-fonce); margin-bottom:.3rem; }
+.info-item-content p{ color:#666; font-size:.95rem; }
+.info-item-content a{ color:var(--vert-foret); text-decoration:none; font-weight:500; }
+.info-item-content a:hover{ text-decoration:underline; }
+
+/* Actions rapides */
+.quick-actions{
+  background:var(--blanc); padding:2rem; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+.quick-actions h3{ font-size:1.3rem; color:var(--bois-fonce); margin-bottom:1.5rem; }
+.action-btn{
+  display:flex; align-items:center; justify-content:center; gap:.8rem; width:100%;
+  padding:1rem; margin-bottom:1rem; border:2px solid var(--vert-foret); background:var(--blanc);
+  color:var(--vert-foret); border-radius:8px; font-size:1rem; font-weight:600; cursor:pointer; transition:all .3s; text-decoration:none;
+}
+.action-btn:hover{ background:var(--vert-foret); color:var(--blanc); }
+.action-icon{ font-size:1.3rem; }
+
+/* Carte / Zone d'intervention */
+.map-section{ background:var(--beige); padding:5rem 2rem; }
+.map-container{ max-width:1400px; margin:0 auto; }
+.map-wrapper{
+  background:var(--blanc); padding:2rem; border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,.1);
+}
+.map-placeholder{
+  width:100%; height:450px; background:linear-gradient(135deg, var(--beige), var(--bois-clair));
+  border-radius:10px; display:flex; align-items:center; justify-content:center; flex-direction:column; color:var(--bois-fonce);
+}
+.map-icon{ font-size:4rem; margin-bottom:1rem; }
+.map-text{ font-size:1.2rem; font-weight:600; }
+
+.zone-section{ padding:5rem 2rem; max-width:1200px; margin:0 auto; }
+.zone-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:1.5rem; margin-top:3rem; }
+.zone-item{
+  background:var(--beige); padding:1.5rem; border-radius:10px; text-align:center; transition:all .3s;
+}
+.zone-item:hover{ background:var(--vert-foret); color:var(--blanc); transform:translateY(-5px); }
+.zone-item-icon{ font-size:2rem; margin-bottom:.5rem; }
+.zone-item h4{ font-size:1.1rem; font-weight:600; }
+
+/* FAQ rapide (variante compacte par rapport à la FAQ globale) */
+.faq-quick{ background:var(--beige); padding:5rem 2rem; }
+.faq-quick .faq-container{ max-width:900px; margin:0 auto; }
+.faq-quick .faq-item{ background:var(--blanc); margin-bottom:1rem; border-radius:10px; overflow:hidden; }
+.faq-quick .faq-question{
+  width:100%; padding:1.2rem 1.5rem; background:var(--blanc); border:none; text-align:left;
+  font-size:1.1rem; font-weight:600; color:var(--bois-fonce); cursor:pointer;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.faq-quick .faq-question:hover{ background:var(--beige); }
+.faq-quick .faq-question::after{ content:'+'; font-size:1.5rem; color:var(--vert-foret); transition:transform .3s; }
+.faq-quick .faq-question.active::after{ transform:rotate(45deg); }
+.faq-quick .faq-answer{ max-height:0; overflow:hidden; transition:max-height .3s ease; }
+.faq-quick .faq-answer-content{ padding:0 1.5rem 1.5rem; color:#666; line-height:1.7; }
+.faq-quick .faq-item.active .faq-answer{ max-height:300px; }
+
+/* Message de succès */
+.success-message{
+  display:none; background:#4CAF50; color:#fff; padding:1.5rem; border-radius:8px; margin-bottom:1.5rem; text-align:center; font-weight:600;
+}
+.success-message.show{ display:block; animation:slideDown .3s ease; }
+@keyframes slideDown{ from{opacity:0; transform:translateY(-10px);} to{opacity:1; transform:translateY(0);} }
+
+/* Responsive spécifiques Contact */
+@media (max-width: 968px){
+  .contact-container{ grid-template-columns:1fr; }
+  .form-row{ grid-template-columns:1fr; }
+}
