@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Au Format - Menuiserie Agencement Bois</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bois-clair: #D4A574;
+            --bois-fonce: #8B6F47;
+            --vert-foret: #2C5F2D;
+            --beige: #F5F1E8;
+            --noir: #2B2B2B;
+            --blanc: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--noir);
+            background: var(--blanc);
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--noir);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--vert-foret);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--vert-foret);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 80px;
+            height: 90vh;
+            background: linear-gradient(rgba(43, 43, 43, 0.4), rgba(43, 43, 43, 0.4)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%238B6F47" width="1200" height="800"/><path fill="%23A0826A" d="M0 400 Q 300 350 600 400 T 1200 400 V 800 H 0 Z"/><circle fill="%23D4A574" cx="200" cy="200" r="80" opacity="0.3"/><circle fill="%23D4A574" cx="1000" cy="300" r="120" opacity="0.2"/></svg>');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--blanc);
+            position: relative;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            padding: 2rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .hero .baseline {
+            font-size: 1.5rem;
+            font-style: italic;
+            margin-bottom: 2rem;
+            color: var(--beige);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        .btn-primary:hover {
+            background: #234a24;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 95, 45, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--blanc);
+            border: 2px solid var(--blanc);
+        }
+
+        .btn-secondary:hover {
+            background: var(--blanc);
+            color: var(--vert-foret);
+        }
+
+        /* Section générique */
+        section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--bois-fonce);
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        /* Savoir-faire */
+        .savoir-faire {
+            background: var(--beige);
+        }
+
+        .competences-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .competence-card {
+            background: var(--blanc);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .competence-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .competence-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .competence-card h3 {
+            color: var(--vert-foret);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* Réalisations */
+        .realisations-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .realisation-card {
+            position: relative;
+            height: 350px;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .realisation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7) 100%);
+            z-index: 1;
+        }
+
+        .realisation-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .realisation-card:hover .realisation-img {
+            transform: scale(1.1);
+        }
+
+        .realisation-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem;
+            color: var(--blanc);
+            z-index: 2;
+        }
+
+        .realisation-info h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Processus */
+        .processus {
+            background: var(--beige);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: var(--vert-foret);
+            color: var(--blanc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 {
+            color: var(--bois-fonce);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Avis clients */
+        .avis-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .avis-card {
+            background: var(--blanc);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--vert-foret);
+        }
+
+        .stars {
+            color: #FFD700;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .avis-text {
+            font-style: italic;
+            margin-bottom: 1rem;
+            color: #555;
+        }
+
+        .avis-auteur {
+            font-weight: 600;
+            color: var(--bois-fonce);
+        }
+
+        /* CTA Final */
+        .cta-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            color: var(--blanc);
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p, .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero .baseline {
+                font-size: 1.2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">AU FORMAT</div>
+            <ul class="nav-links">
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#savoir-faire">Savoir-faire</a></li>
+                <li><a href="#realisations">Réalisations</a></li>
+                <li><a href="#processus">Processus</a></li>
+                <li><a href="#avis">Avis</a></li>
+                <li><a href="#contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="accueil">
+        <div class="hero-content">
+            <h1>AU FORMAT</h1>
+            <p class="baseline">Franchissons ensemble, le pas vers le bois</p>
+            <div class="cta-buttons">
+                <a href="#contact" class="btn btn-primary">Demander un devis</a>
+                <a href="#realisations" class="btn btn-secondary">Nos réalisations</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Savoir-faire -->
+    <section class="savoir-faire" id="savoir-faire">
+        <h2 class="section-title">Notre Savoir-Faire</h2>
+        <p class="section-subtitle">L'excellence du bois au service de vos projets</p>
+        
+        <div class="competences-grid">
+            <div class="competence-card">
+                <div class="competence-icon">🏠</div>
+                <h3>Agencement Sur-Mesure</h3>
+                <p>Conception et réalisation d'espaces uniques adaptés à vos besoins et à votre style de vie.</p>
+            </div>
+            
+            <div class="competence-card">
+                <div class="competence-icon">🪑</div>
+                <h3>Menuiserie Intérieure</h3>
+                <p>Cuisines, dressings, bibliothèques, placards... Chaque pièce est pensée pour optimiser votre espace.</p>
+            </div>
+            
+            <div class="competence-card">
+                <div class="competence-icon">🚪</div>
+                <h3>Menuiserie Extérieure</h3>
+                <p>Portes, fenêtres, volets et bardages en bois noble pour sublimer votre habitation.</p>
+            </div>
+            
+            <div class="competence-card">
+                <div class="competence-icon">🏢</div>
+                <h3>Agencement Professionnel</h3>
+                <p>Boutiques, bureaux, espaces commerciaux : des réalisations qui valorisent votre image.</p>
+            </div>
+            
+            <div class="competence-card">
+                <div class="competence-icon">♻️</div>
+                <h3>Approche Éco-responsable</h3>
+                <p>Sélection rigoureuse de bois issus de forêts gérées durablement.</p>
+            </div>
+            
+            <div class="competence-card">
+                <div class="competence-icon">⚒️</div>
+                <h3>Savoir-Faire Artisanal</h3>
+                <p>Une équipe passionnée qui allie tradition et techniques modernes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Réalisations -->
+    <section id="realisations">
+        <h2 class="section-title">Nos Réalisations</h2>
+        <p class="section-subtitle">Découvrez quelques-uns de nos projets</p>
+        
+        <div class="realisations-preview">
+            <div class="realisation-card">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23C19A6B' width='400' height='350'/><rect fill='%238B6F47' x='50' y='50' width='300' height='200'/><rect fill='%23D4A574' x='80' y='80' width='100' height='140'/><rect fill='%23D4A574' x='220' y='80' width='100' height='140'/><text x='200' y='300' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>CUISINE</text></svg>" alt="Cuisine sur-mesure" class="realisation-img">
+                <div class="realisation-info">
+                    <h3>Cuisine Sur-Mesure</h3>
+                    <p>Design contemporain en chêne massif</p>
+                </div>
+            </div>
+            
+            <div class="realisation-card">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23A68A64' width='400' height='350'/><rect fill='%238B6F47' x='100' y='50' width='200' height='250'/><rect fill='%23D4A574' x='120' y='80' width='60' height='80'/><rect fill='%23D4A574' x='220' y='80' width='60' height='80'/><rect fill='%23D4A574' x='120' y='180' width='60' height='80'/><rect fill='%23D4A574' x='220' y='180' width='60' height='80'/><text x='200' y='320' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>BIBLIOTHÈQUE</text></svg>" alt="Bibliothèque" class="realisation-img">
+                <div class="realisation-info">
+                    <h3>Bibliothèque</h3>
+                    <p>Agencement mural en noyer</p>
+                </div>
+            </div>
+            
+            <div class="realisation-card">
+                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23B8956A' width='400' height='350'/><rect fill='%238B6F47' x='50' y='100' width='300' height='200'/><rect fill='%23D4A574' x='80' y='130' width='80' height='140'/><rect fill='%23D4A574' x='240' y='130' width='80' height='140'/><circle fill='%23C19A6B' cx='200' cy='200' r='30'/><text x='200' y='90' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>DRESSING</text></svg>" alt="Dressing" class="realisation-img">
+                <div class="realisation-info">
+                    <h3>Dressing</h3>
+                    <p>Optimisation d'espace avec finitions haut de gamme</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 3rem;">
+            <a href="#contact" class="btn btn-primary">Voir toutes nos réalisations</a>
+        </div>
+    </section>
+
+    <!-- Processus -->
+    <section class="processus" id="processus">
+        <h2 class="section-title">Notre Processus</h2>
+        <p class="section-subtitle">De l'idée à la réalisation, un accompagnement complet</p>
+        
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Écoute & Conseil</h3>
+                <p>Analyse de vos besoins, de vos envies et de vos contraintes pour définir ensemble votre projet.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Conception</h3>
+                <p>Création de plans détaillés et de visualisations 3D pour valider chaque détail.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Fabrication</h3>
+                <p>Réalisation en atelier par nos artisans avec des matériaux de qualité supérieure.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Installation</h3>
+                <p>Pose soignée sur site avec finitions impeccables et respect des délais.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Avis Clients -->
+    <section id="avis">
+        <h2 class="section-title">Ils Nous Font Confiance</h2>
+        <p class="section-subtitle">L'avis de nos clients</p>
+        
+        <div class="avis-container">
+            <div class="avis-card">
+                <div class="stars">★★★★★</div>
+                <p class="avis-text">"Un travail remarquable ! Notre cuisine sur-mesure est exactement ce dont nous rêvions. L'équipe est professionnelle et à l'écoute."</p>
+                <p class="avis-auteur">— Marie D., Lyon</p>
+            </div>
+            
+            <div class="avis-card">
+                <div class="stars">★★★★★</div>
+                <p class="avis-text">"Qualité exceptionnelle et finitions parfaites. Le dressing réalisé optimise parfaitement l'espace. Je recommande vivement !"</p>
+                <p class="avis-auteur">— Thomas L., Villeurbanne</p>
+            </div>
+            
+            <div class="avis-card">
+                <div class="stars">★★★★★</div>
+                <p class="avis-text">"De la conception à l'installation, tout s'est déroulé parfaitement. Un vrai plaisir de travailler avec des passionnés du bois."</p>
+                <p class="avis-auteur">— Sophie M., Caluire</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section" id="contact">
+        <h2>Prêt à Concrétiser Votre Projet ?</h2>
+        <p>Contactez-nous pour un devis gratuit et personnalisé</p>
+        <a href="#contact" class="btn btn-primary" style="background: white; color: var(--vert-foret);">Demander un devis</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AU FORMAT</h3>
+                <p>Menuiserie & Agencement Bois</p>
+                <p style="font-style: italic; color: var(--bois-clair);">Franchissons ensemble, le pas vers le bois</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📍 [Votre adresse]</p>
+                <p>📞 [Votre téléphone]</p>
+                <p>✉️ [Votre email]</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Horaires</h3>
+                <p>Lundi - Vendredi : 8h - 18h</p>
+                <p>Samedi : 9h - 12h</p>
+                <p>Dimanche : Fermé</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Liens Rapides</h3>
+                <a href="#savoir-faire">Savoir-faire</a>
+                <a href="#realisations">Réalisations</a>
+                <a href="#processus">Notre processus</a>
+                <a href="#contact">Contact</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Au Format - Tous droits réservés</p>
+        </div>
+    </footer>
+</body>
+</html>
