@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>À Propos - Au Format</title>
+    <link rel="stylesheet" href="sources/css/style.css">
+    <link rel="icon" href="sources/img/logo_tmp.png">
+    
+    <style>
+        
+
+        /* Notre Histoire */
+        .histoire-section {
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        .histoire-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .histoire-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .histoire-text p {
+            margin-bottom: 1.5rem;
+        }
+
+        .histoire-text strong {
+            color: var(--vert-foret);
+            font-weight: 600;
+        }
+
+        .histoire-image {
+            height: 500px;
+            background: linear-gradient(135deg, var(--bois-fonce), var(--bois-clair));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            color: rgba(255,255,255,0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Timeline */
+        .timeline-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .timeline-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .timeline-items {
+            margin-top: 3rem;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 60px;
+            top: 80px;
+            bottom: -50px;
+            width: 2px;
+            background: var(--bois-clair);
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-year {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+            background: var(--blanc);
+            padding: 1rem;
+            border-radius: 10px;
+            height: fit-content;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-content {
+            background: var(--blanc);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--vert-foret);
+        }
+
+        .timeline-content h3 {
+            font-size: 1.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 0.8rem;
+        }
+
+        .timeline-content p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        /* Valeurs */
+        .valeurs-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .valeurs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .valeur-card {
+            background: var(--beige);
+            padding: 2.5rem;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .valeur-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--vert-foret);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .valeur-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .valeur-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .valeur-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .valeur-card h3 {
+            font-size: 1.5rem;
+            color: var(--vert-foret);
+            margin-bottom: 1rem;
+        }
+
+        .valeur-card p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        /* Équipe */
+        .equipe-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .equipe-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .equipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .membre-card {
+            background: var(--blanc);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .membre-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .membre-photo {
+            height: 300px;
+            background: linear-gradient(135deg, var(--bois-clair), var(--bois-fonce));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 6rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .membre-info {
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .membre-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            margin-bottom: 0.5rem;
+        }
+
+        .membre-role {
+            color: var(--vert-foret);
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .membre-description {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Atelier */
+        .atelier-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .atelier-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-top: 3rem;
+        }
+
+        .atelier-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .atelier-image {
+            height: 250px;
+            background: linear-gradient(135deg, var(--bois-fonce), var(--bois-clair));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: rgba(255,255,255,0.3);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .atelier-image:first-child {
+            grid-column: 1 / -1;
+            height: 350px;
+        }
+
+        .atelier-text h3 {
+            font-size: 1.8rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1.5rem;
+        }
+
+        .atelier-text p {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .atelier-features {
+            list-style: none;
+            margin-top: 2rem;
+        }
+
+        .atelier-features li {
+            padding: 0.8rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--noir);
+            font-size: 1.05rem;
+        }
+
+        .atelier-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--vert-foret);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Engagements */
+        .engagements-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            color: var(--blanc);
+            padding: 5rem 2rem;
+        }
+
+        .engagements-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .engagements-section h2 {
+            color: var(--blanc);
+        }
+
+        .engagements-section .section-subtitle {
+            color: rgba(255,255,255,0.8);
+        }
+
+        .engagements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .engagement-item {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .engagement-item:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-5px);
+        }
+
+        .engagement-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .engagement-item h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+            color: var(--bois-clair);
+        }
+
+        .engagement-item p {
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        /* Chiffres Clés */
+        .chiffres-section {
+            padding: 5rem 2rem;
+            background: var(--beige);
+        }
+
+        .chiffres-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .chiffres-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .chiffre-box {
+            background: var(--blanc);
+            padding: 2.5rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .chiffre-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+            margin-bottom: 0.5rem;
+        }
+
+        .chiffre-label {
+            font-size: 1.1rem;
+            color: var(--bois-fonce);
+            font-weight: 600;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 2rem;
+            text-align: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        .btn-primary:hover {
+            background: #234a24;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 95, 45, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .histoire-content,
+            .atelier-content {
+                grid-template-columns: 1fr;
+            }
+
+            .page-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .timeline-item {
+                grid-template-columns: 80px 1fr;
+                gap: 1rem;
+            }
+
+            .timeline-item::before {
+                left: 40px;
+            }
+
+            .timeline-year {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div data-include="partials/header.html"></div>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div>
+            <h1>À Propos de Nous</h1>
+            <p>L'histoire d'une passion pour le bois et l'artisanat</p>
+        </div>
+    </section>
+
+    <!-- Notre Histoire -->
+    <section class="histoire-section">
+        <h2 class="section-title">Notre Histoire</h2>
+        <p class="section-subtitle">Une aventure familiale dédiée au travail du bois</p>
+
+        <div class="histoire-content">
+            <div class="histoire-text">
+    <p>
+        <strong>Au Format</strong> est née en 2020 à Lille, d’une aventure familiale autour du bois et de l’artisanat. 
+        Ce qui a commencé comme un petit atelier partagé est rapidement devenu une passion commune portée par l’envie de créer et de transmettre.
+    </p>
+    <p>
+        Notre philosophie est simple : <strong>allier savoir-faire traditionnel et techniques modernes</strong> pour imaginer des réalisations uniques, faites pour durer. 
+        Chaque projet est pour nous une nouvelle histoire à écrire aux côtés de nos clients.
+    </p>
+    <p>
+        Aujourd’hui, nous sommes <strong>4 membres de la même famille</strong>, réunis par les mêmes valeurs : authenticité, qualité et respect de l’environnement. 
+        Depuis nos débuts, nous avons déjà accompagné de nombreux particuliers et professionnels dans leurs projets d’agencement et de menuiserie.
+    </p>
+    <p>
+        Notre devise <em>"Franchissons ensemble, le pas vers le bois"</em> reflète notre engagement : rester proches de nos clients, avec écoute, transparence et passion.
+    </p>
+</div>
+
+
+            <div class="histoire-image">
+                🏭
+            </div>
+        </div>
+    </section>
+
+    <!-- Timeline -->
+    <section class="timeline-section">
+        <div class="timeline-container">
+            <h2 class="section-title">Notre Parcours</h2>
+            <p class="section-subtitle">Les grandes étapes de notre développement</p>
+
+            <div class="timeline-items">
+                <div class="timeline-item">
+    <div class="timeline-year">2020</div>
+    <div class="timeline-content">
+        <h3>Les Débuts</h3>
+        <p>Création de <strong>Au Format</strong> à Fretin par une famille passionnée de menuiserie. 
+        L’aventure commence dans un petit atelier avec les premières réalisations sur-mesure pour des particuliers.</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-year">2021</div>
+    <div class="timeline-content">
+        <h3>Premiers Projets</h3>
+        <p>Développement des premiers chantiers d’agencement complet : cuisines, rangements et meubles personnalisés. 
+        L’entreprise familiale gagne rapidement la confiance de ses premiers clients.</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-year">2022</div>
+    <div class="timeline-content">
+        <h3>Une Équipe Unie</h3>
+        <p>L’équipe se structure autour des <strong>4 membres de la famille</strong>, chacun apportant ses compétences et son savoir-faire. 
+        De nouveaux partenariats locaux sont noués avec des fournisseurs de bois responsables.</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-year">2023</div>
+    <div class="timeline-content">
+        <h3>Reconnaissance Locale</h3>
+        <p>De nombreux projets réalisés à Lille et dans la métropole lilloise. 
+        <strong>Au Format</strong> s’impose comme un acteur de confiance dans la menuiserie sur-mesure familiale.</p>
+    </div>
+</div>
+
+<div class="timeline-item">
+    <div class="timeline-year">2024</div>
+    <div class="timeline-content">
+        <h3>Aujourd'hui</h3>
+        <p>Une entreprise <strong>100% familiale</strong>, fière de ses valeurs : qualité, authenticité et proximité. 
+        Toujours basés à Lille, nous continuons d’accompagner particuliers et professionnels dans leurs projets d’agencement.</p>
+    </div>
+</div>
+
+
+    <!-- Atelier -->
+    <section class="atelier-section">
+        <h2 class="section-title">Notre Atelier</h2>
+        <p class="section-subtitle">Un espace moderne au service de l'artisanat</p>
+
+        <div class="atelier-content">
+            <div class="atelier-images">
+                <div class="atelier-image">🏭</div>
+                <div class="atelier-image">🔨</div>
+                <div class="atelier-image">⚙️</div>
+            </div>
+
+            <div class="atelier-text">
+                <h3>Un Équipement de Pointe</h3>
+                <p>
+                    Notre atelier de 600m² situé à Cysoing est équipé des machines les plus performantes pour allier précision et créativité. Des outils traditionnels aux technologies CNC de dernière génération, nous disposons de tout le nécessaire pour donner vie à vos projets.
+                </p>
+                <p>
+                    Un showroom de 100m² vous permet de découvrir nos réalisations, de toucher les différentes essences de bois et de visualiser concrètement la qualité de notre travail. Nous vous accueillons sur rendez-vous pour échanger autour de votre projet.
+                </p>
+
+                <ul class="atelier-features">
+                    <li>Atelier de 600m² équipé de machines professionnelles</li>
+                    <li>Technologies CNC pour une précision millimétrique</li>
+                    <li>Showroom de 100m² pour découvrir nos réalisations</li>
+                    <li>Stock permanent de bois nobles de qualité</li>
+                    <li>Espace de finition avec cabine de vernissage</li>
+                    <li>Zone de stockage sécurisée pour vos projets en cours</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Engagements -->
+    <section class="engagements-section">
+        <div class="engagements-container">
+            <h2 class="section-title">Nos Engagements</h2>
+            <p class="section-subtitle">Des garanties solides pour votre tranquillité</p>
+
+            <div class="engagements-grid">
+                <div class="engagement-item">
+                    <div class="engagement-icon">🌳</div>
+                    <h3>Bois Durables</h3>
+                    <p>100% de nos bois proviennent de forêts gérées durablement (certifications PEFC et FSC)</p>
+                </div>
+
+                <div class="engagement-item">
+                    <div class="engagement-icon">🛡️</div>
+                    <h3>Garantie 10 Ans</h3>
+                    <p>Tous nos ouvrages sont garantis 10 ans et couverts par notre assurance décennale</p>
+                </div>
+
+                <div class="engagement-item">
+                    <div class="engagement-icon">💰</div>
+                    <h3>Prix Transparent</h3>
+                    <p>Devis détaillé sans frais cachés. Le prix annoncé est le prix final</p>
+                </div>
+
+                <div class="engagement-item">
+                    <div class="engagement-icon">⏰</div>
+                    <h3>Délais Respectés</h3>
+                    <p>Engagement sur les délais avec un planning précis communiqué dès le départ</p>
+                </div>
+
+                <div class="engagement-item">
+                    <div class="engagement-icon">🔒</div>
+                    <h3>Assurances</h3>
+                    <p>Assurance décennale, responsabilité civile professionnelle et garantie de parfait achèvement</p>
+                </div>
+
+                <div class="engagement-item">
+                    <div class="engagement-icon">♻️</div>
+                    <h3>Zéro Déchet</h3>
+                    <p>Valorisation de toutes nos chutes de bois et utilisation de produits écologiques</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chiffres Clés -->
+    <section class="chiffres-section">
+        <div class="chiffres-container">
+            <h2 class="section-title">Au Format en Chiffres</h2>
+            <p class="section-subtitle">Notre croissance témoigne de votre confiance</p>
+
+            <div class="chiffres-grid">
+                <div class="chiffre-box">
+                    <div class="chiffre-number">15+</div>
+                    <div class="chiffre-label">Années d'Expérience</div>
+                </div>
+
+                <div class="chiffre-box">
+                    <div class="chiffre-number">500+</div>
+                    <div class="chiffre-label">Projets Réalisés</div>
+                </div>
+
+                <div class="chiffre-box">
+                    <div class="chiffre-number">12</div>
+                    <div class="chiffre-label">Artisans Passionnés</div>
+                </div>
+
+                <div class="chiffre-box">
+                    <div class="chiffre-number">98%</div>
+                    <div class="chiffre-label">Clients Satisfaits</div>
+                </div>
+
+                <div class="chiffre-box">
+                    <div class="chiffre-number">600m²</div>
+                    <div class="chiffre-label">Surface d'Atelier</div>
+                </div>
+
+                <div class="chiffre-box">
+                    <div class="chiffre-number">100%</div>
+                    <div class="chiffre-label">Bois Durables</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Envie de Nous Rencontrer ?</h2>
+        <p>Visitez notre atelier et showroom pour découvrir notre savoir-faire</p>
+        <a href="contact.html" class="btn btn-primary">Prendre rendez-vous</a>
+    </section>
+
+    <!-- Footer -->
+    
+
+    <script>
+        // Animation au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Animer les éléments
+        const animatedElements = document.querySelectorAll('.valeur-card, .membre-card, .timeline-item, .engagement-item, .chiffre-box');
+        animatedElements.forEach((element, index) => {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(30px)';
+            element.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
+            observer.observe(element);
+        });
+
+        // Animation des chiffres
+        const animateNumber = (element, target, suffix = '') => {
+            const duration = 2000;
+            const start = 0;
+            let targetNum = parseFloat(target);
+            const increment = targetNum / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= targetNum) {
+                    element.textContent = target + suffix;
+                    clearInterval(timer);
+                } else {
+                    if (target.includes('.')) {
+                        element.textContent = current.toFixed(1) + suffix;
+                    } else {
+                        element.textContent = Math.floor(current) + suffix;
+                    }
+                }
+            }, 16);
+        };
+
+        // Observer pour animer les chiffres
+        const chiffresObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const chiffreNumber = entry.target.querySelector('.chiffre-number');
+                    const text = chiffreNumber.textContent;
+                    
+                    if (text.includes('+')) {
+                        const num = parseInt(text);
+                        chiffreNumber.textContent = '0+';
+                        setTimeout(() => {
+                            animateNumber(chiffreNumber, num, '+');
+                        }, 300);
+                    } else if (text.includes('%')) {
+                        const num = parseInt(text);
+                        chiffreNumber.textContent = '0%';
+                        setTimeout(() => {
+                            animateNumber(chiffreNumber, num, '%');
+                        }, 300);
+                    } else if (text.includes('m²')) {
+                        const num = parseInt(text);
+                        chiffreNumber.textContent = '0m²';
+                        setTimeout(() => {
+                            animateNumber(chiffreNumber, num, 'm²');
+                        }, 300);
+                    }
+                    
+                    chiffresObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        const chiffreBoxes = document.querySelectorAll('.chiffre-box');
+        chiffreBoxes.forEach(box => chiffresObserver.observe(box));
+
+        // Animation progressive des éléments de la timeline
+        const timelineItems = document.querySelectorAll('.timeline-item');
+        timelineItems.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-30px)';
+            item.style.transition = `opacity 0.6s ease ${index * 0.2}s, transform 0.6s ease ${index * 0.2}s`;
+            observer.observe(item);
+        });
+
+        // Effet parallax subtil sur le hero
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.page-hero');
+            if (hero && scrolled < hero.offsetHeight) {
+                hero.style.backgroundPositionY = scrolled * 0.5 + 'px';
+            }
+        });
+
+        // Animation des images de l'atelier
+        const atelierImages = document.querySelectorAll('.atelier-image');
+        atelierImages.forEach((img, index) => {
+            img.style.opacity = '0';
+            img.style.transform = 'scale(0.8)';
+            img.style.transition = `opacity 0.5s ease ${index * 0.15}s, transform 0.5s ease ${index * 0.15}s`;
+            observer.observe(img);
+        });
+
+        // Hover effect sur les cartes de valeurs
+        const valeurCards = document.querySelectorAll('.valeur-card');
+        valeurCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(-10px) scale(1)';
+            });
+        });
+
+        // Smooth scroll pour les ancres
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+    </section>
+
+    <!-- Valeurs -->
+    <section class="valeurs-section">
+        <h2 class="section-title">Nos Valeurs</h2>
+        <p class="section-subtitle">Ce qui nous guide au quotidien</p>
+
+        <div class="valeurs-grid">
+            <div class="valeur-card">
+                <div class="valeur-icon">🎯</div>
+                <h3>Excellence</h3>
+                <p>Nous visons la perfection dans chaque détail. Du choix des matériaux à la finition finale, rien n'est laissé au hasard. La qualité est notre signature.</p>
+            </div>
+
+            <div class="valeur-card">
+                <div class="valeur-icon">🤝</div>
+                <h3>Écoute</h3>
+                <p>Chaque projet est unique car chaque client est unique. Nous prenons le temps de comprendre vos besoins, vos envies et vos contraintes pour créer des solutions parfaitement adaptées.</p>
+            </div>
+
+            <div class="valeur-card">
+                <div class="valeur-icon">♻️</div>
+                <h3>Éco-responsabilité</h3>
+                <p>Nous sélectionnons des bois issus de forêts gérées durablement (PEFC, FSC). Valorisation des chutes, utilisation de produits écologiques et circuits courts privilégiés.</p>
+            </div>
+
+            <div class="valeur-card">
+                <div class="valeur-icon">🔨</div>
+                <h3>Savoir-faire</h3>
+                <p>Notre équipe allie techniques traditionnelles transmises de génération en génération et technologies modernes pour des réalisations d'exception.</p>
+            </div>
+
+            <div class="valeur-card">
+                <div class="valeur-icon">💎</div>
+                <h3>Authenticité</h3>
+                <p>Nous valorisons le caractère naturel du bois dans toutes ses nuances. Pas de standardisation : chaque réalisation a son identité propre.</p>
+            </div>
+
+            <div class="valeur-card">
+                <div class="valeur-icon">⏰</div>
+                <h3>Engagement</h3>
+                <p>Respect des délais, transparence des prix, garanties solides : nous nous engageons pleinement dans chaque projet pour votre totale satisfaction.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Équipe -->
+    <section class="equipe-section">
+        <div class="equipe-container">
+            <h2 class="section-title">Notre Équipe</h2>
+            <p class="section-subtitle">Des artisans passionnés à votre service</p>
+
+            <div class="equipe-grid">
+                <div class="membre-card">
+                    <div class="membre-photo">👨‍💼</div>
+                    <div class="membre-info">
+                        <div class="membre-name">Jean-Marc Dubois</div>
+                        <div class="membre-role">Fondateur & Maître Artisan</div>
+                        <p class="membre-description">
+                            30 ans d'expérience dans la menuiserie. Passionné par le travail du bois depuis l'enfance, il a fondé Au Format pour transmettre son savoir-faire et créer des réalisations d'exception.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="membre-card">
+                    <div class="membre-photo">👨‍🔧</div>
+                    <div class="membre-info">
+                        <div class="membre-name">Thomas Mercier</div>
+                        <div class="membre-role">Chef d'Atelier</div>
+                        <p class="membre-description">
+                            Expert en fabrication et assemblage. Il coordonne l'équipe de production et veille à la qualité de chaque réalisation. 15 ans d'expérience dans la menuiserie haut de gamme.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="membre-card">
+                    <div class="membre-photo">👩‍💼</div>
+                    <div class="membre-info">
+                        <div class="membre-name">Sophie Laurent</div>
+                        <div class="membre-role">Responsable Projets</div>
+                        <p class="membre-description">
+                            Votre interlocutrice privilégiée. Sophie coordonne les projets de A à Z, de la conception à la livraison. Son écoute et son organisation garantissent votre satisfaction.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="membre-card">
+                    <div class="membre-photo">👨‍🎨</div>
+                    <div class="membre-info">
+                        <div class="membre-name">Marc Petit</div>
+                        <div class="membre-role">Concepteur 3D</div>
+                        <p class="membre-description">
+                            Il transforme vos idées en plans et visualisations 3D réalistes. Formé en architecture d'intérieur, il optimise chaque espace avec créativité et fonctionnalité.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+</section>
+
+    
+<div data-include="partials/footer.html"></div>
+
+  <!-- charge le script en bas pour éviter le FOUC -->
+  <script src="js/include.js" defer></script>

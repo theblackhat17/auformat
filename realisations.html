@@ -40,7 +40,7 @@
                 <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23C19A6B' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='50' y='80' width='300' height='240'/%3E%3Crect fill='%23D4A574' x='80' y='110' width='120' height='180'/%3E%3Crect fill='%23D4A574' x='230' y='110' width='90' height='180'/%3E%3Ccircle fill='%23A68A64' cx='140' cy='200' r='15'/%3E%3Crect fill='%23666' x='100' y='140' width='60' height='8' rx='4'/%3E%3C/svg%3E" alt="Cuisine moderne" class="portfolio-image">
                 <div class="portfolio-overlay">
                     <span class="portfolio-category">Cuisine</span>
-                    <h3 class="portfolio-title">Cuisine Contemporaine Lyon 3</h3>
+                    <h3 class="portfolio-title">Cuisine Contemporaine</h3>
                     <p class="portfolio-description">Design épuré en chêne massif avec îlot central</p>
                 </div>
             </div>
@@ -183,162 +183,162 @@
   </noscript>
 
     <script>
-        // Données des projets
-        const projectsData = {
-            1: {
-                category: 'Cuisine',
-                title: 'Cuisine Contemporaine Lyon 3',
-                duration: '3 semaines',
-                surface: '25 m²',
-                material: 'Chêne massif',
-                location: 'Lyon 3ème',
-                description: 'Réalisation d\'une cuisine haut de gamme avec îlot central sur-mesure. Le projet incluait la conception complète de l\'espace, l\'intégration d\'électroménagers encastrés et la création de rangements optimisés. Le chêne massif apporte chaleur et authenticité à cet espace de vie moderne.',
-                features: [
-                    'Îlot central avec espace repas',
-                    'Plan de travail en bois massif traité',
-                    'Rangements avec tiroirs à fermeture douce',
-                    'Éclairage LED sous meubles hauts',
-                    'Intégration électroménagers haut de gamme',
-                    'Finitions cirées et huilées'
-                ]
-            },
-            2: {
-                category: 'Dressing',
-                title: 'Dressing Suite Parentale',
-                duration: '2 semaines',
-                surface: '12 m²',
-                material: 'Noyer américain',
-                location: 'Villeurbanne',
-                description: 'Aménagement complet d\'un dressing dans une suite parentale. Optimisation maximale de l\'espace avec des solutions de rangement intelligentes : penderies modulables, tiroirs compartimentés et étagères ajustables. Le noyer américain confère élégance et raffinement.',
-                features: [
-                    'Penderies avec éclairage automatique',
-                    'Tiroirs avec séparateurs modulables',
-                    'Étagères réglables en hauteur',
-                    'Miroir mural pleine hauteur',
-                    'Rangement chaussures coulissant',
-                    'Finition vernis mat'
-                ]
-            },
-            3: {
-                category: 'Bibliothèque',
-                title: 'Bibliothèque Murale Noyer',
-                duration: '10 jours',
-                surface: '8 m²',
-                material: 'Noyer européen',
-                location: 'Lyon 6ème',
-                description: 'Création d\'une bibliothèque sur-mesure du sol au plafond. Design épuré avec intégration d\'un système d\'éclairage LED pour mettre en valeur les ouvrages et objets de décoration. Structure renforcée pour supporter jusqu\'à 200 kg par étagère.',
-                features: [
-                    'Structure murale sur-mesure',
-                    'Étagères ajustables tous les 5 cm',
-                    'Éclairage LED intégré',
-                    'Niches dédiées objets déco',
-                    'Portes vitrées section basse',
-                    'Traitement anti-UV du bois'
-                ]
-            },
-            4: {
-                category: 'Commerce',
-                title: 'Agencement Boutique Presqu\'île',
-                duration: '4 semaines',
-                surface: '45 m²',
-                material: 'Chêne & acier',
-                location: 'Lyon 2ème',
-                description: 'Agencement complet d\'une boutique de prêt-à-porter haut de gamme. Création d\'un comptoir d\'accueil, de présentoirs muraux et de podiums d\'exposition. Le mélange chêne massif et acier noir crée une ambiance moderne et chaleureuse.',
-                features: [
-                    'Comptoir d\'accueil avec rangements',
-                    'Présentoirs muraux modulables',
-                    'Podiums d\'exposition',
-                    'Cabines d\'essayage sur-mesure',
-                    'Miroirs avec éclairage professionnel',
-                    'Finition vernis haute résistance'
-                ]
-            },
-            5: {
-                category: 'Escalier',
-                title: 'Escalier Design Contemporain',
-                duration: '3 semaines',
-                surface: '15 m²',
-                material: 'Chêne & métal',
-                location: 'Caluire',
-                description: 'Conception et réalisation d\'un escalier design alliant bois et métal. Structure autoportante avec marches en chêne massif de 40mm d\'épaisseur et garde-corps en verre sécurit. Un élément architectural qui devient la pièce maîtresse de l\'habitation.',
-                features: [
-                    'Structure autoportante',
-                    'Marches chêne massif 40mm',
-                    'Garde-corps verre sécurit',
-                    'Limon acier peint époxy',
-                    'Éclairage LED sous marches',
-                    'Traitement antidérapant'
-                ]
-            },
-            6: {
-                category: 'Cuisine',
-                title: 'Cuisine Rustique Moderne',
-                duration: '3 semaines',
-                surface: '20 m²',
-                material: 'Chêne massif',
-                location: 'Tassin',
-                description: 'Cuisine alliant charme rustique et fonctionnalités modernes. Façades en chêne massif avec patine naturelle, plan de travail en bois brut et îlot central intégrant plaques de cuisson et espace bar. Équilibre parfait entre authenticité et modernité.',
-                features: [
-                    'Façades chêne massif patiné',
-                    'Plan de travail bois massif',
-                    'Îlot central multifonction',
-                    'Hotte décorative en bois',
-                    'Étagères ouvertes murales',
-                    'Quincaillerie style campagne'
-                ]
-            },
-            7: {
-                category: 'Extérieur',
-                title: 'Porte d\'Entrée Bois Massif',
-                duration: '1 semaine',
-                surface: '3 m²',
-                material: 'Chêne massif',
-                location: 'Écully',
-                description: 'Fabrication d\'une porte d\'entrée monumentale en chêne massif. Double vitrage sécurisé, serrure multipoints et traitement extérieur haute protection contre les intempéries. Design contemporain avec imposte vitrée et poignée en acier inox.',
-                features: [
-                    'Chêne massif 68mm',
-                    'Double vitrage sécurisé',
-                    'Serrure multipoints A2P',
-                    'Traitement lasure extérieur',
-                    'Imposte vitrée',
-                    'Poignée inox design'
-                ]
-            },
-            8: {
-                category: 'Dressing',
-                title: 'Dressing d\'Angle Optimisé',
-                duration: '2 semaines',
-                surface: '9 m²',
-                material: 'Hêtre massif',
-                location: 'Lyon 7ème',
-                description: 'Solution dressing d\'angle pour optimiser un espace atypique. Système de penderies rotatives, tiroirs d\'angle coulissants et miroirs sur portes. Chaque centimètre carré est exploité intelligemment pour maximiser le rangement.',
-                features: [
-                    'Système d\'angle rotatif',
-                    'Tiroirs coulissants d\'angle',
-                    'Miroirs sur portes coulissantes',
-                    'Éclairage automatique',
-                    'Penderies double hauteur',
-                    'Rangement accessoires intégré'
-                ]
-            },
-            9: {
-                category: 'Bibliothèque',
-                title: 'Meuble TV & Bibliothèque',
-                duration: '12 jours',
-                surface: '10 m²',
-                material: 'Chêne naturel',
-                location: 'Lyon 4ème',
-                description: 'Ensemble mural combinant meuble TV bas et bibliothèque haute. Intégration discrète de tous les équipements audiovisuels avec passages de câbles invisibles. Niches éclairées pour objets de décoration et système de rangement fermé.',
-                features: [
-                    'Meuble TV avec tiroirs cachés',
-                    'Passages câbles intégrés',
-                    'Bibliothèque modulaire',
-                    'Niches avec LED',
-                    'Portes coulissantes parties basses',
-                    'Finition laquée mate'
-                ]
-            }
-        };
+   // Données des projets (version Lille / MEL)
+const projectsData = {
+    1: {
+        category: 'Cuisine',
+        title: 'Cuisine Contemporaine Lille-Centre',
+        duration: '3 semaines',
+        surface: '25 m²',
+        material: 'Chêne massif',
+        location: 'Lille Centre',
+        description: 'Réalisation d\'une cuisine haut de gamme avec îlot central sur-mesure. Conception complète de l\'espace, intégration d\'électroménagers encastrés et rangements optimisés. Le chêne massif apporte chaleur et authenticité à cet espace de vie moderne.',
+        features: [
+            'Îlot central avec espace repas',
+            'Plan de travail en bois massif traité',
+            'Rangements avec tiroirs à fermeture douce',
+            'Éclairage LED sous meubles hauts',
+            'Intégration électroménagers haut de gamme',
+            'Finitions cirées et huilées'
+        ]
+    },
+    2: {
+        category: 'Dressing',
+        title: 'Dressing Suite Parentale',
+        duration: '2 semaines',
+        surface: '12 m²',
+        material: 'Noyer américain',
+        location: 'Villeneuve-d’Ascq',
+        description: 'Aménagement complet d\'un dressing dans une suite parentale. Optimisation maximale de l\'espace avec des solutions de rangement intelligentes : penderies modulables, tiroirs compartimentés et étagères ajustables. Le noyer américain confère élégance et raffinement.',
+        features: [
+            'Penderies avec éclairage automatique',
+            'Tiroirs avec séparateurs modulables',
+            'Étagères réglables en hauteur',
+            'Miroir mural pleine hauteur',
+            'Rangement chaussures coulissant',
+            'Finition vernis mat'
+        ]
+    },
+    3: {
+        category: 'Bibliothèque',
+        title: 'Bibliothèque Murale Noyer',
+        duration: '10 jours',
+        surface: '8 m²',
+        material: 'Noyer européen',
+        location: 'Lille - Vieux-Lille',
+        description: 'Création d\'une bibliothèque sur-mesure du sol au plafond. Design épuré avec intégration d\'un système d\'éclairage LED pour mettre en valeur les ouvrages et objets de décoration. Structure renforcée pour supporter jusqu\'à 200 kg par étagère.',
+        features: [
+            'Structure murale sur-mesure',
+            'Étagères ajustables tous les 5 cm',
+            'Éclairage LED intégré',
+            'Niches dédiées objets déco',
+            'Portes vitrées section basse',
+            'Traitement anti-UV du bois'
+        ]
+    },
+    4: {
+        category: 'Commerce',
+        title: 'Agencement Boutique Vieux-Lille',
+        duration: '4 semaines',
+        surface: '45 m²',
+        material: 'Chêne & acier',
+        location: 'Lille - Vieux-Lille',
+        description: 'Agencement complet d\'une boutique de prêt-à-porter. Comptoir d\'accueil, présentoirs muraux et podiums d\'exposition. Le mélange chêne massif et acier noir crée une ambiance moderne et chaleureuse adaptée au flux client.',
+        features: [
+            'Comptoir d\'accueil avec rangements',
+            'Présentoirs muraux modulables',
+            'Podiums d\'exposition',
+            'Cabines d\'essayage sur-mesure',
+            'Miroirs avec éclairage professionnel',
+            'Finition vernis haute résistance'
+        ]
+    },
+    5: {
+        category: 'Escalier',
+        title: 'Escalier Design Contemporain',
+        duration: '3 semaines',
+        surface: '15 m²',
+        material: 'Chêne & métal',
+        location: 'Marcq-en-Barœul',
+        description: 'Conception et réalisation d\'un escalier design alliant bois et métal. Structure autoportante avec marches en chêne massif de 40mm et garde-corps en verre sécurit. Une pièce architecturale qui devient le point focal de l\'habitation.',
+        features: [
+            'Structure autoportante',
+            'Marches chêne massif 40mm',
+            'Garde-corps verre sécurit',
+            'Limon acier peint époxy',
+            'Éclairage LED sous marches',
+            'Traitement antidérapant'
+        ]
+    },
+    6: {
+        category: 'Cuisine',
+        title: 'Cuisine Rustique Moderne',
+        duration: '3 semaines',
+        surface: '20 m²',
+        material: 'Chêne massif',
+        location: 'Tourcoing',
+        description: 'Cuisine alliant charme rustique et fonctionnalités modernes. Façades en chêne massif avec patine naturelle, plan de travail en bois brut et îlot central intégrant plaques de cuisson et espace bar.',
+        features: [
+            'Façades chêne massif patiné',
+            'Plan de travail bois massif',
+            'Îlot central multifonction',
+            'Hotte décorative en bois',
+            'Étagères ouvertes murales',
+            'Quincaillerie style campagne'
+        ]
+    },
+    7: {
+        category: 'Extérieur',
+        title: 'Porte d\'Entrée Bois Massif',
+        duration: '1 semaine',
+        surface: '3 m²',
+        material: 'Chêne massif',
+        location: 'Lambersart',
+        description: 'Fabrication d\'une porte d\'entrée en chêne massif. Double vitrage sécurisé, serrure multipoints et traitement extérieur haute protection. Design contemporain avec imposte vitrée et poignée en acier inox.',
+        features: [
+            'Chêne massif 68mm',
+            'Double vitrage sécurisé',
+            'Serrure multipoints A2P',
+            'Traitement lasure extérieur',
+            'Imposte vitrée',
+            'Poignée inox design'
+        ]
+    },
+    8: {
+        category: 'Dressing',
+        title: 'Dressing d\'Angle Optimisé',
+        duration: '2 semaines',
+        surface: '9 m²',
+        material: 'Hêtre massif',
+        location: 'Wasquehal',
+        description: 'Solution dressing d\'angle pour optimiser un espace atypique. Penderies rotatives, tiroirs d\'angle coulissants et miroirs sur portes. Chaque centimètre est exploité intelligemment pour maximiser le rangement.',
+        features: [
+            'Système d\'angle rotatif',
+            'Tiroirs coulissants d\'angle',
+            'Miroirs sur portes coulissantes',
+            'Éclairage automatique',
+            'Penderies double hauteur',
+            'Rangement accessoires intégré'
+        ]
+    },
+    9: {
+        category: 'Bibliothèque',
+        title: 'Meuble TV & Bibliothèque',
+        duration: '12 jours',
+        surface: '10 m²',
+        material: 'Chêne naturel',
+        location: 'Lambersart',
+        description: 'Ensemble mural combinant meuble TV bas et bibliothèque haute. Intégration discrète de tous les équipements audiovisuels avec passages de câbles invisibles. Niches éclairées et rangements fermés pour un salon épuré.',
+        features: [
+            'Meuble TV avec tiroirs cachés',
+            'Passages câbles intégrés',
+            'Bibliothèque modulaire',
+            'Niches avec LED',
+            'Portes coulissantes parties basses',
+            'Finition laquée mate'
+        ]
+    }
+};
 
         // Gestion des filtres
         const filterBtns = document.querySelectorAll('.filter-btn');
