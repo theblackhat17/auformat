@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notre Savoir-Faire - Au Format</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bois-clair: #D4A574;
+            --bois-fonce: #8B6F47;
+            --vert-foret: #2C5F2D;
+            --beige: #F5F1E8;
+            --noir: #2B2B2B;
+            --blanc: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--noir);
+            background: var(--blanc);
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--noir);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--vert-foret);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--vert-foret);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .page-hero {
+            margin-top: 80px;
+            height: 50vh;
+            background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><path fill="%23A0826A" d="M0 300 Q 300 250 600 300 T 1200 300 V 600 H 0 Z"/><rect fill="%23D4A574" x="100" y="100" width="200" height="300" opacity="0.3"/><rect fill="%23D4A574" x="400" y="150" width="150" height="250" opacity="0.3"/><rect fill="%23D4A574" x="700" y="120" width="180" height="280" opacity="0.3"/><rect fill="%23D4A574" x="950" y="140" width="160" height="260" opacity="0.3"/></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--blanc);
+        }
+
+        .page-hero h1 {
+            font-size: 3.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .page-hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--beige);
+        }
+
+        /* Introduction */
+        .intro-section {
+            padding: 5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .intro-section h2 {
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1.5rem;
+        }
+
+        .intro-section p {
+            font-size: 1.2rem;
+            color: #555;
+            max-width: 900px;
+            margin: 0 auto 3rem;
+            line-height: 1.8;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .stat-item {
+            padding: 2rem;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: var(--bois-fonce);
+            font-weight: 600;
+        }
+
+        /* Métiers Section */
+        .metiers-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .metiers-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 4rem;
+        }
+
+        .metier-card {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 4rem;
+            background: var(--blanc);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .metier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .metier-card:nth-child(even) {
+            direction: rtl;
+        }
+
+        .metier-card:nth-child(even) > * {
+            direction: ltr;
+        }
+
+        .metier-image {
+            height: 400px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .metier-content {
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .metier-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .metier-content h3 {
+            font-size: 2rem;
+            color: var(--vert-foret);
+            margin-bottom: 1rem;
+        }
+
+        .metier-content p {
+            font-size: 1.1rem;
+            color: #555;
+            margin-bottom: 1.5rem;
+            line-height: 1.8;
+        }
+
+        .metier-features {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .metier-features li {
+            padding: 0.7rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--noir);
+            font-size: 1.05rem;
+        }
+
+        .metier-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--vert-foret);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Expertise Section */
+        .expertise-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .expertise-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .expertise-card {
+            background: var(--blanc);
+            padding: 2.5rem;
+            border-radius: 10px;
+            border: 2px solid var(--beige);
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .expertise-card:hover {
+            border-color: var(--vert-foret);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(44, 95, 45, 0.1);
+        }
+
+        .expertise-icon {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .expertise-card h3 {
+            font-size: 1.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .expertise-card p {
+            color: #666;
+            line-height: 1.7;
+        }
+
+        /* Matériaux Section */
+        .materiaux-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            padding: 5rem 2rem;
+            color: var(--blanc);
+        }
+
+        .materiaux-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .materiaux-section h2 {
+            color: var(--blanc);
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .materiaux-intro {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            opacity: 0.9;
+        }
+
+        .materiaux-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .materiau-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .materiau-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .materiau-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--bois-clair);
+        }
+
+        .materiau-card p {
+            line-height: 1.7;
+            opacity: 0.9;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            padding: 5rem 2rem;
+            text-align: center;
+            background: var(--beige);
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            color: #555;
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        .btn-primary:hover {
+            background: #234a24;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 95, 45, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .metier-card {
+                grid-template-columns: 1fr;
+            }
+
+            .metier-card:nth-child(even) {
+                direction: ltr;
+            }
+
+            .metier-image {
+                height: 300px;
+            }
+
+            .page-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">AU FORMAT</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="savoir-faire.html" class="active">Savoir-faire</a></li>
+                <li><a href="realisations.html">Réalisations</a></li>
+                <li><a href="processus.html">Processus</a></li>
+                <li><a href="avis.html">Avis</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div>
+            <h1>Notre Savoir-Faire</h1>
+            <p>L'excellence artisanale au service de vos projets en bois</p>
+        </div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="intro-section">
+        <h2>Une Expertise Complète en Menuiserie</h2>
+        <p>
+            Depuis plusieurs années, Au Format allie tradition et modernité pour créer des espaces uniques. 
+            Notre atelier combine savoir-faire artisanal et techniques innovantes pour répondre à tous vos besoins 
+            en menuiserie et agencement. Chaque projet est une occasion de sublimer le bois et de créer 
+            des réalisations qui vous ressemblent.
+        </p>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Projets réalisés</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Années d'expérience</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Sur-mesure</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">98%</div>
+                <div class="stat-label">Clients satisfaits</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Métiers -->
+    <section class="metiers-section">
+        <div class="metiers-container">
+            <h2 class="section-title">Nos Métiers</h2>
+            <p class="section-subtitle">Des compétences variées pour concrétiser tous vos projets</p>
+
+            <!-- Agencement Sur-Mesure -->
+            <div class="metier-card">
+                <div class="metier-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 600 400&quot;><rect fill=&quot;%23C19A6B&quot; width=&quot;600&quot; height=&quot;400&quot;/><rect fill=&quot;%238B6F47&quot; x=&quot;50&quot; y=&quot;50&quot; width=&quot;500&quot; height=&quot;300&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;80&quot; y=&quot;80&quot; width=&quot;200&quot; height=&quot;240&quot;/><rect fill=&quot;%23A68A64&quot; x=&quot;320&quot; y=&quot;80&quot; width=&quot;200&quot; height=&quot;100&quot;/><rect fill=&quot;%23A68A64&quot; x=&quot;320&quot; y=&quot;220&quot; width=&quot;200&quot; height=&quot;100&quot;/></svg>'); background-size: cover;"></div>
+                <div class="metier-content">
+                    <div class="metier-icon">🏠</div>
+                    <h3>Agencement Sur-Mesure</h3>
+                    <p>
+                        Nous créons des espaces de vie uniques, parfaitement adaptés à vos besoins et à votre style. 
+                        Chaque projet est pensé pour optimiser l'espace et créer une harmonie parfaite avec votre intérieur.
+                    </p>
+                    <ul class="metier-features">
+                        <li>Conception 3D et plans détaillés</li>
+                        <li>Optimisation intelligente de l'espace</li>
+                        <li>Choix personnalisé des essences et finitions</li>
+                        <li>Intégration de solutions techniques modernes</li>
+                        <li>Suivi de A à Z de votre projet</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menuiserie Intérieure -->
+            <div class="metier-card">
+                <div class="metier-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 600 400&quot;><rect fill=&quot;%23B8956A&quot; width=&quot;600&quot; height=&quot;400&quot;/><rect fill=&quot;%238B6F47&quot; x=&quot;100&quot; y=&quot;50&quot; width=&quot;400&quot; height=&quot;300&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;130&quot; y=&quot;80&quot; width=&quot;150&quot; height=&quot;120&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;320&quot; y=&quot;80&quot; width=&quot;150&quot; height=&quot;120&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;130&quot; y=&quot;230&quot; width=&quot;340&quot; height=&quot;90&quot;/><circle fill=&quot;%23C19A6B&quot; cx=&quot;210&quot; cy=&quot;140&quot; r=&quot;15&quot;/><circle fill=&quot;%23C19A6B&quot; cx=&quot;390&quot; cy=&quot;140&quot; r=&quot;15&quot;/></svg>'); background-size: cover;"></div>
+                <div class="metier-content">
+                    <div class="metier-icon">🪑</div>
+                    <h3>Menuiserie Intérieure</h3>
+                    <p>
+                        Du placard sur-mesure à la cuisine équipée, en passant par les bibliothèques et dressings, 
+                        nous réalisons tous vos projets de menuiserie intérieure avec un soin du détail exceptionnel.
+                    </p>
+                    <ul class="metier-features">
+                        <li>Cuisines équipées sur-mesure</li>
+                        <li>Dressings et placards optimisés</li>
+                        <li>Bibliothèques et étagères murales</li>
+                        <li>Parquets et lambris</li>
+                        <li>Escaliers intérieurs</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Menuiserie Extérieure -->
+            <div class="metier-card">
+                <div class="metier-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 600 400&quot;><rect fill=&quot;%23A68A64&quot; width=&quot;600&quot; height=&quot;400&quot;/><rect fill=&quot;%238B6F47&quot; x=&quot;150&quot; y=&quot;50&quot; width=&quot;300&quot; height=&quot;300&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;200&quot; y=&quot;100&quot; width=&quot;100&quot; height=&quot;180&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;350&quot; y=&quot;100&quot; width=&quot;50&quot; height=&quot;180&quot;/><circle fill=&quot;%23C19A6B&quot; cx=&quot;280&quot; cy=&quot;190&quot; r=&quot;12&quot;/><rect fill=&quot;%23B8956A&quot; x=&quot;200&quot; y=&quot;300&quot; width=&quot;100&quot; height=&quot;50&quot;/></svg>'); background-size: cover;"></div>
+                <div class="metier-content">
+                    <div class="metier-icon">🚪</div>
+                    <h3>Menuiserie Extérieure</h3>
+                    <p>
+                        Protégez et embellissez votre habitation avec nos réalisations en menuiserie extérieure. 
+                        Nous utilisons des bois nobles et des traitements durables pour garantir la longévité de nos créations.
+                    </p>
+                    <ul class="metier-features">
+                        <li>Portes d'entrée en bois massif</li>
+                        <li>Fenêtres et baies vitrées</li>
+                        <li>Volets battants et coulissants</li>
+                        <li>Bardages et habillages de façade</li>
+                        <li>Pergolas et structures extérieures</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Agencement Professionnel -->
+            <div class="metier-card">
+                <div class="metier-image" style="background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), url('data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 600 400&quot;><rect fill=&quot;%23C19A6B&quot; width=&quot;600&quot; height=&quot;400&quot;/><rect fill=&quot;%238B6F47&quot; x=&quot;50&quot; y=&quot;80&quot; width=&quot;500&quot; height=&quot;240&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;80&quot; y=&quot;110&quot; width=&quot;120&quot; height=&quot;180&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;240&quot; y=&quot;110&quot; width=&quot;120&quot; height=&quot;180&quot;/><rect fill=&quot;%23D4A574&quot; x=&quot;400&quot; y=&quot;110&quot; width=&quot;120&quot; height=&quot;180&quot;/><rect fill=&quot;%23A68A64&quot; x=&quot;100&quot; y=&quot;150&quot; width=&quot;80&quot; height=&quot;100&quot;/><rect fill=&quot;%23A68A64&quot; x=&quot;260&quot; y=&quot;150&quot; width=&quot;80&quot; height=&quot;100&quot;/><rect fill=&quot;%23A68A64&quot; x=&quot;420&quot; y=&quot;150&quot; width=&quot;80&quot; height=&quot;100&quot;/></svg>'); background-size: cover;"></div>
+                <div class="metier-content">
+                    <div class="metier-icon">🏢</div>
+                    <h3>Agencement Professionnel</h3>
+                    <p>
+                        Nous accompagnons les professionnels dans l'aménagement de leurs espaces commerciaux et bureaux. 
+                        Chaque réalisation est pensée pour valoriser votre image de marque et optimiser votre activité.
+                    </p>
+                    <ul class="metier-features">
+                        <li>Boutiques et commerces</li>
+                        <li>Bureaux et espaces de coworking</li>
+                        <li>Restaurants et bars</li>
+                        <li>Hôtels et établissements touristiques</li>
+                        <li>Stands d'exposition</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Expertise -->
+    <section class="expertise-section">
+        <h2 class="section-title">Notre Expertise Technique</h2>
+        <p class="section-subtitle">Des compétences pointues pour des réalisations d'exception</p>
+
+        <div class="expertise-grid">
+            <div class="expertise-card">
+                <div class="expertise-icon">📐</div>
+                <h3>Conception & Design</h3>
+                <p>Modélisation 3D, plans techniques et visualisations réalistes pour vous projeter dans votre futur espace.</p>
+            </div>
+
+            <div class="expertise-card">
+                <div class="expertise-icon">🔨</div>
+                <h3>Fabrication Artisanale</h3>
+                <p>Réalisation en atelier avec des machines professionnelles et un savoir-faire artisanal transmis de génération en génération.</p>
+            </div>
+
+            <div class="expertise-card">
+                <div class="expertise-icon">⚙️</div>
+                <h3>Techniques Modernes</h3>
+                <p>Utilisation d'équipements de pointe (CNC, assemblages innovants) pour une précision millimétrique.</p>
+            </div>
+
+            <div class="expertise-card">
+                <div class="expertise-icon">♻️</div>
+                <h3>Éco-Responsabilité</h3>
+                <p>Sélection de bois issus de forêts gérées durablement (PEFC, FSC) et traitement respectueux de l'environnement.</p>
+            </div>
+
+            <div class="expertise-card">
+                <div class="expertise-icon">🎨</div>
+                <h3>Finitions Premium</h3>
+                <p>Large gamme de finitions (vernis, lasures, huiles, teintes) pour un rendu impeccable et durable.</p>
+            </div>
+
+            <div class="expertise-card">
+                <div class="expertise-icon">🛠️</div>
+                <h3>Pose Professionnelle</h3>
+                <p>Installation soignée par notre équipe avec respect des normes et des délais convenus.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Matériaux -->
+    <section class="materiaux-section">
+        <div class="materiaux-container">
+            <h2>Nos Matériaux Nobles</h2>
+            <p class="materiaux-intro">
