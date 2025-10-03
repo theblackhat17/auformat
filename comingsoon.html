@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Au Format — Bientôt en ligne</title>
+<meta name="description" content="Au Format — Menuiserie & agencement bois. Notre site arrive très bientôt.">
+<link rel="icon" href="sources/img/logo_tmp.png">
+<style>
+  /* -------- Reset + Variables -------- */
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bois-clair:#D4A574; --bois-fonce:#8B6F47; --vert-foret:#2C5F2D;
+    --beige:#F5F1E8; --noir:#2B2B2B; --blanc:#fff; --ombre:rgba(0,0,0,.12);
+    --accent:#2C5F2D;
+  }
+  html,body{height:100%}
+  body{
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,Inter,Ubuntu,"Helvetica Neue",Arial;
+    color:var(--noir); background: #caa577;
+    /* Fond bois (dégradé + veinage svg inline) */
+   background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23caa577'/><stop offset='1' stop-color='%23b78958'/></linearGradient></defs><rect width='300' height='300' fill='url(%23g)'/></svg>");
+
+    background-size: cover, cover, 380px 380px;
+  }
+  a{color:inherit}
+
+  /* -------- Layout -------- */
+  .wrap{
+    min-height:100%;
+    display:flex; align-items:center; justify-content:center;
+    padding: clamp(24px, 4vw, 48px);
+  }
+  .card{
+    width:min(960px, 100%);
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(6px);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    overflow:hidden;
+  }
+
+  /* Bande chantier */
+  .tape{
+    --stripe:#f3d27c;
+    background: repeating-linear-gradient(45deg, var(--stripe), var(--stripe) 18px, #222 18px, #222 36px);
+    height: 16px;
+  }
+
+  /* -------- Header -------- */
+  .head{
+    display:flex; gap:20px; align-items:center; justify-content:space-between;
+    padding: clamp(16px, 2.6vw, 28px) clamp(18px, 3vw, 36px);
+    border-bottom: 1px solid rgba(0,0,0,.06);
+  }
+  .brand{display:flex; gap:14px; align-items:center; text-decoration:none}
+  .brand img{height: clamp(36px, 5vw, 56px); width:auto; display:block}
+  .brand h1{
+    font-size: clamp(18px, 2.2vw, 24px);
+    letter-spacing:.08em; text-transform:uppercase; color:var(--bois-fonce);
+  }
+  .badge{
+    font-size: .85rem; color: var(--blanc); background: var(--vert-foret);
+    padding:.45rem .7rem; border-radius: 999px; box-shadow: 0 6px 16px rgba(44,95,45,.35);
+  }
+
+  /* -------- Hero -------- */
+  .hero{
+    display:grid; grid-template-columns: 1.1fr .9fr; gap: clamp(18px, 3vw, 32px);
+    padding: clamp(24px, 4vw, 48px);
+  }
+  @media (max-width: 860px){ .hero{ grid-template-columns: 1fr; } }
+
+  .hero-text h2{
+    font-size: clamp(28px, 4.2vw, 46px);
+    line-height:1.1; color: var(--noir);
+  }
+  .hero-text p.lead{
+    margin-top: 10px; font-size: clamp(16px, 1.6vw, 18px); color:#4d402f;
+  }
+
+  /* Progress */
+  .progress{
+    margin: 18px 0 24px; height: 12px; border-radius: 999px;
+    background: #e9dfd3; box-shadow: inset 0 2px 6px rgba(0,0,0,.08);
+    overflow: hidden; position: relative;
+  }
+  .progress > span{
+    display:block; height:100%; width:64%;
+    background: linear-gradient(90deg, var(--bois-clair), var(--bois-fonce));
+    box-shadow: 0 6px 14px rgba(139,111,71,.35);
+    animation: load 1.6s ease-out both;
+  }
+  @keyframes load{ from{ width:0 } to{ width:64% } }
+
+  /* Mini points d'étapes */
+  .checkpoints{ display:flex; gap:10px; flex-wrap:wrap; color:#5a4a36; font-size:.95rem }
+  .cp{ display:inline-flex; align-items:center; gap:8px; background:#fff4e6; border:1px solid #f0d4ad; padding:.35rem .6rem; border-radius: 999px; }
+  .cp i{ color:var(--vert-foret) }
+
+  /* Formulaire */
+  .form{
+    margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap;
+    background:#fff; padding:10px; border-radius: 14px; border:1px solid rgba(0,0,0,.06);
+    box-shadow: 0 8px 18px rgba(0,0,0,.06);
+  }
+  .form input{
+    flex:1 1 240px; min-width: 180px;
+    padding: .9rem 1rem;
+    border-radius: 10px; border:1px solid #dbc8b3; outline: none;
+    font-size: 1rem;
+  }
+  .form button{
+    padding:.9rem 1.1rem; border-radius:10px; border:none; cursor:pointer;
+    background: var(--vert-foret); color:var(--blanc); font-weight: 700;
+    box-shadow: 0 8px 18px rgba(44,95,45,.35); transition: transform .15s ease, filter .15s ease;
+  }
+  .form button:hover{ transform: translateY(-2px); filter: brightness(.95) }
+
+  .small{
+    font-size:.9rem; color:#6d5b45; margin-top: 6px;
+  }
+
+  /* -------- Illustration (SVG animé) -------- */
+  .scene{
+    background: #fff9f2;
+    border:1px solid #f0e1cf;
+    border-radius: 16px;
+    box-shadow: inset 0 10px 30px rgba(0,0,0,.05);
+    padding: clamp(12px, 2vw, 16px);
+  }
+  svg{ width:100%; height:auto; display:block }
+
+  /* Animations outils */
+  @keyframes saw { 0%,100% { transform: translateX(0) rotate(0deg) } 50% { transform: translateX(26px) rotate(-4deg) } }
+  @keyframes saw-dust { 0% { transform: translate(0,0); opacity:1 } 100% { transform: translate(-20px,18px); opacity:0 } }
+  @keyframes hammer { 0%,100% { transform: rotate(-8deg) translateY(0) } 50% { transform: rotate(-22deg) translateY(2px) } }
+
+  .saw { transform-origin: 40px 60px; animation: saw 1.2s ease-in-out infinite; }
+  .hammer { transform-origin: 240px 50px; animation: hammer 1.5s ease-in-out infinite; }
+  .dust rect { animation: saw-dust .8s ease-out infinite; }
+  .dust rect:nth-child(2){ animation-delay: .18s }
+  .dust rect:nth-child(3){ animation-delay: .32s }
+
+  /* -------- Footer -------- */
+  .foot{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:10px; padding: clamp(14px, 2.4vw, 22px) clamp(18px, 3vw, 36px);
+    border-top:1px solid rgba(0,0,0,.06); background: #fffdf9;
+  }
+  .foot .links{ display:flex; gap:16px; flex-wrap:wrap; font-size:.95rem }
+  .chip{
+    background:#eef4ee; color:#1f4b20; padding:.35rem .6rem; border-radius:999px; font-weight:600;
+    border:1px solid #cfe4cf;
+  }
+
+  /* -------- Compteur (facultatif) -------- */
+  .count{
+    margin-top: 8px; display:flex; gap:10px; flex-wrap:wrap; color:#433524; font-weight:700
+  }
+  .count span{ background:#fff4e6; border:1px solid #f0d4ad; padding:.35rem .6rem; border-radius:8px; min-width:56px; text-align:center }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card" role="region" aria-label="Page En travaux">
+    <div class="tape" aria-hidden="true"></div>
+
+    <header class="head">
+      <a class="brand" href="/" aria-label="Accueil Au Format">
+        <img src="sources/img/logo_tmp.png" alt="Au Format — Menuiserie & agencement" onerror="this.style.display='none'">
+        <h1>AU FORMAT</h1>
+      </a>
+      <span class="badge">Site en chantier</span>
+    </header>
+
+    <main class="hero">
+      <section class="hero-text">
+        <h2>Bientôt en ligne 🌲</h2>
+        <p class="lead">
+          Nous façonnons notre nouveau site avec le même soin que nos projets en bois.
+          Encore quelques coups de rabot et ce sera prêt !
+        </p>
+
+        <!-- Progress bar -->
+        <div class="progress" aria-label="Progression estimée">
+          <span aria-hidden="true"></span>
+        </div>
+
+        <!-- Checkpoints -->
+        <div class="checkpoints" aria-hidden="true">
+          <span class="cp"><i>✓</i> Design</span>
+          <span class="cp"><i>✓</i> Portfolio</span>
+          <span class="cp"><i>✓</i> Contact</span>
+          <span class="cp">Blog</span>
+        </div>
+
+        <!-- Compteur (décommente la ligne JS plus bas pour activer) -->
+        <div id="countdown" class="count" style="display:none">
+          <span id="d">00j</span>
+          <span id="h">00h</span>
+          <span id="m">00m</span>
+          <span id="s">00s</span>
+        </div>
+        
+        <p class="small">
+        Besoin d’un devis ou d’une info dès maintenant ?  
+        <a href="mailto:contact@auformat.fr" style="font-weight:700; text-decoration:underline">contact@auformat.fr</a>
+        · 
+          <a href="tel:+33788916068" style="font-weight:700; text-decoration:underline">07 88 91 60 68</a>
+        </p>
+      </section>
+
+      <!-- Illustration outillage -->
+      <aside class="scene" aria-hidden="true">
+        <svg viewBox="0 0 320 220" role="img" aria-label="Scie et marteau animés">
+          <!-- Planche -->
+          <rect x="20" y="120" width="280" height="26" rx="4" fill="#c59b6c" stroke="#a57a4e" stroke-width="2"/>
+          <!-- Veinage planche -->
+          <path d="M28 133 Q 60 128 92 133 T 156 133 T 220 133 T 284 133" fill="none" stroke="#a77f58" stroke-opacity=".5" stroke-width="2"/>
+          <!-- Scie -->
+          <g class="saw">
+            <polygon points="36,86 100,110 36,110" fill="#c0c0c0" stroke="#9aa1a6" stroke-width="2"/>
+            <rect x="24" y="90" width="14" height="20" rx="3" fill="#2C5F2D"/>
+            <!-- Dents -->
+            <path d="M36 110 l6 8 l6-8 l6 8 l6-8 l6 8 l6-8 l6 8" fill="#9aa1a6"/>
+          </g>
+          <!-- Copeaux -->
+          <g class="dust" fill="#e6c399">
+            <rect x="80" y="118" width="6" height="4" rx="2"/>
+            <rect x="86" y="120" width="6" height="4" rx="2"/>
+            <rect x="92" y="118" width="6" height="4" rx="2"/>
+          </g>
+          <!-- Marteau -->
+          <g class="hammer">
+            <rect x="220" y="52" width="70" height="8" rx="4" fill="#8b6f47"/>
+            <path d="M218,56 q10-12 28-12 l0,8 q-16,0 -26,10 z" fill="#444"/>
+            <rect x="246" y="42" width="10" height="14" rx="2" fill="#666"/>
+          </g>
+          <!-- Établi -->
+          <rect x="0" y="160" width="320" height="52" fill="#8b6f47"/>
+          <rect x="0" y="160" width="320" height="6" fill="#6f5636"/>
+        </svg>
+      </aside>
+    </main>
+
+    <footer class="foot">
+      <div class="links">
+        <span class="chip">Bois local</span>
+        <span class="chip">Sur-mesure</span>
+        <span class="chip">Pose soignée</span>
+      </div>
+      <div style="opacity:.8;font-size:.95rem">&copy; <span id="y"></span> Au Format — Menuiserie & agencement</div>
+    </footer>
+
+    <div class="tape" aria-hidden="true"></div>
+  </div>
+</div>
+
+<script>
+  // Année footer
+  document.getElementById('y').textContent = new Date().getFullYear();
+
+  // (Optionnel) Compteur — mets ta date de lancement et décommente :
+   const launch = new Date("2025-10-30T10:00:00"); // <- à modifier
+   const box = document.getElementById('countdown'); box.style.display='flex';
+  const ids = {d:'d',h:'h',m:'m',s:'s'};
+  setInterval(()=> {
+    const diff = Math.max(0, launch - new Date());
+    const d = Math.floor(diff / (1000*60*60*24));
+    const h = Math.floor((diff / (1000*60*60)) % 24);
+    const m = Math.floor((diff / (1000*60)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+    document.getElementById(ids.d).textContent = d + "j";
+    document.getElementById(ids.h).textContent = h.toString().padStart(2,'0') + "h";
+    document.getElementById(ids.m).textContent = m.toString().padStart(2,'0') + "m";
+    document.getElementById(ids.s).textContent = s.toString().padStart(2,'0') + "s";
+  }, 1000);
+</script>
+</body>
+</html>
