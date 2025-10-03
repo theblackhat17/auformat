@@ -9,22 +9,7 @@
 </head>
 <body>
     <!-- Header -->
-  <header class="site-header">
-  <nav class="nav">
-    <a class="logo" href="/">
-      <img src="sources/img/logo_tmp.png" alt="AuFormat — menuiserie & agencement">
-    </a>
-
-    <ul class="nav-links">
-      <li><a href="index.html">Accueil</a></li>
-      <li><a href="savoir_faire.html">Savoir-faire</a></li>
-      <li><a href="realisations.html">Réalisations</a></li>
-      <li><a href="processus.html">Processus</a></li>
-      <li><a href="avis.html">Avis</a></li>
-      <!-- <li><a href="contact.html">Contact</a></li>-->
-    </ul>
-  </nav>
-</header>
+<div data-include="partials/header.html"></div>
 
     <!-- Hero Section -->
     <section class="page-hero">
@@ -414,42 +399,15 @@
         <a href="contact.html" class="btn btn-white">Demander un devis gratuit</a>
     </section>
 
-    <!-- Footer -->
- <footer>
-        <div class="footer-content">
-            <div class="footer-section">
-                <h3>AU FORMAT</h3>
-                <p>Menuiserie & Agencement Bois</p>
-                <p style="font-style: italic; color: var(--bois-clair);">Franchissons ensemble, le pas vers le bois</p>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Contact</h3>
-                <p>📍 88 Imp. de la Briqueterie, 59830 Cysoing</p>
-                <p>📞 07 88 91 60 68</p>
-                <p>✉️ contact@auformat.fr</p>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Horaires</h3>
-                <p>Lundi - Vendredi : 8h - 18h</p>
-                <p>Samedi : Fermé</p>
-                <p>Dimanche : Fermé</p>
-            </div>
-            
-            <div class="footer-section">
-                <h3>Liens Rapides</h3>
-                <a href="savoir_faire.html">Savoir-faire</a>
-                <a href="realisations.html">Réalisations</a>
-                <a href="processus.html">Notre processus</a>
-                <!-- <a href="contact.html">Contact</a>-->
-            </div>
-        </div>
-        
-        <div class="footer-bottom">
-            <p>&copy; 2025 Au Format - Tous droits réservés</p>
-        </div>
-    </footer>
+<div data-include="partials/footer.html"></div>
+
+  <!-- charge le script en bas pour éviter le FOUC -->
+  <script src="js/include.js" defer></script>
+
+  <!-- Fallback si JS désactivé (SEO ok) -->
+  <noscript>
+    <div>Activez JavaScript pour afficher l’en-tête et le pied de page.</div>
+  </noscript>
 
     <script>
         // Gestion des filtres
