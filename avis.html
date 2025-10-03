@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avis Clients - Au Format</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bois-clair: #D4A574;
+            --bois-fonce: #8B6F47;
+            --vert-foret: #2C5F2D;
+            --beige: #F5F1E8;
+            --noir: #2B2B2B;
+            --blanc: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--noir);
+            background: var(--blanc);
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--noir);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--vert-foret);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--vert-foret);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .page-hero {
+            margin-top: 80px;
+            height: 50vh;
+            background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><text x="200" y="200" font-size="120" fill="%23D4A574" opacity="0.3">★</text><text x="500" y="300" font-size="150" fill="%23C19A6B" opacity="0.3">★</text><text x="800" y="250" font-size="130" fill="%23D4A574" opacity="0.3">★</text><text x="350" y="450" font-size="100" fill="%23A68A64" opacity="0.3">★</text><text x="950" y="400" font-size="110" fill="%23C19A6B" opacity="0.3">★</text></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--blanc);
+        }
+
+        .page-hero h1 {
+            font-size: 3.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .page-hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--beige);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            padding: 4rem 2rem;
+            background: var(--beige);
+        }
+
+        .stats-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            text-align: center;
+        }
+
+        .stat-box {
+            background: var(--blanc);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-10px);
+        }
+
+        .stat-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1.2rem;
+            color: var(--bois-fonce);
+            font-weight: 600;
+        }
+
+        .stat-sublabel {
+            font-size: 0.95rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        /* Filtres */
+        .filter-section {
+            padding: 2rem;
+            background: var(--blanc);
+            border-bottom: 2px solid var(--beige);
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+        }
+
+        .filter-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 0.7rem 1.5rem;
+            background: var(--beige);
+            border: 2px solid var(--bois-clair);
+            color: var(--noir);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: var(--bois-clair);
+            color: var(--blanc);
+        }
+
+        .filter-btn.active {
+            background: var(--vert-foret);
+            border-color: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        /* Avis Section */
+        .avis-section {
+            padding: 4rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        .avis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .avis-card {
+            background: var(--blanc);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--vert-foret);
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .avis-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .avis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+
+        .avis-author {
+            flex: 1;
+        }
+
+        .author-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            margin-bottom: 0.3rem;
+        }
+
+        .author-info {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .avis-rating {
+            display: flex;
+            gap: 0.2rem;
+        }
+
+        .stars {
+            color: #FFD700;
+            font-size: 1.3rem;
+        }
+
+        .avis-project {
+            display: inline-block;
+            background: var(--beige);
+            color: var(--bois-fonce);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .avis-text {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .avis-date {
+            font-size: 0.85rem;
+            color: #999;
+        }
+
+        .quote-icon {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 3rem;
+            color: var(--beige);
+            opacity: 0.5;
+        }
+
+        /* Verified Badge */
+        .verified-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: #4CAF50;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        /* Video Testimonials */
+        .video-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .video-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .video-card {
+            background: var(--blanc);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, var(--bois-fonce), var(--bois-clair));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .play-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--vert-foret);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .play-button:hover {
+            background: white;
+            transform: scale(1.1);
+        }
+
+        .video-info {
+            padding: 1.5rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--bois-fonce);
+            margin-bottom: 0.5rem;
+        }
+
+        .video-description {
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        /* Google Reviews Widget */
+        .google-section {
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .google-widget {
+            max-width: 600px;
+            margin: 3rem auto;
+            padding: 3rem;
+            background: var(--blanc);
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .google-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .google-rating {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+            margin-bottom: 0.5rem;
+        }
+
+        .google-stars {
+            font-size: 2rem;
+            color: #FFD700;
+            margin-bottom: 1rem;
+        }
+
+        .google-count {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        .btn-primary:hover {
+            background: #234a24;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(44, 95, 45, 0.4);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            color: var(--blanc);
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-white {
+            background: var(--blanc);
+            color: var(--vert-foret);
+        }
+
+        .btn-white:hover {
+            background: var(--beige);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .avis-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">AU FORMAT</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="savoir-faire.html">Savoir-faire</a></li>
+                <li><a href="realisations.html">Réalisations</a></li>
+                <li><a href="processus.html">Processus</a></li>
+                <li><a href="avis.html" class="active">Avis</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div>
+            <h1>Avis Clients</h1>
+            <p>La satisfaction de nos clients est notre plus belle récompense</p>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-number">4.9/5</div>
+                    <div class="stat-label">Note Moyenne</div>
+                    <div class="stat-sublabel">Sur 127 avis</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon">😊</div>
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">Clients Satisfaits</div>
+                    <div class="stat-sublabel">Recommanderaient nos services</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon">🔄</div>
+                    <div class="stat-number">85%</div>
+                    <div class="stat-label">Clients Fidèles</div>
+                    <div class="stat-sublabel">Refont appel à nous</div>
+                </div>
+
+                <div class="stat-box">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Projets Réalisés</div>
+                    <div class="stat-sublabel">Depuis 2010</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filtres -->
+    <section class="filter-section">
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="tous">Tous les avis</button>
+            <button class="filter-btn" data-filter="cuisines">Cuisines</button>
+            <button class="filter-btn" data-filter="dressings">Dressings</button>
+            <button class="filter-btn" data-filter="bibliotheques">Bibliothèques</button>
+            <button class="filter-btn" data-filter="commerces">Commerces</button>
+            <button class="filter-btn" data-filter="escaliers">Escaliers</button>
+        </div>
+    </section>
+
+    <!-- Avis Section -->
+    <section class="avis-section">
+        <h2 class="section-title">Ce Que Disent Nos Clients</h2>
+        <p class="section-subtitle">Témoignages authentiques et vérifiés</p>
+
+        <div class="avis-grid">
+            <!-- Avis 1 -->
+            <div class="avis-card" data-category="cuisines">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Marie Dubois
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 3ème • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Cuisine sur-mesure</span>
+                <p class="avis-text">
+                    Nous avons fait appel à Au Format pour refaire entièrement notre cuisine. De la conception à la pose, tout a été parfait. L'équipe est à l'écoute, professionnelle et le résultat dépasse nos attentes. Le chêne massif apporte une chaleur incroyable à notre pièce de vie. Je recommande à 200% !
+                </p>
+                <div class="avis-date">Il y a 2 semaines</div>
+            </div>
+
+            <!-- Avis 2 -->
+            <div class="avis-card" data-category="dressings">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Thomas Laurent
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Villeurbanne • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Dressing suite parentale</span>
+                <p class="avis-text">
+                    Excellent travail ! Notre dressing sur-mesure exploite chaque centimètre carré disponible. Les finitions sont impeccables et la qualité du bois est remarquable. L'équipe a su nous conseiller pour optimiser le rangement. Délais respectés et prix honnête. Très content de notre investissement.
+                </p>
+                <div class="avis-date">Il y a 1 mois</div>
+            </div>
+
+            <!-- Avis 3 -->
+            <div class="avis-card" data-category="bibliotheques">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Sophie Martin
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 6ème • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Bibliothèque murale</span>
+                <p class="avis-text">
+                    Magnifique réalisation ! La bibliothèque occupe tout notre mur du salon et s'intègre parfaitement à notre décoration. L'éclairage LED intégré met en valeur nos livres et objets. Un vrai travail d'artisan qui transforme notre intérieur. Merci pour votre professionnalisme.
+                </p>
+                <div class="avis-date">Il y a 1 mois</div>
+            </div>
+
+            <!-- Avis 4 -->
+            <div class="avis-card" data-category="commerces">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Julien Mercier
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 2ème • Professionnel</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Agencement boutique</span>
+                <p class="avis-text">
+                    En tant que gérant d'une boutique, je cherchais un agencement qui reflète notre identité. Au Format a créé un espace unique avec des présentoirs sur-mesure en chêne. L'ambiance est chaleureuse et nos clients adorent. Équipe réactive et créative. Partenaire de confiance pour nos futurs projets.
+                </p>
+                <div class="avis-date">Il y a 2 mois</div>
+            </div>
+
+            <!-- Avis 5 -->
+            <div class="avis-card" data-category="cuisines">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Isabelle Rousseau
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Caluire • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Cuisine & îlot central</span>
+                <p class="avis-text">
+                    Quelle transformation ! Notre cuisine est devenue la pièce maîtresse de la maison. L'îlot central est fonctionnel et magnifique. La qualité des matériaux est exceptionnelle. L'équipe a été d'une grande patience pour répondre à toutes nos questions. Un investissement qui en vaut vraiment la peine.
+                </p>
+                <div class="avis-date">Il y a 2 mois</div>
+            </div>
+
+            <!-- Avis 6 -->
+            <div class="avis-card" data-category="escaliers">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Pierre Durand
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Tassin • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Escalier design</span>
+                <p class="avis-text">
+                    Notre escalier est une vraie œuvre d'art ! Le mélange bois et métal est sublime. La structure est solide et les finitions parfaites. C'est devenu l'élément central de notre intérieur. Au Format a su concrétiser notre vision avec brio. Un grand merci à toute l'équipe !
+                </p>
+                <div class="avis-date">Il y a 3 mois</div>
+            </div>
+
+            <!-- Avis 7 -->
+            <div class="avis-card" data-category="dressings">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Céline Bonnet
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 7ème • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Dressing d'angle</span>
+                <p class="avis-text">
+                    Impressionnée par la capacité d'Au Format à optimiser un espace difficile. Notre dressing d'angle exploite chaque recoin avec intelligence. Les solutions de rangement sont ingénieuses. Qualité irréprochable et pose soignée. Je les recommande sans hésitation pour leur expertise et leur sérieux.
+                </p>
+                <div class="avis-date">Il y a 3 mois</div>
+            </div>
+
+            <!-- Avis 8 -->
+            <div class="avis-card" data-category="bibliotheques">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Marc Lefebvre
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 4ème • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Meuble TV & bibliothèque</span>
+                <p class="avis-text">
+                    Prestation de haute qualité. Le meuble TV avec bibliothèque intégrée est exactement ce que nous voulions. Les dimensions sont parfaites, les finitions impeccables. L'équipe est ponctuelle et respectueuse. Rapport qualité-prix excellent. Nous ferons à nouveau appel à eux pour nos prochains projets.
+                </p>
+                <div class="avis-date">Il y a 4 mois</div>
+            </div>
+
+            <!-- Avis 9 -->
+            <div class="avis-card" data-category="cuisines">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Anne Girard
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Écully • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Cuisine rustique moderne</span>
+                <p class="avis-text">
+                    Un travail remarquable ! Notre cuisine allie charme rustique et fonctionnalités modernes. Le bois patiné est magnifique et les équipements parfaitement intégrés. L'équipe a su nous guider dans nos choix avec de judicieux conseils. Délais tenus et chantier propre. Ravis du résultat !
+                </p>
+                <div class="avis-date">Il y a 4 mois</div>
+            </div>
+
+            <!-- Avis 10 -->
+            <div class="avis-card" data-category="commerces">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            David Renard
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 1er • Professionnel</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Bar restaurant</span>
+                <p class="avis-text">
+                    Au Format a aménagé l'intégralité de notre bar-restaurant. Le comptoir en chêne massif est spectaculaire et les banquettes sur-mesure parfaites. Leur créativité et expertise ont transformé notre espace. Travail soigné, respect des délais malgré la complexité. Équipe pro et sympathique. Top !
+                </p>
+                <div class="avis-date">Il y a 5 mois</div>
+            </div>
+
+            <!-- Avis 11 -->
+            <div class="avis-card" data-category="dressings">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            Sandrine Petit
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Villeurbanne • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Dressing avec miroirs</span>
+                <p class="avis-text">
+                    Très satisfaite de mon dressing ! L'optimisation de l'espace est remarquable avec des solutions astucieuses pour mes chaussures et accessoires. Les miroirs intégrés agrandissent la pièce. Qualité du bois exceptionnelle et finitions parfaites. Équipe sérieuse et à l'écoute. Je recommande vivement !
+                </p>
+                <div class="avis-date">Il y a 5 mois</div>
+            </div>
+
+            <!-- Avis 12 -->
+            <div class="avis-card" data-category="bibliotheques">
+                <span class="quote-icon">"</span>
+                <div class="avis-header">
+                    <div class="avis-author">
+                        <div class="author-name">
+                            François Moreau
+                            <span class="verified-badge">✓ Vérifié</span>
+                        </div>
+                        <div class="author-info">Lyon 5ème • Particulier</div>
+                    </div>
+                    <div class="avis-rating">
+                        <span class="stars">★★★★★</span>
+                    </div>
+                </div>
+                <span class="avis-project">Bibliothèque bureau</span>
+                <p class="avis-text">
+                    Ma bibliothèque de bureau est superbe ! Le noyer européen choisi est magnifique et l'éclairage LED met parfaitement en valeur ma collection de livres. Le bureau intégré est fonctionnel et élégant. Travail de grande qualité réalisé par de vrais passionnés. Tarif correct pour cette qualité. Bravo !
+                </p>
+                <div class="avis-date">Il y a 6 mois</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Témoignages Vidéo -->
+    <section class="video-section">
+        <div class="video-container">
+            <h2 class="section-title">Témoignages Vidéo</h2>
+            <p class="section-subtitle">Nos clients partagent leur expérience</p>
+
+            <div class="video-grid">
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <div class="play-button">▶</div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">Cuisine complète à Lyon 3</h3>
+                        <p class="video-description">Marie nous raconte son expérience et nous fait découvrir sa cuisine sur-mesure en chêne massif.</p>
+                    </div>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <div class="play-button">▶</div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">Agencement boutique Presqu'île</h3>
+                        <p class="video-description">Julien, gérant de boutique, explique comment Au Format a transformé son espace commercial.</p>
+                    </div>
+                </div>
+
+                <div class="video-card">
+                    <div class="video-thumbnail">
+                        <div class="play-button">▶</div>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">Dressing suite parentale</h3>
+                        <p class="video-description">Découverte d'un dressing optimisé avec Thomas et les solutions de rangement ingénieuses.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Google Reviews -->
+    <section class="google-section">
+        <h2 class="section-title">Retrouvez-nous sur Google</h2>
+        <p class="section-subtitle">Consultez tous nos avis clients</p>
+
+        <div class="google-widget">
+            <div class="google-logo">🔍</div>
+            <div class="google-rating">4.9</div>
+            <div class="google-stars">★★★★★</div>
+            <div class="google-count">Basé sur 127 avis Google</div>
+            <a href="#" class="btn btn-primary">Voir tous les avis Google</a>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Vous Aussi, Rejoignez Nos Clients Satisfaits</h2>
+        <p>Confiez-nous votre projet et vivez l'expérience Au Format</p>
+        <a href="contact.html" class="btn btn-white">Demander un devis gratuit</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AU FORMAT</h3>
+                <p>Menuiserie & Agencement Bois</p>
+                <p style="font-style: italic; color: var(--bois-clair);">Franchissons ensemble, le pas vers le bois</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📍 [Votre adresse]</p>
+                <p>📞 [Votre téléphone]</p>
+                <p>✉️ [Votre email]</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Horaires</h3>
+                <p>Lundi - Vendredi : 8h - 18h</p>
+                <p>Samedi : 9h - 12h</p>
+                <p>Dimanche : Fermé</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Liens Rapides</h3>
+                <a href="savoir-faire.html">Savoir-faire</a>
+                <a href="realisations.html">Réalisations</a>
+                <a href="processus.html">Notre processus</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Au Format - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        // Gestion des filtres
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const avisCards = document.querySelectorAll('.avis-card');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Retirer la classe active de tous les boutons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Ajouter la classe active au bouton cliqué
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+
+                avisCards.forEach(card => {
+                    if (filter === 'tous' || card.dataset.category === filter) {
+                        card.style.display = 'block';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 10);
+                    } else {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+        });
+
+        // Animation au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observer pour les cartes d'avis
+        avisCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
+            observer.observe(card);
+        });
+
+        // Observer pour les stats
+        const statBoxes = document.querySelectorAll('.stat-box');
+        statBoxes.forEach((box, index) => {
+            box.style.opacity = '0';
+            box.style.transform = 'scale(0.8)';
+            box.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            observer.observe(box);
+        });
+
+        // Observer pour les vidéos
+        const videoCards = document.querySelectorAll('.video-card');
+        videoCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            observer.observe(card);
+        });
+
+        // Animation des nombres dans les stats
+        const animateNumber = (element, target) => {
+            const duration = 2000;
+            const start = 0;
+            const increment = target / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    if (target % 1 === 0) {
+                        element.textContent = Math.floor(current);
+                    } else {
+                        element.textContent = current.toFixed(1);
+                    }
+                }
+            }, 16);
+        };
+
+        // Observer pour animer les nombres
+        const statsObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const statNumber = entry.target.querySelector('.stat-number');
+                    const text = statNumber.textContent;
+                    
+                    if (text.includes('%')) {
+                        const num = parseInt(text);
+                        statNumber.textContent = '0%';
+                        setTimeout(() => {
+                            animateNumber(statNumber, num);
+                            setTimeout(() => {
+                                statNumber.textContent = num + '%';
+                            }, 2000);
+                        }, 300);
+                    } else if (text.includes('/')) {
+                        const num = parseFloat(text);
+                        statNumber.textContent = '0.0/5';
+                        setTimeout(() => {
+                            animateNumber(statNumber, num);
+                            setTimeout(() => {
+                                statNumber.textContent = num + '/5';
+                            }, 2000);
+                        }, 300);
+                    } else if (text.includes('+')) {
+                        const num = parseInt(text);
+                        statNumber.textContent = '0+';
+                        setTimeout(() => {
+                            animateNumber(statNumber, num);
+                            setTimeout(() => {
+                                statNumber.textContent = num + '+';
+                            }, 2000);
+                        }, 300);
+                    }
+                    
+                    statsObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        statBoxes.forEach(box => statsObserver.observe(box));
+    </script>
+</body>
+</html>

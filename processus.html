@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notre Processus - Au Format</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bois-clair: #D4A574;
+            --bois-fonce: #8B6F47;
+            --vert-foret: #2C5F2D;
+            --beige: #F5F1E8;
+            --noir: #2B2B2B;
+            --blanc: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--noir);
+            background: var(--blanc);
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--noir);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--vert-foret);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--vert-foret);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .page-hero {
+            margin-top: 80px;
+            height: 50vh;
+            background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><circle fill="%23D4A574" cx="200" cy="150" r="80" opacity="0.3"/><circle fill="%23C19A6B" cx="500" cy="200" r="100" opacity="0.3"/><circle fill="%23D4A574" cx="800" cy="180" r="90" opacity="0.3"/><circle fill="%23C19A6B" cx="1000" cy="220" r="70" opacity="0.3"/><path fill="%23A0826A" d="M0 400 Q 300 350 600 400 T 1200 400 V 600 H 0 Z"/></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--blanc);
+        }
+
+        .page-hero h1 {
+            font-size: 3.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .page-hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--beige);
+        }
+
+        /* Introduction */
+        .intro-section {
+            padding: 5rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .intro-section h2 {
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1.5rem;
+        }
+
+        .intro-section p {
+            font-size: 1.2rem;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        /* Timeline Section */
+        .timeline-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .timeline-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 5rem;
+        }
+
+        /* Timeline vertical line */
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--bois-clair);
+            transform: translateX(-50%);
+        }
+
+        .timeline-step {
+            position: relative;
+            margin-bottom: 4rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-step:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .step-number-container {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--vert-foret);
+            color: var(--blanc);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(44, 95, 45, 0.3);
+            border: 5px solid var(--blanc);
+        }
+
+        .step-content {
+            width: 45%;
+            background: var(--blanc);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .step-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .timeline-step:nth-child(even) .step-content {
+            margin-right: auto;
+        }
+
+        .timeline-step:nth-child(odd) .step-content {
+            margin-left: auto;
+        }
+
+        .step-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            color: var(--vert-foret);
+            margin-bottom: 1rem;
+        }
+
+        .step-duration {
+            display: inline-block;
+            background: var(--beige);
+            color: var(--bois-fonce);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .step-description {
+            font-size: 1.05rem;
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-details {
+            list-style: none;
+        }
+
+        .step-details li {
+            padding: 0.5rem 0;
+            padding-left: 1.8rem;
+            position: relative;
+            color: var(--noir);
+        }
+
+        .step-details li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--vert-foret);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Engagement Section */
+        .engagement-section {
+            padding: 5rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .engagement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            margin-top: 3rem;
+        }
+
+        .engagement-card {
+            text-align: center;
+            padding: 2.5rem;
+            background: var(--beige);
+            border-radius: 15px;
+            transition: all 0.3s;
+        }
+
+        .engagement-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .engagement-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .engagement-card h3 {
+            font-size: 1.5rem;
+            color: var(--vert-foret);
+            margin-bottom: 1rem;
+        }
+
+        .engagement-card p {
+            color: #555;
+            line-height: 1.7;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: var(--beige);
+            padding: 5rem 2rem;
+        }
+
+        .faq-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--blanc);
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 1.5rem 2rem;
+            background: var(--blanc);
+            border: none;
+            text-align: left;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--bois-fonce);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .faq-question:hover {
+            background: var(--beige);
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 2rem;
+            color: var(--vert-foret);
+            transition: transform 0.3s;
+        }
+
+        .faq-question.active::after {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-answer-content {
+            padding: 0 2rem 1.5rem 2rem;
+            color: #555;
+            line-height: 1.8;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            color: var(--blanc);
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: var(--blanc);
+            color: var(--vert-foret);
+        }
+
+        .btn:hover {
+            background: var(--beige);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .timeline-line {
+                left: 30px;
+            }
+
+            .timeline-step {
+                flex-direction: column !important;
+                padding-left: 80px;
+            }
+
+            .step-number-container {
+                left: 30px;
+                transform: translateX(-50%);
+            }
+
+            .step-content {
+                width: 100% !important;
+                margin: 2rem 0 0 0 !important;
+            }
+
+            .page-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .step-number {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .timeline-step {
+                padding-left: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">AU FORMAT</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="savoir-faire.html">Savoir-faire</a></li>
+                <li><a href="realisations.html">Réalisations</a></li>
+                <li><a href="processus.html" class="active">Processus</a></li>
+                <li><a href="avis.html">Avis</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div>
+            <h1>Notre Processus</h1>
+            <p>Un accompagnement personnalisé de la conception à la réalisation</p>
+        </div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="intro-section">
+        <h2>De Votre Idée à Sa Concrétisation</h2>
+        <p>
+            Chez Au Format, chaque projet est unique et mérite une attention particulière. 
+            Notre processus en 6 étapes garantit un suivi rigoureux, une qualité irréprochable 
+            et le respect de vos attentes. De la première rencontre à la livraison finale, 
+            nous vous accompagnons à chaque instant pour transformer vos envies en réalité.
+        </p>
+    </section>
+
+    <!-- Timeline -->
+    <section class="timeline-section">
+        <div class="timeline-container">
+            <h2 class="section-title">Les 6 Étapes de Votre Projet</h2>
+            <p class="section-subtitle">Un accompagnement complet et transparent</p>
+
+            <div class="timeline-line"></div>
+
+            <!-- Étape 1 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">1</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">🤝</div>
+                    <h3 class="step-title">Premier Contact & Écoute</h3>
+                    <span class="step-duration">⏱️ 1-2 jours</span>
+                    <p class="step-description">
+                        Tout commence par une discussion pour comprendre vos besoins, vos envies et vos contraintes. 
+                        Nous prenons le temps d'écouter votre vision et d'analyser les spécificités de votre projet.
+                    </p>
+                    <ul class="step-details">
+                        <li>Échange téléphonique ou rendez-vous</li>
+                        <li>Analyse de vos besoins et contraintes</li>
+                        <li>Visite sur site si nécessaire</li>
+                        <li>Prise de mesures précises</li>
+                        <li>Discussion du budget indicatif</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Étape 2 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">2</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">📐</div>
+                    <h3 class="step-title">Conception & Plans</h3>
+                    <span class="step-duration">⏱️ 5-10 jours</span>
+                    <p class="step-description">
+                        Notre bureau d'études crée des plans détaillés et des visualisations 3D pour vous projeter 
+                        dans votre futur espace. Chaque détail est pensé pour optimiser fonctionnalité et esthétique.
+                    </p>
+                    <ul class="step-details">
+                        <li>Création de plans techniques détaillés</li>
+                        <li>Modélisation 3D réaliste</li>
+                        <li>Sélection des essences de bois</li>
+                        <li>Choix des finitions et quincailleries</li>
+                        <li>Présentation du projet complet</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Étape 3 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">3</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">📋</div>
+                    <h3 class="step-title">Devis Détaillé</h3>
+                    <span class="step-duration">⏱️ 2-3 jours</span>
+                    <p class="step-description">
+                        Nous établissons un devis transparent et détaillé reprenant chaque élément du projet. 
+                        Vous savez exactement ce que vous payez, sans surprise.
+                    </p>
+                    <ul class="step-details">
+                        <li>Devis détaillé poste par poste</li>
+                        <li>Description complète des matériaux</li>
+                        <li>Planning prévisionnel</li>
+                        <li>Conditions de paiement échelonné</li>
+                        <li>Garanties et assurances</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Étape 4 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">4</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">🔨</div>
+                    <h3 class="step-title">Fabrication en Atelier</h3>
+                    <span class="step-duration">⏱️ 2-6 semaines</span>
+                    <p class="step-description">
+                        Une fois le devis validé, nos artisans menuisiers fabriquent votre projet dans notre atelier. 
+                        Savoir-faire traditionnel et équipements modernes pour une qualité optimale.
+                    </p>
+                    <ul class="step-details">
+                        <li>Sélection et préparation des bois</li>
+                        <li>Découpe et usinage de précision</li>
+                        <li>Assemblage selon techniques traditionnelles</li>
+                        <li>Application des finitions</li>
+                        <li>Contrôle qualité rigoureux</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Étape 5 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">5</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">🚚</div>
+                    <h3 class="step-title">Installation sur Site</h3>
+                    <span class="step-duration">⏱️ 1-5 jours</span>
+                    <p class="step-description">
+                        Notre équipe installe votre projet avec le plus grand soin. Chaque élément est posé, 
+                        réglé et ajusté pour un résultat parfait. Nous protégeons votre intérieur pendant les travaux.
+                    </p>
+                    <ul class="step-details">
+                        <li>Protection de votre intérieur</li>
+                        <li>Pose et assemblage sur site</li>
+                        <li>Réglages et ajustements minutieux</li>
+                        <li>Finitions et retouches si nécessaire</li>
+                        <li>Nettoyage complet du chantier</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Étape 6 -->
+            <div class="timeline-step">
+                <div class="step-number-container">
+                    <div class="step-number">6</div>
+                </div>
+                <div class="step-content">
+                    <div class="step-icon">✨</div>
+                    <h3 class="step-title">Livraison & Suivi</h3>
+                    <span class="step-duration">⏱️ Immédiat + SAV</span>
+                    <p class="step-description">
+                        Nous vous présentons votre réalisation terminée et vous expliquons les conseils d'entretien. 
+                        Notre service après-vente reste à votre disposition pour toute question.
+                    </p>
+                    <ul class="step-details">
+                        <li>Visite de contrôle finale ensemble</li>
+                        <li>Explications sur l'entretien</li>
+                        <li>Remise des documents et garanties</li>
+                        <li>Photos professionnelles du projet</li>
+                        <li>SAV disponible pendant 2 ans</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Engagements -->
+    <section class="engagement-section">
+        <h2 class="section-title">Nos Engagements</h2>
+        <p class="section-subtitle">Ce qui fait la différence Au Format</p>
+
+        <div class="engagement-grid">
+            <div class="engagement-card">
+                <div class="engagement-icon">⏰</div>
+                <h3>Respect des Délais</h3>
+                <p>Nous nous engageons à respecter les délais annoncés. Un planning précis vous est communiqué dès le départ.</p>
+            </div>
+
+            <div class="engagement-card">
+                <div class="engagement-icon">💎</div>
+                <h3>Qualité Premium</h3>
+                <p>Sélection rigoureuse des matériaux et contrôle qualité à chaque étape pour une finition impeccable.</p>
+            </div>
+
+            <div class="engagement-card">
+                <div class="engagement-icon">💰</div>
+                <h3>Prix Transparent</h3>
+                <p>Devis détaillé sans frais cachés. Le prix annoncé est le prix final, sauf modification demandée.</p>
+            </div>
+
+            <div class="engagement-card">
+                <div class="engagement-icon">🛡️</div>
+                <h3>Garantie 10 ans</h3>
+                <p>Tous nos ouvrages sont garantis 10 ans. Assurance décennale et garanties constructeur incluses.</p>
+            </div>
+
+            <div class="engagement-card">
+                <div class="engagement-icon">♻️</div>
+                <h3>Éco-Responsable</h3>
+                <p>Bois issus de forêts gérées durablement et valorisation des chutes pour réduire notre empreinte.</p>
+            </div>
+
+            <div class="engagement-card">
+                <div class="engagement-icon">📞</div>
+                <h3>À Votre Écoute</h3>
+                <p>Un interlocuteur unique tout au long du projet. Disponible et réactif pour répondre à vos questions.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq-section">
+        <div class="faq-container">
+            <h2 class="section-title">Questions Fréquentes</h2>
+            <p class="section-subtitle">Tout ce que vous devez savoir sur notre processus</p>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Quel est le délai moyen pour réaliser un projet ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Le délai varie selon la complexité du projet. En moyenne, comptez 4 à 8 semaines entre la signature du devis et la livraison finale. Pour une cuisine complète, prévoyez 6 à 8 semaines. Un dressing ou une bibliothèque prend généralement 3 à 5 semaines. Nous vous communiquons un planning précis dès la validation du devis.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Le devis est-il gratuit et sans engagement ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Oui, le premier devis est totalement gratuit et sans engagement. Nous prenons le temps d'étudier votre projet, de créer des plans et des visualisations 3D avant de vous proposer un chiffrage détaillé. Vous êtes libre d'accepter ou de refuser notre proposition.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Puis-je voir l'avancement de mon projet ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Absolument ! Nous vous envoyons régulièrement des photos de l'avancement en atelier. Vous pouvez également visiter notre atelier sur rendez-vous pour voir votre projet en cours de fabrication. La transparence est essentielle pour nous.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Quelles sont les modalités de paiement ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Le paiement s'effectue en plusieurs fois : 30% à la signature du devis, 40% au démarrage de la fabrication, et 30% à la livraison après réception des travaux. Nous acceptons les virements bancaires, chèques et espèces (dans la limite légale).
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Intervenez-vous dans toute la région ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Nous intervenons principalement sur Lyon et son agglomération (Grand Lyon), ainsi que dans un rayon de 50 km autour de notre atelier. Pour des projets spécifiques ou de plus grande envergure, nous pouvons étudier des interventions plus éloignées. N'hésitez pas à nous consulter.
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <button class="faq-question">
+                    Que se passe-t-il en cas de problème après l'installation ?
+                </button>
+                <div class="faq-answer">
+                    <div class="faq-answer-content">
+                        Nous offrons un service après-vente de 2 ans pour tout ajustement ou intervention mineure. Tous nos ouvrages sont couverts par une garantie décennale. En cas de problème, contactez-nous et nous interviendrons rapidement pour trouver une solution.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Prêt à Démarrer Votre Projet ?</h2>
+        <p>Contactez-nous pour un premier échange gratuit et sans engagement</p>
+        <a href="contact.html" class="btn">Demander un devis</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AU FORMAT</h3>
+                <p>Menuiserie & Agencement Bois</p>
+                <p style="font-style: italic; color: var(--bois-clair);">Franchissons ensemble, le pas vers le bois</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📍 [Votre adresse]</p>
+                <p>📞 [Votre téléphone]</p>
+                <p>✉️ [Votre email]</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Horaires</h3>
+                <p>Lundi - Vendredi : 8h - 18h</p>
+                <p>Samedi : 9h - 12h</p>
+                <p>Dimanche : Fermé</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Liens Rapides</h3>
+                <a href="savoir-faire.html">Savoir-faire</a>
+                <a href="realisations.html">Réalisations</a>
+                <a href="processus.html">Notre processus</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Au Format - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        // Gestion FAQ Accordéon
+        const faqQuestions = document.querySelectorAll('.faq-question');
+
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', () => {
+                const faqItem = question.parentElement;
+                const isActive = faqItem.classList.contains('active');
+
+                // Fermer tous les autres items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                    item.querySelector('.faq-question').classList.remove('active');
+                });
+
+                // Toggle l'item cliqué
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                    question.classList.add('active');
+                }
+            });
+        });
+
+        // Animation au scroll pour les étapes
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observer pour les étapes de la timeline
+        const timelineSteps = document.querySelectorAll('.timeline-step');
+        timelineSteps.forEach((step, index) => {
+            step.style.opacity = '0';
+            step.style.transform = 'translateY(30px)';
+            step.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+            observer.observe(step);
+        });
+
+        // Observer pour les cartes d'engagement
+        const engagementCards = document.querySelectorAll('.engagement-card');
+        engagementCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            observer.observe(card);
+        });
+
+        // Animation de la ligne de timeline
+        window.addEventListener('scroll', () => {
+            const timelineLine = document.querySelector('.timeline-line');
+            if (timelineLine) {
+                const timelineSection = document.querySelector('.timeline-section');
+                const sectionTop = timelineSection.offsetTop;
+                const sectionHeight = timelineSection.offsetHeight;
+                const scrolled = window.pageYOffset;
+                const windowHeight = window.innerHeight;
+
+                if (scrolled > sectionTop - windowHeight && scrolled < sectionTop + sectionHeight) {
+                    const percentage = ((scrolled - (sectionTop - windowHeight)) / (sectionHeight + windowHeight)) * 100;
+                    const clampedPercentage = Math.min(Math.max(percentage, 0), 100);
+                    timelineLine.style.background = `linear-gradient(to bottom, var(--vert-foret) ${clampedPercentage}%, var(--bois-clair) ${clampedPercentage}%)`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

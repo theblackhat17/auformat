@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nos Réalisations - Au Format</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bois-clair: #D4A574;
+            --bois-fonce: #8B6F47;
+            --vert-foret: #2C5F2D;
+            --beige: #F5F1E8;
+            --noir: #2B2B2B;
+            --blanc: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--noir);
+            background: var(--blanc);
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--bois-fonce);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--noir);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--vert-foret);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--vert-foret);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        /* Hero Section */
+        .page-hero {
+            margin-top: 80px;
+            height: 50vh;
+            background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><rect fill="%23C19A6B" x="100" y="100" width="300" height="400" opacity="0.4"/><rect fill="%23D4A574" x="450" y="150" width="250" height="350" opacity="0.4"/><rect fill="%23A68A64" x="750" y="120" width="350" height="380" opacity="0.4"/></svg>');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--blanc);
+        }
+
+        .page-hero h1 {
+            font-size: 3.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 1rem;
+        }
+
+        .page-hero p {
+            font-size: 1.3rem;
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--beige);
+        }
+
+        /* Filtres */
+        .filters-section {
+            padding: 3rem 2rem 2rem;
+            background: var(--beige);
+            position: sticky;
+            top: 80px;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .filters-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--bois-fonce);
+            font-size: 1.1rem;
+        }
+
+        .filter-btn {
+            padding: 0.7rem 1.5rem;
+            background: var(--blanc);
+            border: 2px solid var(--bois-clair);
+            color: var(--noir);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .filter-btn:hover {
+            background: var(--bois-clair);
+            color: var(--blanc);
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: var(--vert-foret);
+            border-color: var(--vert-foret);
+            color: var(--blanc);
+        }
+
+        /* Portfolio Grid */
+        .portfolio-section {
+            padding: 4rem 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .portfolio-item {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: all 0.4s;
+            height: 400px;
+        }
+
+        .portfolio-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+
+        .portfolio-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s;
+        }
+
+        .portfolio-item:hover .portfolio-image {
+            transform: scale(1.1);
+        }
+
+        .portfolio-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 2rem;
+            color: var(--blanc);
+        }
+
+        .portfolio-category {
+            display: inline-block;
+            background: var(--vert-foret);
+            color: var(--blanc);
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            width: fit-content;
+        }
+
+        .portfolio-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .portfolio-description {
+            font-size: 0.95rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--blanc);
+            border-radius: 15px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--vert-foret);
+            color: var(--blanc);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: #234a24;
+            transform: rotate(90deg);
+        }
+
+        .modal-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-body {
+            padding: 2.5rem;
+        }
+
+        .modal-category {
+            display: inline-block;
+            background: var(--vert-foret);
+            color: var(--blanc);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 2.5rem;
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+        }
+
+        .modal-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--beige);
+            border-radius: 10px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.85rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--vert-foret);
+        }
+
+        .modal-description {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 2rem;
+        }
+
+        .modal-features {
+            margin-top: 2rem;
+        }
+
+        .modal-features h3 {
+            color: var(--bois-fonce);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .features-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .features-list li {
+            padding: 0.8rem;
+            padding-left: 2.5rem;
+            position: relative;
+            background: var(--beige);
+            border-radius: 8px;
+        }
+
+        .features-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 1rem;
+            color: var(--vert-foret);
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+            color: var(--blanc);
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .cta-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: var(--blanc);
+            color: var(--vert-foret);
+        }
+
+        .btn:hover {
+            background: var(--beige);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255,255,255,0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--noir);
+            color: var(--blanc);
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            color: var(--bois-clair);
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-section a:hover {
+            color: var(--bois-clair);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #444;
+            color: #888;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+                font-size: 0.9rem;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-container {
+                justify-content: flex-start;
+            }
+
+            .modal-content {
+                margin: 1rem;
+            }
+
+            .modal-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">AU FORMAT</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Accueil</a></li>
+                <li><a href="savoir-faire.html">Savoir-faire</a></li>
+                <li><a href="realisations.html" class="active">Réalisations</a></li>
+                <li><a href="processus.html">Processus</a></li>
+                <li><a href="avis.html">Avis</a></li>
+                <li><a href="contact.html">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="page-hero">
+        <div>
+            <h1>Nos Réalisations</h1>
+            <p>Découvrez nos projets sur-mesure en menuiserie et agencement</p>
+        </div>
+    </section>
+
+    <!-- Filtres -->
+    <section class="filters-section">
+        <div class="filters-container">
+            <span class="filter-label">Catégories :</span>
+            <button class="filter-btn active" data-filter="tous">Tous les projets</button>
+            <button class="filter-btn" data-filter="cuisines">Cuisines</button>
+            <button class="filter-btn" data-filter="dressings">Dressings</button>
+            <button class="filter-btn" data-filter="bibliotheques">Bibliothèques</button>
+            <button class="filter-btn" data-filter="commerces">Agencement Commercial</button>
+            <button class="filter-btn" data-filter="escaliers">Escaliers</button>
+            <button class="filter-btn" data-filter="exterieurs">Extérieurs</button>
+        </div>
+    </section>
+
+    <!-- Portfolio -->
+    <section class="portfolio-section">
+        <div class="portfolio-grid" id="portfolioGrid">
+            <!-- Cuisine 1 -->
+            <div class="portfolio-item" data-category="cuisines" data-id="1">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23C19A6B' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='50' y='80' width='300' height='240'/%3E%3Crect fill='%23D4A574' x='80' y='110' width='120' height='180'/%3E%3Crect fill='%23D4A574' x='230' y='110' width='90' height='180'/%3E%3Ccircle fill='%23A68A64' cx='140' cy='200' r='15'/%3E%3Crect fill='%23666' x='100' y='140' width='60' height='8' rx='4'/%3E%3C/svg%3E" alt="Cuisine moderne" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Cuisine</span>
+                    <h3 class="portfolio-title">Cuisine Contemporaine Lyon 3</h3>
+                    <p class="portfolio-description">Design épuré en chêne massif avec îlot central</p>
+                </div>
+            </div>
+
+            <!-- Dressing 1 -->
+            <div class="portfolio-item" data-category="dressings" data-id="2">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23B8956A' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='60' y='60' width='280' height='280'/%3E%3Crect fill='%23D4A574' x='90' y='90' width='80' height='220'/%3E%3Crect fill='%23D4A574' x='230' y='90' width='80' height='220'/%3E%3Ccircle fill='%23C19A6B' cx='130' cy='200' r='20'/%3E%3Ccircle fill='%23C19A6B' cx='270' cy='200' r='20'/%3E%3C/svg%3E" alt="Dressing sur-mesure" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Dressing</span>
+                    <h3 class="portfolio-title">Dressing Suite Parentale</h3>
+                    <p class="portfolio-description">Optimisation d'espace avec finitions haut de gamme</p>
+                </div>
+            </div>
+
+            <!-- Bibliothèque 1 -->
+            <div class="portfolio-item" data-category="bibliotheques" data-id="3">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23A68A64' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='80' y='60' width='240' height='280'/%3E%3Crect fill='%23D4A574' x='100' y='90' width='60' height='100'/%3E%3Crect fill='%23D4A574' x='170' y='90' width='60' height='100'/%3E%3Crect fill='%23D4A574' x='240' y='90' width='60' height='100'/%3E%3Crect fill='%23D4A574' x='100' y='220' width='60' height='90'/%3E%3Crect fill='%23D4A574' x='170' y='220' width='60' height='90'/%3E%3Crect fill='%23D4A574' x='240' y='220' width='60' height='90'/%3E%3C/svg%3E" alt="Bibliothèque murale" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Bibliothèque</span>
+                    <h3 class="portfolio-title">Bibliothèque Murale Noyer</h3>
+                    <p class="portfolio-description">Sur-mesure avec éclairage LED intégré</p>
+                </div>
+            </div>
+
+            <!-- Commerce 1 -->
+            <div class="portfolio-item" data-category="commerces" data-id="4">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23C19A6B' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='50' y='100' width='300' height='200'/%3E%3Crect fill='%23D4A574' x='80' y='130' width='100' height='140'/%3E%3Crect fill='%23D4A574' x='220' y='130' width='100' height='140'/%3E%3Crect fill='%23A68A64' x='100' y='160' width='60' height='80'/%3E%3Crect fill='%23A68A64' x='240' y='160' width='60' height='80'/%3E%3C/svg%3E" alt="Boutique" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Commerce</span>
+                    <h3 class="portfolio-title">Agencement Boutique Presqu'île</h3>
+                    <p class="portfolio-description">Comptoir et présentoirs en chêne massif</p>
+                </div>
+            </div>
+
+            <!-- Escalier 1 -->
+            <div class="portfolio-item" data-category="escaliers" data-id="5">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23B8956A' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='80' y='280' width='240' height='40'/%3E%3Crect fill='%238B6F47' x='100' y='220' width='220' height='40'/%3E%3Crect fill='%238B6F47' x='120' y='160' width='200' height='40'/%3E%3Crect fill='%238B6F47' x='140' y='100' width='180' height='40'/%3E%3Crect fill='%23D4A574' x='350' y='80' width='20' height='260'/%3E%3C/svg%3E" alt="Escalier" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Escalier</span>
+                    <h3 class="portfolio-title">Escalier Design Contemporain</h3>
+                    <p class="portfolio-description">Structure bois et métal avec garde-corps vitré</p>
+                </div>
+            </div>
+
+            <!-- Cuisine 2 -->
+            <div class="portfolio-item" data-category="cuisines" data-id="6">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23A68A64' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='40' y='100' width='320' height='200'/%3E%3Crect fill='%23D4A574' x='70' y='130' width='100' height='140'/%3E%3Crect fill='%23D4A574' x='230' y='130' width='100' height='140'/%3E%3Crect fill='%23C19A6B' x='180' y='250' width='120' height='40'/%3E%3C/svg%3E" alt="Cuisine bois" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Cuisine</span>
+                    <h3 class="portfolio-title">Cuisine Rustique Moderne</h3>
+                    <p class="portfolio-description">Mariage du bois massif et d'éléments contemporains</p>
+                </div>
+            </div>
+
+            <!-- Extérieur 1 -->
+            <div class="portfolio-item" data-category="exterieurs" data-id="7">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23C19A6B' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='100' y='80' width='200' height='240'/%3E%3Crect fill='%23D4A574' x='140' y='120' width='50' height='150'/%3E%3Crect fill='%23D4A574' x='210' y='120' width='50' height='150'/%3E%3Ccircle fill='%23A68A64' cx='165' cy='195' r='12'/%3E%3Crect fill='%23B8956A' x='140' y='290' width='120' height='30'/%3E%3C/svg%3E" alt="Porte extérieure" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Extérieur</span>
+                    <h3 class="portfolio-title">Porte d'Entrée Bois Massif</h3>
+                    <p class="portfolio-description">Chêne traité avec vitrage sécurisé</p>
+                </div>
+            </div>
+
+            <!-- Dressing 2 -->
+            <div class="portfolio-item" data-category="dressings" data-id="8">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23C19A6B' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='70' y='70' width='260' height='260'/%3E%3Crect fill='%23D4A574' x='90' y='100' width='70' height='200'/%3E%3Crect fill='%23D4A574' x='170' y='100' width='70' height='200'/%3E%3Crect fill='%23D4A574' x='250' y='100' width='70' height='200'/%3E%3C/svg%3E" alt="Dressing angle" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Dressing</span>
+                    <h3 class="portfolio-title">Dressing d'Angle Optimisé</h3>
+                    <p class="portfolio-description">Solution gain de place avec miroirs intégrés</p>
+                </div>
+            </div>
+
+            <!-- Bibliothèque 2 -->
+            <div class="portfolio-item" data-category="bibliotheques" data-id="9">
+                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'%3E%3Crect fill='%23B8956A' width='400' height='400'/%3E%3Crect fill='%238B6F47' x='60' y='80' width='280' height='240'/%3E%3Crect fill='%23D4A574' x='80' y='110' width='80' height='180'/%3E%3Crect fill='%23D4A574' x='170' y='110' width='80' height='180'/%3E%3Crect fill='%23D4A574' x='260' y='110' width='60' height='180'/%3E%3C/svg%3E" alt="Meuble TV" class="portfolio-image">
+                <div class="portfolio-overlay">
+                    <span class="portfolio-category">Bibliothèque</span>
+                    <h3 class="portfolio-title">Meuble TV & Bibliothèque</h3>
+                    <p class="portfolio-description">Ensemble mural avec rangements cachés</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose">×</button>
+            <img class="modal-image" id="modalImage" src="" alt="">
+            <div class="modal-body">
+                <span class="modal-category" id="modalCategory"></span>
+                <h2 class="modal-title" id="modalTitle"></h2>
+                
+                <div class="modal-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Durée</div>
+                        <div class="detail-value" id="modalDuration"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Surface</div>
+                        <div class="detail-value" id="modalSurface"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Matériau</div>
+                        <div class="detail-value" id="modalMaterial"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Localisation</div>
+                        <div class="detail-value" id="modalLocation"></div>
+                    </div>
+                </div>
+
+                <p class="modal-description" id="modalDescription"></p>
+
+                <div class="modal-features">
+                    <h3>Caractéristiques du projet</h3>
+                    <ul class="features-list" id="modalFeatures"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Un Projet en Tête ?</h2>
+        <p>Contactez-nous pour transformer vos idées en réalité</p>
+        <a href="contact.html" class="btn">Demander un devis gratuit</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>AU FORMAT</h3>
+                <p>Menuiserie & Agencement Bois</p>
+                <p style="font-style: italic; color: var(--bois-clair);">Franchissons ensemble, le pas vers le bois</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Contact</h3>
+                <p>📍 [Votre adresse]</p>
+                <p>📞 [Votre téléphone]</p>
+                <p>✉️ [Votre email]</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Horaires</h3>
+                <p>Lundi - Vendredi : 8h - 18h</p>
+                <p>Samedi : 9h - 12h</p>
+                <p>Dimanche : Fermé</p>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Liens Rapides</h3>
+                <a href="savoir-faire.html">Savoir-faire</a>
+                <a href="realisations.html">Réalisations</a>
+                <a href="processus.html">Notre processus</a>
+                <a href="contact.html">Contact</a>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2025 Au Format - Tous droits réservés</p>
+        </div>
+    </footer>
+
+    <script>
+        // Données des projets
+        const projectsData = {
+            1: {
+                category: 'Cuisine',
+                title: 'Cuisine Contemporaine Lyon 3',
+                duration: '3 semaines',
+                surface: '25 m²',
+                material: 'Chêne massif',
+                location: 'Lyon 3ème',
+                description: 'Réalisation d\'une cuisine haut de gamme avec îlot central sur-mesure. Le projet incluait la conception complète de l\'espace, l\'intégration d\'électroménagers encastrés et la création de rangements optimisés. Le chêne massif apporte chaleur et authenticité à cet espace de vie moderne.',
+                features: [
+                    'Îlot central avec espace repas',
+                    'Plan de travail en bois massif traité',
+                    'Rangements avec tiroirs à fermeture douce',
+                    'Éclairage LED sous meubles hauts',
+                    'Intégration électroménagers haut de gamme',
+                    'Finitions cirées et huilées'
+                ]
+            },
+            2: {
+                category: 'Dressing',
+                title: 'Dressing Suite Parentale',
+                duration: '2 semaines',
+                surface: '12 m²',
+                material: 'Noyer américain',
+                location: 'Villeurbanne',
+                description: 'Aménagement complet d\'un dressing dans une suite parentale. Optimisation maximale de l\'espace avec des solutions de rangement intelligentes : penderies modulables, tiroirs compartimentés et étagères ajustables. Le noyer américain confère élégance et raffinement.',
+                features: [
+                    'Penderies avec éclairage automatique',
+                    'Tiroirs avec séparateurs modulables',
+                    'Étagères réglables en hauteur',
+                    'Miroir mural pleine hauteur',
+                    'Rangement chaussures coulissant',
+                    'Finition vernis mat'
+                ]
+            },
+            3: {
+                category: 'Bibliothèque',
+                title: 'Bibliothèque Murale Noyer',
+                duration: '10 jours',
+                surface: '8 m²',
+                material: 'Noyer européen',
+                location: 'Lyon 6ème',
+                description: 'Création d\'une bibliothèque sur-mesure du sol au plafond. Design épuré avec intégration d\'un système d\'éclairage LED pour mettre en valeur les ouvrages et objets de décoration. Structure renforcée pour supporter jusqu\'à 200 kg par étagère.',
+                features: [
+                    'Structure murale sur-mesure',
+                    'Étagères ajustables tous les 5 cm',
+                    'Éclairage LED intégré',
+                    'Niches dédiées objets déco',
+                    'Portes vitrées section basse',
+                    'Traitement anti-UV du bois'
+                ]
+            },
+            4: {
+                category: 'Commerce',
+                title: 'Agencement Boutique Presqu\'île',
+                duration: '4 semaines',
+                surface: '45 m²',
+                material: 'Chêne & acier',
+                location: 'Lyon 2ème',
+                description: 'Agencement complet d\'une boutique de prêt-à-porter haut de gamme. Création d\'un comptoir d\'accueil, de présentoirs muraux et de podiums d\'exposition. Le mélange chêne massif et acier noir crée une ambiance moderne et chaleureuse.',
+                features: [
+                    'Comptoir d\'accueil avec rangements',
+                    'Présentoirs muraux modulables',
+                    'Podiums d\'exposition',
+                    'Cabines d\'essayage sur-mesure',
+                    'Miroirs avec éclairage professionnel',
+                    'Finition vernis haute résistance'
+                ]
+            },
+            5: {
+                category: 'Escalier',
+                title: 'Escalier Design Contemporain',
+                duration: '3 semaines',
+                surface: '15 m²',
+                material: 'Chêne & métal',
+                location: 'Caluire',
+                description: 'Conception et réalisation d\'un escalier design alliant bois et métal. Structure autoportante avec marches en chêne massif de 40mm d\'épaisseur et garde-corps en verre sécurit. Un élément architectural qui devient la pièce maîtresse de l\'habitation.',
+                features: [
+                    'Structure autoportante',
+                    'Marches chêne massif 40mm',
+                    'Garde-corps verre sécurit',
+                    'Limon acier peint époxy',
+                    'Éclairage LED sous marches',
+                    'Traitement antidérapant'
+                ]
+            },
+            6: {
+                category: 'Cuisine',
+                title: 'Cuisine Rustique Moderne',
+                duration: '3 semaines',
+                surface: '20 m²',
+                material: 'Chêne massif',
+                location: 'Tassin',
+                description: 'Cuisine alliant charme rustique et fonctionnalités modernes. Façades en chêne massif avec patine naturelle, plan de travail en bois brut et îlot central intégrant plaques de cuisson et espace bar. Équilibre parfait entre authenticité et modernité.',
+                features: [
+                    'Façades chêne massif patiné',
+                    'Plan de travail bois massif',
+                    'Îlot central multifonction',
+                    'Hotte décorative en bois',
+                    'Étagères ouvertes murales',
+                    'Quincaillerie style campagne'
+                ]
+            },
+            7: {
+                category: 'Extérieur',
+                title: 'Porte d\'Entrée Bois Massif',
+                duration: '1 semaine',
+                surface: '3 m²',
+                material: 'Chêne massif',
+                location: 'Écully',
+                description: 'Fabrication d\'une porte d\'entrée monumentale en chêne massif. Double vitrage sécurisé, serrure multipoints et traitement extérieur haute protection contre les intempéries. Design contemporain avec imposte vitrée et poignée en acier inox.',
+                features: [
+                    'Chêne massif 68mm',
+                    'Double vitrage sécurisé',
+                    'Serrure multipoints A2P',
+                    'Traitement lasure extérieur',
+                    'Imposte vitrée',
+                    'Poignée inox design'
+                ]
+            },
+            8: {
+                category: 'Dressing',
+                title: 'Dressing d\'Angle Optimisé',
+                duration: '2 semaines',
+                surface: '9 m²',
+                material: 'Hêtre massif',
+                location: 'Lyon 7ème',
+                description: 'Solution dressing d\'angle pour optimiser un espace atypique. Système de penderies rotatives, tiroirs d\'angle coulissants et miroirs sur portes. Chaque centimètre carré est exploité intelligemment pour maximiser le rangement.',
+                features: [
+                    'Système d\'angle rotatif',
+                    'Tiroirs coulissants d\'angle',
+                    'Miroirs sur portes coulissantes',
+                    'Éclairage automatique',
+                    'Penderies double hauteur',
+                    'Rangement accessoires intégré'
+                ]
+            },
+            9: {
+                category: 'Bibliothèque',
+                title: 'Meuble TV & Bibliothèque',
+                duration: '12 jours',
+                surface: '10 m²',
+                material: 'Chêne naturel',
+                location: 'Lyon 4ème',
+                description: 'Ensemble mural combinant meuble TV bas et bibliothèque haute. Intégration discrète de tous les équipements audiovisuels avec passages de câbles invisibles. Niches éclairées pour objets de décoration et système de rangement fermé.',
+                features: [
+                    'Meuble TV avec tiroirs cachés',
+                    'Passages câbles intégrés',
+                    'Bibliothèque modulaire',
+                    'Niches avec LED',
+                    'Portes coulissantes parties basses',
+                    'Finition laquée mate'
+                ]
+            }
+        };
+
+        // Gestion des filtres
+        const filterBtns = document.querySelectorAll('.filter-btn');
+        const portfolioItems = document.querySelectorAll('.portfolio-item');
+
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Retirer la classe active de tous les boutons
+                filterBtns.forEach(b => b.classList.remove('active'));
+                // Ajouter la classe active au bouton cliqué
+                btn.classList.add('active');
+
+                const filter = btn.dataset.filter;
+
+                portfolioItems.forEach(item => {
+                    if (filter === 'tous' || item.dataset.category === filter) {
+                        item.style.display = 'block';
+                        setTimeout(() => {
+                            item.style.opacity = '1';
+                            item.style.transform = 'scale(1)';
+                        }, 10);
+                    } else {
+                        item.style.opacity = '0';
+                        item.style.transform = 'scale(0.8)';
+                        setTimeout(() => {
+                            item.style.display = 'none';
+                        }, 300);
+                    }
+                });
+            });
+        });
+
+        // Gestion du modal
+        const modal = document.getElementById('modal');
+        const modalClose = document.getElementById('modalClose');
+
+        portfolioItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const projectId = item.dataset.id;
+                const project = projectsData[projectId];
+
+                if (project) {
+                    document.getElementById('modalImage').src = item.querySelector('img').src;
+                    document.getElementById('modalCategory').textContent = project.category;
+                    document.getElementById('modalTitle').textContent = project.title;
+                    document.getElementById('modalDuration').textContent = project.duration;
+                    document.getElementById('modalSurface').textContent = project.surface;
+                    document.getElementById('modalMaterial').textContent = project.material;
+                    document.getElementById('modalLocation').textContent = project.location;
+                    document.getElementById('modalDescription').textContent = project.description;
+
+                    const featuresList = document.getElementById('modalFeatures');
+                    featuresList.innerHTML = '';
+                    project.features.forEach(feature => {
+                        const li = document.createElement('li');
+                        li.textContent = feature;
+                        featuresList.appendChild(li);
+                    });
+
+                    modal.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            });
+        });
+
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Animation au scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        portfolioItems.forEach(item => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateY(20px)';
+            item.style.transition = 'opacity 0.5s, transform 0.5s';
+            observer.observe(item);
+        });
+    </script>
+</body>
+</html>
