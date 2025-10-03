@@ -1,0 +1,301 @@
+/* ========================================
+   STYLE SAVOIR-FAIRE - AU FORMAT
+   ======================================== */
+
+/* Hero Section */
+.page-hero {
+    height: 50vh;
+    background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><rect fill="%23C19A6B" x="100" y="100" width="200" height="400" opacity="0.3"/><rect fill="%23D4A574" x="350" y="150" width="150" height="350" opacity="0.3"/><rect fill="%23A68A64" x="550" y="120" width="180" height="380" opacity="0.3"/><rect fill="%23C19A6B" x="780" y="140" width="160" height="360" opacity="0.3"/><rect fill="%23D4A574" x="990" y="110" width="140" height="390" opacity="0.3"/></svg>');
+}
+
+/* Introduction */
+.intro-section {
+    padding: 5rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.intro-section h2 {
+    font-size: 2.5rem;
+    color: var(--bois-fonce);
+    margin-bottom: 1.5rem;
+}
+
+.intro-section p {
+    font-size: 1.2rem;
+    color: #555;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    line-height: 1.8;
+}
+
+/* Stats */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.stat-item {
+    padding: 2rem;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--vert-foret);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    color: var(--bois-fonce);
+    font-weight: 600;
+}
+
+/* Métiers Section */
+.metiers-section {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.metiers-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.metier-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 4rem;
+    background: var(--blanc);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.metier-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.metier-card:nth-child(even) {
+    direction: rtl;
+}
+
+.metier-card:nth-child(even) > * {
+    direction: ltr;
+}
+
+.metier-image {
+    height: 400px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.metier-content {
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.metier-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.metier-content h3 {
+    font-size: 2rem;
+    color: var(--vert-foret);
+    margin-bottom: 1rem;
+}
+
+.metier-content p {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 1.5rem;
+    line-height: 1.8;
+}
+
+.metier-features {
+    list-style: none;
+    margin-top: 1rem;
+}
+
+.metier-features li {
+    padding: 0.7rem 0;
+    padding-left: 2rem;
+    position: relative;
+    color: var(--noir);
+    font-size: 1.05rem;
+}
+
+.metier-features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--vert-foret);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Expertise Section */
+.expertise-section {
+    padding: 5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.expertise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+}
+
+.expertise-card {
+    background: var(--blanc);
+    padding: 2.5rem;
+    border-radius: 10px;
+    border: 2px solid var(--beige);
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.expertise-card:hover {
+    border-color: var(--vert-foret);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(44, 95, 45, 0.1);
+}
+
+.expertise-icon {
+    font-size: 3rem;
+    margin-bottom: 1.5rem;
+}
+
+.expertise-card h3 {
+    font-size: 1.5rem;
+    color: var(--bois-fonce);
+    margin-bottom: 1rem;
+}
+
+.expertise-card p {
+    color: #666;
+    line-height: 1.7;
+}
+
+/* Matériaux Section */
+.materiaux-section {
+    background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+    padding: 5rem 2rem;
+    color: var(--blanc);
+}
+
+.materiaux-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.materiaux-section h2 {
+    color: var(--blanc);
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.materiaux-intro {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 3rem;
+    opacity: 0.9;
+}
+
+.materiaux-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.materiau-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s;
+}
+
+.materiau-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+}
+
+.materiau-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.materiau-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: var(--bois-clair);
+}
+
+.materiau-card p {
+    line-height: 1.7;
+    opacity: 0.9;
+}
+
+/* CTA Section */
+.cta-section {
+    padding: 5rem 2rem;
+    text-align: center;
+    background: var(--beige);
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    color: var(--bois-fonce);
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.3rem;
+    color: #555;
+    margin-bottom: 2rem;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .metier-card {
+        grid-template-columns: 1fr;
+    }
+
+    .metier-card:nth-child(even) {
+        direction: ltr;
+    }
+
+    .metier-image {
+        height: 300px;
+    }
+}
+
+@media (max-width: 600px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+}

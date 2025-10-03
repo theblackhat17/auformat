@@ -1,0 +1,283 @@
+/* ========================================
+   STYLE ACCUEIL - AU FORMAT
+   ======================================== */
+
+/* Hero Section Accueil */
+.hero {
+    margin-top: 80px;
+    height: 90vh;
+    background: linear-gradient(rgba(43, 43, 43, 0.4), rgba(43, 43, 43, 0.4)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect fill="%238B6F47" width="1200" height="800"/><path fill="%23A0826A" d="M0 400 Q 300 350 600 400 T 1200 400 V 800 H 0 Z"/><circle fill="%23D4A574" cx="200" cy="200" r="80" opacity="0.3"/><circle fill="%23D4A574" cx="1000" cy="300" r="120" opacity="0.2"/></svg>');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--blanc);
+    position: relative;
+}
+
+.hero-content {
+    max-width: 800px;
+    padding: 2rem;
+    animation: fadeInUp 1s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.hero .baseline {
+    font-size: 1.5rem;
+    font-style: italic;
+    margin-bottom: 2rem;
+    color: var(--beige);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Savoir-faire */
+.savoir-faire {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.competences-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.competence-card {
+    background: var(--blanc);
+    padding: 2rem;
+    border-radius: 10px;
+    text-align: center;
+    transition: transform 0.3s, box-shadow 0.3s;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.competence-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.competence-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.competence-card h3 {
+    color: var(--vert-foret);
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.competence-card p {
+    color: #666;
+    line-height: 1.7;
+}
+
+/* Réalisations Preview */
+.realisations-preview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+.realisation-card {
+    position: relative;
+    height: 350px;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.realisation-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.7) 100%);
+    z-index: 1;
+}
+
+.realisation-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.realisation-card:hover .realisation-img {
+    transform: scale(1.1);
+}
+
+.realisation-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+    color: var(--blanc);
+    z-index: 2;
+}
+
+.realisation-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.realisation-info p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+/* Processus */
+.processus {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.step {
+    text-align: center;
+    position: relative;
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: var(--vert-foret);
+    color: var(--blanc);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin: 0 auto 1rem;
+}
+
+.step h3 {
+    color: var(--bois-fonce);
+    margin-bottom: 0.5rem;
+    font-size: 1.3rem;
+}
+
+.step p {
+    color: #666;
+    line-height: 1.7;
+}
+
+/* Avis clients */
+.avis-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 2rem;
+}
+
+.avis-card {
+    background: var(--blanc);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--vert-foret);
+}
+
+.stars {
+    color: #FFD700;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.avis-text {
+    font-style: italic;
+    margin-bottom: 1rem;
+    color: #555;
+    line-height: 1.7;
+}
+
+.avis-auteur {
+    font-weight: 600;
+    color: var(--bois-fonce);
+}
+
+/* CTA Final */
+.cta-section {
+    background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+    color: var(--blanc);
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero .baseline {
+        font-size: 1.2rem;
+    }
+
+    .cta-buttons {
+        flex-direction: column;
+    }
+}

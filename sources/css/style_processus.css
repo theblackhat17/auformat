@@ -1,0 +1,318 @@
+/* ========================================
+   STYLE PROCESSUS - AU FORMAT
+   ======================================== */
+
+/* Hero Section */
+.page-hero {
+    height: 50vh;
+    background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><circle fill="%23D4A574" cx="200" cy="150" r="80" opacity="0.3"/><circle fill="%23C19A6B" cx="500" cy="200" r="100" opacity="0.3"/><circle fill="%23D4A574" cx="800" cy="180" r="90" opacity="0.3"/><circle fill="%23C19A6B" cx="1000" cy="220" r="70" opacity="0.3"/><path fill="%23A0826A" d="M0 400 Q 300 350 600 400 T 1200 400 V 600 H 0 Z"/></svg>');
+}
+
+/* Introduction */
+.intro-section {
+    padding: 5rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.intro-section h2 {
+    font-size: 2.5rem;
+    color: var(--bois-fonce);
+    margin-bottom: 1.5rem;
+}
+
+.intro-section p {
+    font-size: 1.2rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+/* Timeline Section */
+.timeline-section {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.timeline-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+/* Timeline vertical line */
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--bois-clair);
+    transform: translateX(-50%);
+}
+
+.timeline-step {
+    position: relative;
+    margin-bottom: 4rem;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-step:nth-child(even) {
+    flex-direction: row-reverse;
+}
+
+.step-number-container {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.step-number {
+    width: 80px;
+    height: 80px;
+    background: var(--vert-foret);
+    color: var(--blanc);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    box-shadow: 0 5px 20px rgba(44, 95, 45, 0.3);
+    border: 5px solid var(--blanc);
+}
+
+.step-content {
+    width: 45%;
+    background: var(--blanc);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.step-content:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.timeline-step:nth-child(even) .step-content {
+    margin-right: auto;
+}
+
+.timeline-step:nth-child(odd) .step-content {
+    margin-left: auto;
+}
+
+.step-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.step-title {
+    font-size: 1.8rem;
+    color: var(--vert-foret);
+    margin-bottom: 1rem;
+}
+
+.step-duration {
+    display: inline-block;
+    background: var(--beige);
+    color: var(--bois-fonce);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.step-description {
+    font-size: 1.05rem;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.step-details {
+    list-style: none;
+}
+
+.step-details li {
+    padding: 0.5rem 0;
+    padding-left: 1.8rem;
+    position: relative;
+    color: var(--noir);
+}
+
+.step-details li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--vert-foret);
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Engagement Section */
+.engagement-section {
+    padding: 5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.engagement-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2.5rem;
+    margin-top: 3rem;
+}
+
+.engagement-card {
+    text-align: center;
+    padding: 2.5rem;
+    background: var(--beige);
+    border-radius: 15px;
+    transition: all 0.3s;
+}
+
+.engagement-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.engagement-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.engagement-card h3 {
+    font-size: 1.5rem;
+    color: var(--vert-foret);
+    margin-bottom: 1rem;
+}
+
+.engagement-card p {
+    color: #555;
+    line-height: 1.7;
+}
+
+/* FAQ Section */
+.faq-section {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.faq-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    background: var(--blanc);
+    margin-bottom: 1.5rem;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.faq-question {
+    width: 100%;
+    padding: 1.5rem 2rem;
+    background: var(--blanc);
+    border: none;
+    text-align: left;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--bois-fonce);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.faq-question:hover {
+    background: var(--beige);
+}
+
+.faq-question::after {
+    content: '+';
+    font-size: 2rem;
+    color: var(--vert-foret);
+    transition: transform 0.3s;
+}
+
+.faq-question.active::after {
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.faq-answer-content {
+    padding: 0 2rem 1.5rem 2rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+.faq-item.active .faq-answer {
+    max-height: 500px;
+}
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+    color: var(--blanc);
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .timeline-line {
+        left: 30px;
+    }
+
+    .timeline-step {
+        flex-direction: column !important;
+        padding-left: 80px;
+    }
+
+    .step-number-container {
+        left: 30px;
+        transform: translateX(-50%);
+    }
+
+    .step-content {
+        width: 100% !important;
+        margin: 2rem 0 0 0 !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .step-number {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .timeline-step {
+        padding-left: 60px;
+    }
+}

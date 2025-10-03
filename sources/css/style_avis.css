@@ -1,0 +1,362 @@
+/* ========================================
+   STYLE AVIS - AU FORMAT
+   ======================================== */
+
+/* Hero Section */
+.page-hero {
+    height: 50vh;
+    background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><text x="200" y="200" font-size="120" fill="%23D4A574" opacity="0.3">★</text><text x="500" y="300" font-size="150" fill="%23C19A6B" opacity="0.3">★</text><text x="800" y="250" font-size="130" fill="%23D4A574" opacity="0.3">★</text><text x="350" y="450" font-size="100" fill="%23A68A64" opacity="0.3">★</text><text x="950" y="400" font-size="110" fill="%23C19A6B" opacity="0.3">★</text></svg>');
+}
+
+/* Stats Section */
+.stats-section {
+    padding: 4rem 2rem;
+    background: var(--beige);
+}
+
+.stats-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 3rem;
+    text-align: center;
+}
+
+.stat-box {
+    background: var(--blanc);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.stat-box:hover {
+    transform: translateY(-10px);
+}
+
+.stat-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--vert-foret);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 1.2rem;
+    color: var(--bois-fonce);
+    font-weight: 600;
+}
+
+.stat-sublabel {
+    font-size: 0.95rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
+/* Filtres */
+.filter-section {
+    padding: 2rem;
+    background: var(--blanc);
+    border-bottom: 2px solid var(--beige);
+    position: sticky;
+    top: 80px;
+    z-index: 100;
+}
+
+.filter-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-btn {
+    padding: 0.7rem 1.5rem;
+    background: var(--beige);
+    border: 2px solid var(--bois-clair);
+    color: var(--noir);
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.filter-btn:hover {
+    background: var(--bois-clair);
+    color: var(--blanc);
+}
+
+.filter-btn.active {
+    background: var(--vert-foret);
+    border-color: var(--vert-foret);
+    color: var(--blanc);
+}
+
+/* Avis Section */
+.avis-section {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.avis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+}
+
+.avis-card {
+    background: var(--blanc);
+    padding: 2.5rem;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    border-left: 5px solid var(--vert-foret);
+    transition: all 0.3s;
+    position: relative;
+}
+
+.avis-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.avis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 1.5rem;
+}
+
+.avis-author {
+    flex: 1;
+}
+
+.author-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--bois-fonce);
+    margin-bottom: 0.3rem;
+}
+
+.author-info {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.avis-rating {
+    display: flex;
+    gap: 0.2rem;
+}
+
+.stars {
+    color: #FFD700;
+    font-size: 1.3rem;
+}
+
+.avis-project {
+    display: inline-block;
+    background: var(--beige);
+    color: var(--bois-fonce);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.avis-text {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+.avis-date {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.quote-icon {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 3rem;
+    color: var(--beige);
+    opacity: 0.5;
+}
+
+/* Verified Badge */
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: #4CAF50;
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+/* Video Testimonials */
+.video-section {
+    background: var(--beige);
+    padding: 5rem 2rem;
+}
+
+.video-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.video-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.video-card {
+    background: var(--blanc);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 200px;
+    background: linear-gradient(135deg, var(--bois-fonce), var(--bois-clair));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.play-button {
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: var(--vert-foret);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.play-button:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.video-info {
+    padding: 1.5rem;
+}
+
+.video-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--bois-fonce);
+    margin-bottom: 0.5rem;
+}
+
+.video-description {
+    font-size: 0.95rem;
+    color: #666;
+}
+
+/* Google Reviews Widget */
+.google-section {
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.google-widget {
+    max-width: 600px;
+    margin: 3rem auto;
+    padding: 3rem;
+    background: var(--blanc);
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.google-logo {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.google-rating {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--vert-foret);
+    margin-bottom: 0.5rem;
+}
+
+.google-stars {
+    font-size: 2rem;
+    color: #FFD700;
+    margin-bottom: 1rem;
+}
+
+.google-count {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* CTA Section */
+.cta-section {
+    background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
+    color: var(--blanc);
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.cta-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.cta-section p {
+    font-size: 1.3rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .avis-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+    }
+
+    .video-grid {
+        grid-template-columns: 1fr;
+    }
+}
