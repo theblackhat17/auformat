@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Au Format - Menuiserie Agencement Bois</title>
-   <link rel="stylesheet" href="sources/css/style_index.css">
-   <link rel="stylesheet" href="sources/css/style_global.css">
-   <link rel="icon" href="sources/img/logo_tmp.png">
+    <link rel="stylesheet" href="sources/css/style_index.css">
+    <link rel="stylesheet" href="sources/css/style_global.css">
+    <link rel="icon" href="sources/img/logo_tmp.png">
 </head>
 
 <body>
@@ -16,16 +16,16 @@
     <!-- Hero Section -->
     <section class="hero" id="accueil">
         <div class="hero-content">
-            <h1>AU FORMAT</h1>
-            <p class="baseline">Franchissons ensemble, le pas vers le bois</p>
+            <h1 id="hero-title">AU FORMAT</h1>
+            <p class="baseline" id="hero-subtitle">Franchissons ensemble, le pas vers le bois</p>
             <div class="cta-buttons">
-                <a href="#contact" class="btn btn-primary">Demander un devis</a>
-                <a href="#realisations" class="btn btn-secondary">Nos réalisations</a>
+                <a href="#contact" class="btn btn-primary" id="cta-primary">Demander un devis</a>
+                <a href="#realisations" class="btn btn-secondary" id="cta-secondary">Nos réalisations</a>
             </div>
         </div>
     </section>
 
-    <!-- Savoir-faire -->
+    <!-- Savoir-faire (CONTENU STATIQUE - Ne change pas souvent) -->
     <section class="savoir-faire" id="savoir-faire">
         <h2 class="section-title">Notre Savoir-Faire</h2>
         <p class="section-subtitle">L'excellence du bois au service de vos projets</p>
@@ -69,43 +69,23 @@
         </div>
     </section>
 
-    <!-- Réalisations -->
+    <!-- Réalisations (CONTENU DYNAMIQUE depuis CMS) -->
     <section id="realisations">
         <h2 class="section-title">Nos Réalisations</h2>
         <p class="section-subtitle">Découvrez quelques-uns de nos projets</p>
         
-        <div class="realisations-preview">
-            <div class="realisation-card">
-                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23C19A6B' width='400' height='350'/><rect fill='%238B6F47' x='50' y='50' width='300' height='200'/><rect fill='%23D4A574' x='80' y='80' width='100' height='140'/><rect fill='%23D4A574' x='220' y='80' width='100' height='140'/><text x='200' y='300' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>CUISINE</text></svg>" alt="Cuisine sur-mesure" class="realisation-img">
-                <div class="realisation-info">
-                    <h3>Cuisine Sur-Mesure</h3>
-                    <p>Design contemporain en chêne massif</p>
-                </div>
-            </div>
-            
-            <div class="realisation-card">
-                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23A68A64' width='400' height='350'/><rect fill='%238B6F47' x='100' y='50' width='200' height='250'/><rect fill='%23D4A574' x='120' y='80' width='60' height='80'/><rect fill='%23D4A574' x='220' y='80' width='60' height='80'/><rect fill='%23D4A574' x='120' y='180' width='60' height='80'/><rect fill='%23D4A574' x='220' y='180' width='60' height='80'/><text x='200' y='320' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>BIBLIOTHÈQUE</text></svg>" alt="Bibliothèque" class="realisation-img">
-                <div class="realisation-info">
-                    <h3>Bibliothèque</h3>
-                    <p>Agencement mural en noyer</p>
-                </div>
-            </div>
-            
-            <div class="realisation-card">
-                <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 350'><rect fill='%23B8956A' width='400' height='350'/><rect fill='%238B6F47' x='50' y='100' width='300' height='200'/><rect fill='%23D4A574' x='80' y='130' width='80' height='140'/><rect fill='%23D4A574' x='240' y='130' width='80' height='140'/><circle fill='%23C19A6B' cx='200' cy='200' r='30'/><text x='200' y='90' text-anchor='middle' fill='white' font-size='24' font-weight='bold'>DRESSING</text></svg>" alt="Dressing" class="realisation-img">
-                <div class="realisation-info">
-                    <h3>Dressing</h3>
-                    <p>Optimisation d'espace avec finitions haut de gamme</p>
-                </div>
-            </div>
+        <!-- Les réalisations seront chargées dynamiquement ici depuis Netlify CMS -->
+        <div class="realisations-preview" id="realisations-preview">
+            <!-- Contenu injecté par JavaScript -->
+            <div class="loading">Chargement des réalisations...</div>
         </div>
 
         <div style="text-align: center; margin-top: 3rem;">
-            <a href="#contact" class="btn btn-primary">Voir toutes nos réalisations</a>
+            <a href="realisations.html" class="btn btn-primary">Voir toutes nos réalisations</a>
         </div>
     </section>
 
-    <!-- Processus -->
+    <!-- Processus (CONTENU STATIQUE - Ne change pas) -->
     <section class="processus" id="processus">
         <h2 class="section-title">Notre Processus</h2>
         <p class="section-subtitle">De l'idée à la réalisation, un accompagnement complet</p>
@@ -137,29 +117,15 @@
         </div>
     </section>
 
-    <!-- Avis Clients -->
+    <!-- Avis Clients (CONTENU DYNAMIQUE depuis CMS) -->
     <section id="avis">
         <h2 class="section-title">Ils Nous Font Confiance</h2>
         <p class="section-subtitle">L'avis de nos clients</p>
         
-        <div class="avis-container">
-            <div class="avis-card">
-                <div class="stars">★★★★★</div>
-                <p class="avis-text">"Un travail remarquable ! Mon dressing sur-mesure est exactement ce dont nous rêvions. L'équipe est professionnelle et à l'écoute."</p>
-                <p class="avis-auteur">— Clément V., Lille</p>
-            </div>
-            
-            <div class="avis-card">
-                <div class="stars">★★★★★</div>
-                <p class="avis-text">"Un travail remarquable ! Mon dressing sur-mesure est exactement ce dont nous rêvions. L'équipe est professionnelle et à l'écoute."</p>
-                <p class="avis-auteur">— Clément V., Lille</p>
-            </div>
-            
-            <div class="avis-card">
-                <div class="stars">★★★★★</div>
-                <p class="avis-text">"Un travail remarquable ! Mon dressing sur-mesure est exactement ce dont nous rêvions. L'équipe est professionnelle et à l'écoute."</p>
-                <p class="avis-auteur">— Clément V., Lille</p>
-            </div>
+        <!-- Les avis seront chargés dynamiquement ici depuis Netlify CMS -->
+        <div class="avis-container" id="avis-container">
+            <!-- Contenu injecté par JavaScript -->
+            <div class="loading">Chargement des avis...</div>
         </div>
     </section>
 
@@ -167,18 +133,52 @@
     <section class="cta-section" id="contact">
         <h2>Prêt à Concrétiser Votre Projet ?</h2>
         <p>Contactez-nous pour un devis gratuit et personnalisé</p>
-        <a href="#contact" class="btn btn-primary" style="background: white; color: var(--vert-foret);">Demander un devis</a>
+        <a href="contact.html" class="btn btn-primary" style="background: white; color: var(--vert-foret);">Demander un devis</a>
     </section>
 
 <div data-include="partials/footer.html"></div>
 
-  <!-- charge le script en bas pour éviter le FOUC -->
-  <script src="js/include.js" defer></script>
+    <!-- Netlify Identity Widget pour l'authentification CMS -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 
-  <!-- Fallback si JS désactivé (SEO ok) -->
-  <noscript>
-    <div>Activez JavaScript pour afficher l’en-tête et le pied de page.</div>
-  </noscript>
+    <!-- Script pour charger le contenu depuis Netlify CMS -->
+    <script src="js/load-content.js"></script>
+    
+    <!-- Script pour inclure header/footer -->
+    <script src="js/include.js" defer></script>
+
+    <!-- Initialisation du chargement du contenu dynamique -->
+    <script>
+        // Attendre que le DOM soit chargé
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les réalisations (3 premières pour la preview)
+            loadRealisationsPreview();
+            
+            // Charger les avis (3 premiers)
+            loadAvisPreview();
+            
+            // Charger les paramètres du site (optionnel pour le hero)
+            loadHomepageSettings();
+        });
+
+        // Gestion de l'authentification Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
+                }
+            });
+        }
+    </script>
+
+    <!-- Fallback si JS désactivé (SEO ok) -->
+    <noscript>
+        <div style="padding: 2rem; text-align: center; background: #f5f1e8;">
+            <p>Activez JavaScript pour afficher l'en-tête, le pied de page et le contenu dynamique.</p>
+        </div>
+    </noscript>
    
 </body>
 </html>
