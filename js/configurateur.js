@@ -45,6 +45,61 @@
             updatePricing();
         }
 
+        // NOUVEAU : Instance du viewer 3D
+let viewer3D = null;
+
+// Initialisation modifiée
+function init() {
+    // Créer le viewer 3D
+    viewer3D = new Viewer3D('viewer-3d-container');
+    
+    // Votre code existant
+    renderMaterials();
+    renderShapes();
+    updateVisualization();
+    updatePricing();
+}
+
+// Modifier updateVisualization() pour utiliser la 3D
+function updateVisualization() {
+    // Mettre à jour le viewer 3D
+    if (viewer3D) {
+        viewer3D.updateBoard(config);
+    }
+    
+    // Votre code existant pour les labels
+    const surfaceM2 = (config.length * config.width) / 1000000;
+    document.getElementById('surface-display').textContent = `${surfaceM2.toFixed(3)} m²`;
+    document.getElementById('thickness-display').textContent = `${config.thickness} mm`;
+    
+    // NOUVEAU : Volume
+    const volumeM3 = (config.length * config.width * config.thickness) / 1000000000;
+    document.getElementById('volume-display').textContent = `${volumeM3.toFixed(4)} m³`;
+}
+
+    // Nouvelles fonctions pour les contrôles
+    function resetCamera() {
+        if (viewer3D) {
+            viewer3D.centerCamera(config);
+        }
+    }
+
+    function toggleWireframe() {
+        if (viewer3D && viewer3D.currentMesh) {
+            viewer3D.currentMesh.material.wireframe = !viewer3D.currentMesh.material.wireframe;
+        }
+    }
+
+    function takeSnapshot() {
+        if (viewer3D) {
+            const screenshot = viewer3D.takeScreenshot();
+            const link = document.createElement('a');
+            link.download = 'configuration-3d.png';
+            link.href = screenshot;
+            link.click();
+        }
+}
+
         function renderMaterials() {
             const grid = document.getElementById('material-grid');
             grid.innerHTML = materials.map(mat => `
@@ -388,6 +443,8 @@
             document.getElementById('tax-price').textContent = `${tax.toFixed(2)} €`;
             document.getElementById('total-price').textContent = `${total.toFixed(2)} €`;
         }
+
+        
 
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', init);

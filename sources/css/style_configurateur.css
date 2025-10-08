@@ -444,3 +444,55 @@
     margin-top: 70px;
   }
 }
+
+
+.viewer-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.control-btn {
+    padding: 10px 15px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.control-btn:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+}
+
+.control-btn:active {
+    transform: translateY(0);
+}
+
+#viewer-3d-container {
+    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    border: 2px solid #e2e8f0;
+    position: relative;
+}
+
+#viewer-3d-container canvas {
+    display: block;
+    border-radius: 8px;
+}
+
+.dimension-labels {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .dimension-labels {
+        grid-template-columns: 1fr;
+    }
+}
