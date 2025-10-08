@@ -20,31 +20,28 @@
         </div>
     </section>
 
-    <!-- Filtres -->
+    <!-- Filtres (générés dynamiquement) -->
     <section class="filters-section">
         <div class="filters-container">
             <span class="filter-label">Catégories :</span>
-            <button class="filter-btn active" data-filter="tous">Tous les projets</button>
-            <button class="filter-btn" data-filter="cuisines">Cuisines</button>
-            <button class="filter-btn" data-filter="dressings">Dressings</button>
-            <button class="filter-btn" data-filter="bibliotheques">Bibliothèques</button>
-            <button class="filter-btn" data-filter="commerces">Agencement Commercial</button>
-            <button class="filter-btn" data-filter="escaliers">Escaliers</button>
-            <button class="filter-btn" data-filter="exterieurs">Extérieurs</button>
+            <div id="category-filters">
+                <!-- Les filtres seront générés automatiquement selon les catégories disponibles -->
+                <button class="filter-btn active" data-category="all">Tous les projets</button>
+            </div>
         </div>
     </section>
 
     <!-- Portfolio (CONTENU DYNAMIQUE depuis CMS) -->
     <section class="portfolio-section">
         <!-- Les réalisations seront chargées dynamiquement ici -->
-        <div class="portfolio-grid" id="portfolioGrid">
+        <div class="portfolio-grid" id="realisations-grid">
             <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 4rem;">
                 <p>Chargement des réalisations...</p>
             </div>
         </div>
     </section>
 
-    <!-- Modal -->
+    <!-- Modal pour afficher les détails -->
     <div class="modal" id="modal">
         <div class="modal-content">
             <button class="modal-close" id="modalClose">×</button>
@@ -54,19 +51,19 @@
                 <h2 class="modal-title" id="modalTitle"></h2>
                 
                 <div class="modal-details">
-                    <div class="detail-item">
+                    <div class="detail-item" id="modal-duration-container">
                         <div class="detail-label">Durée</div>
                         <div class="detail-value" id="modalDuration"></div>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item" id="modal-surface-container">
                         <div class="detail-label">Surface</div>
                         <div class="detail-value" id="modalSurface"></div>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item" id="modal-material-container">
                         <div class="detail-label">Matériau</div>
                         <div class="detail-value" id="modalMaterial"></div>
                     </div>
-                    <div class="detail-item">
+                    <div class="detail-item" id="modal-location-container">
                         <div class="detail-label">Localisation</div>
                         <div class="detail-value" id="modalLocation"></div>
                     </div>
@@ -74,9 +71,13 @@
 
                 <p class="modal-description" id="modalDescription"></p>
 
-                <div class="modal-features">
+                <div class="modal-features" id="modal-features-container">
                     <h3>Caractéristiques du projet</h3>
                     <ul class="features-list" id="modalFeatures"></ul>
+                </div>
+
+                <div class="modal-gallery" id="modalGallery">
+                    <!-- Galerie d'images supplémentaires si disponibles -->
                 </div>
             </div>
         </div>
@@ -95,17 +96,245 @@
     <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 
     <!-- Script pour charger le contenu depuis le CMS -->
-    <script src="js/load-realisations.js"></script>
+    <script src="js/load-content.js"></script>
 
     <!-- Script pour inclure header/footer -->
     <script src="js/include.js" defer></script>
 
-    <!-- Initialisation du chargement -->
+    <!-- Script pour gérer les réalisations et la modal -->
     <script>
+        let currentRealisations = [];
+
         document.addEventListener('DOMContentLoaded', function() {
             // Charger toutes les réalisations depuis le CMS
-            loadAllRealisations();
+            loadRealisationsPage();
+            
+            // Gérer la modal
+            setupModal();
         });
+
+        // Fonction pour charger et afficher toutes les réalisations
+        async function loadRealisationsPage() {
+            try {
+                const response = await fetch('/api/realisations.json');
+                const realisations = await response.json();
+
+                const container = document.getElementById('realisations-grid');
+                if (!container) return;
+
+                // Trier par date (plus récent en premier)
+                realisations.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Filtrer uniquement les réalisations publiées
+                const published = realisations.filter(r => r.published !== false);
+                currentRealisations = published;
+
+                // Générer le HTML pour toutes les réalisations
+                container.innerHTML = published.map((realisation, index) => `
+                    <div class="realisation-card" data-category="${realisation.category}" data-index="${index}">
+                        <img src="${realisation.image}" 
+                             alt="${realisation.title}" 
+                             class="realisation-img"
+                             loading="lazy">
+                        <div class="realisation-info">
+                            <span class="category-tag">${getCategoryLabel(realisation.category)}</span>
+                            <h3>${realisation.title}</h3>
+                            <p>${realisation.description}</p>
+                            <div class="realisation-meta">
+                                ${realisation.duration ? `<span>⏱️ ${realisation.duration}</span>` : ''}
+                                ${realisation.material ? `<span>🌳 ${realisation.material}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Créer les filtres par catégorie
+                createCategoryFilters(published);
+
+                // Ajouter les événements de clic pour ouvrir la modal
+                setupRealisationCards();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des réalisations:', error);
+                const container = document.getElementById('realisations-grid');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-message" style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                            <p>❌ Erreur lors du chargement des réalisations.</p>
+                            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
+                                Vérifiez que le fichier /api/realisations.json existe et que le build s'est bien exécuté.
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Obtenir le label de catégorie en français
+        function getCategoryLabel(category) {
+            const labels = {
+                'cuisines': '🍳 Cuisines',
+                'dressings': '👔 Dressings',
+                'bibliotheques': '📚 Bibliothèques',
+                'commerces': '🏢 Commerces',
+                'escaliers': '🪜 Escaliers',
+                'exterieurs': '🚪 Extérieurs'
+            };
+            return labels[category] || category;
+        }
+
+        // Créer les filtres de catégories
+        function createCategoryFilters(realisations) {
+            const filterContainer = document.getElementById('category-filters');
+            if (!filterContainer) return;
+
+            // Obtenir les catégories uniques présentes dans les réalisations
+            const categories = [...new Set(realisations.map(r => r.category))];
+
+            filterContainer.innerHTML = `
+                <button class="filter-btn active" data-category="all">Tous les projets</button>
+                ${categories.map(cat => `
+                    <button class="filter-btn" data-category="${cat}">
+                        ${getCategoryLabel(cat)}
+                    </button>
+                `).join('')}
+            `;
+
+            // Ajouter les événements de filtrage
+            filterContainer.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Retirer la classe active de tous les boutons
+                    filterContainer.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    // Filtrer les réalisations
+                    const category = btn.dataset.category;
+                    const cards = document.querySelectorAll('.realisation-card');
+                    
+                    cards.forEach(card => {
+                        if (category === 'all' || card.dataset.category === category) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+
+        // Configurer les événements de clic sur les cartes
+        function setupRealisationCards() {
+            const cards = document.querySelectorAll('.realisation-card');
+            cards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const index = parseInt(card.dataset.index);
+                    openModal(currentRealisations[index]);
+                });
+                card.style.cursor = 'pointer';
+            });
+        }
+
+        // Ouvrir la modal avec les détails d'une réalisation
+        function openModal(realisation) {
+            const modal = document.getElementById('modal');
+            
+            // Remplir les informations
+            document.getElementById('modalImage').src = realisation.image;
+            document.getElementById('modalImage').alt = realisation.title;
+            document.getElementById('modalCategory').textContent = getCategoryLabel(realisation.category);
+            document.getElementById('modalTitle').textContent = realisation.title;
+            document.getElementById('modalDescription').textContent = realisation.body || realisation.description;
+
+            // Détails optionnels
+            const durationContainer = document.getElementById('modal-duration-container');
+            if (realisation.duration) {
+                document.getElementById('modalDuration').textContent = realisation.duration;
+                durationContainer.style.display = 'block';
+            } else {
+                durationContainer.style.display = 'none';
+            }
+
+            const surfaceContainer = document.getElementById('modal-surface-container');
+            if (realisation.surface) {
+                document.getElementById('modalSurface').textContent = realisation.surface;
+                surfaceContainer.style.display = 'block';
+            } else {
+                surfaceContainer.style.display = 'none';
+            }
+
+            const materialContainer = document.getElementById('modal-material-container');
+            if (realisation.material) {
+                document.getElementById('modalMaterial').textContent = realisation.material;
+                materialContainer.style.display = 'block';
+            } else {
+                materialContainer.style.display = 'none';
+            }
+
+            const locationContainer = document.getElementById('modal-location-container');
+            if (realisation.location) {
+                document.getElementById('modalLocation').textContent = realisation.location;
+                locationContainer.style.display = 'block';
+            } else {
+                locationContainer.style.display = 'none';
+            }
+
+            // Caractéristiques
+            const featuresContainer = document.getElementById('modal-features-container');
+            if (realisation.features && realisation.features.length > 0) {
+                document.getElementById('modalFeatures').innerHTML = realisation.features
+                    .map(f => `<li>${f.feature || f}</li>`)
+                    .join('');
+                featuresContainer.style.display = 'block';
+            } else {
+                featuresContainer.style.display = 'none';
+            }
+
+            // Galerie d'images supplémentaires
+            const galleryContainer = document.getElementById('modalGallery');
+            if (realisation.gallery && realisation.gallery.length > 0) {
+                galleryContainer.innerHTML = '<h3>Galerie</h3>' + 
+                    realisation.gallery.map(img => `
+                        <img src="${img.image || img}" alt="Galerie ${realisation.title}" class="gallery-img">
+                    `).join('');
+                galleryContainer.style.display = 'block';
+            } else {
+                galleryContainer.style.display = 'none';
+            }
+
+            // Afficher la modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Configurer la modal
+        function setupModal() {
+            const modal = document.getElementById('modal');
+            const closeBtn = document.getElementById('modalClose');
+
+            // Fermer avec le bouton X
+            closeBtn.addEventListener('click', closeModal);
+
+            // Fermer en cliquant en dehors
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Fermer avec la touche Échap
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Fermer la modal
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
 
         // Gestion Netlify Identity
         if (window.netlifyIdentity) {
