@@ -1,0 +1,227 @@
+# Configuration Netlify CMS pour Au Format
+backend:
+  name: git-gateway
+  branch: main # ou master selon votre repo
+
+# Configuration de l'upload d'images avec Cloudinary
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: votre-cloud-name # À remplacer par votre cloud name Cloudinary
+    api_key: votre-api-key # À remplacer par votre API key Cloudinary
+
+# URL publique du site
+publish_mode: editorial_workflow
+media_folder: "sources/images/uploads" # Dossier de fallback
+public_folder: "/sources/images/uploads"
+
+# Langue de l'interface
+locale: 'fr'
+
+# IMPORTANT : Format de sortie
+# Les fichiers seront en JSON pour faciliter le chargement JavaScript
+extension: 'json'
+format: 'json'
+
+# Collections de contenu
+collections:
+  # RÉALISATIONS
+  - name: "realisations"
+    label: "📁 Réalisations"
+    folder: "api/realisations"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    identifier_field: "title"
+    format: 'json'
+    extension: 'json'
+    fields:
+      - {label: "Titre", name: "title", widget: "string", required: true}
+      - {label: "Date de publication", name: "date", widget: "datetime", default: ""}
+      - label: "Catégorie"
+        name: "category"
+        widget: "select"
+        required: true
+        options: 
+          - {label: "🍳 Cuisines", value: "cuisines"}
+          - {label: "👔 Dressings", value: "dressings"}
+          - {label: "📚 Bibliothèques", value: "bibliotheques"}
+          - {label: "🏢 Agencement commercial", value: "commerces"}
+          - {label: "🪜 Escaliers", value: "escaliers"}
+          - {label: "🚪 Extérieurs", value: "exterieurs"}
+      - {label: "Image principale", name: "image", widget: "image", required: true}
+      - label: "Galerie d'images (optionnel)"
+        name: "gallery"
+        widget: "list"
+        required: false
+        field: {label: "Image", name: "image", widget: "image"}
+      - {label: "Description courte", name: "description", widget: "text", required: true}
+      - {label: "Description complète", name: "body", widget: "markdown", required: false}
+      - {label: "Durée du projet", name: "duration", widget: "string", required: false, hint: "Ex: 3 semaines"}
+      - {label: "Surface (m²)", name: "surface", widget: "string", required: false, hint: "Ex: 25 m²"}
+      - {label: "Matériau principal", name: "material", widget: "string", required: false, hint: "Ex: Chêne massif"}
+      - {label: "Localisation", name: "location", widget: "string", required: false, hint: "Ex: Lyon 3ème"}
+      - label: "Caractéristiques (optionnel)"
+        name: "features"
+        widget: "list"
+        required: false
+        field: {label: "Caractéristique", name: "feature", widget: "string"}
+      - {label: "Publié", name: "published", widget: "boolean", default: true}
+
+  # AVIS CLIENTS
+  - name: "avis"
+    label: "⭐ Avis Clients"
+    folder: "api/avis"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    identifier_field: "name"
+    format: 'json'
+    extension: 'json'
+    fields:
+      - {label: "Nom du client", name: "name", widget: "string", required: true}
+      - {label: "Localisation", name: "location", widget: "string", required: true, hint: "Ex: Lyon, Lille"}
+      - label: "Type de client"
+        name: "clientType"
+        widget: "select"
+        default: "Particulier"
+        options: ["Particulier", "Professionnel"]
+      - label: "Note"
+        name: "rating"
+        widget: "number"
+        value_type: "int"
+        min: 1
+        max: 5
+        default: 5
+      - label: "Type de projet"
+        name: "projectType"
+        widget: "select"
+        required: true
+        options: 
+          - {label: "🍳 Cuisine", value: "Cuisine"}
+          - {label: "👔 Dressing", value: "Dressing"}
+          - {label: "📚 Bibliothèque", value: "Bibliothèque"}
+          - {label: "🏢 Commerce", value: "Commerce"}
+          - {label: "🪜 Escalier", value: "Escalier"}
+          - {label: "🏠 Autre", value: "Autre"}
+      - {label: "Témoignage", name: "testimonial", widget: "text", required: true}
+      - {label: "Date", name: "date", widget: "datetime", default: ""}
+      - {label: "Vérifié", name: "verified", widget: "boolean", default: true}
+      - {label: "Publié", name: "published", widget: "boolean", default: true}
+
+  # MATÉRIAUX
+  - name: "materiaux"
+    label: "🌳 Matériaux"
+    folder: "api/materiaux"
+    create: true
+    slug: "{{slug}}"
+    identifier_field: "name"
+    format: 'json'
+    extension: 'json'
+    fields:
+      - {label: "Nom du matériau", name: "name", widget: "string", required: true}
+      - {label: "Nom latin", name: "latinName", widget: "string", required: false}
+      - {label: "Image", name: "image", widget: "image", required: true}
+      - label: "Catégorie"
+        name: "category"
+        widget: "select"
+        required: true
+        options: 
+          - {label: "💎 Bois Nobles", value: "nobles"}
+          - {label: "🇫🇷 Bois Locaux", value: "locaux"}
+          - {label: "🌴 Bois Exotiques", value: "exotiques"}
+          - {label: "🚪 Extérieurs", value: "exterieurs"}
+      - label: "Tag"
+        name: "tag"
+        widget: "select"
+        required: true
+        options: ["Noble", "Premium", "Local", "Exotique", "Durable"]
+      - {label: "Description", name: "description", widget: "text", required: true}
+      - label: "Dureté"
+        name: "hardness"
+        widget: "number"
+        value_type: "int"
+        min: 1
+        max: 5
+        default: 3
+        hint: "1 = Tendre, 5 = Très dur"
+      - label: "Stabilité"
+        name: "stability"
+        widget: "number"
+        value_type: "int"
+        min: 1
+        max: 5
+        default: 3
+        hint: "1 = Instable, 5 = Très stable"
+      - {label: "Origine", name: "origin", widget: "string", required: true}
+      - {label: "Teinte", name: "color", widget: "string", required: true}
+      - label: "Caractéristiques"
+        name: "features"
+        widget: "list"
+        required: false
+        field: {label: "Caractéristique", name: "feature", widget: "string"}
+      - label: "Utilisations"
+        name: "usages"
+        widget: "list"
+        required: false
+        field: {label: "Usage", name: "usage", widget: "string"}
+      - {label: "Publié", name: "published", widget: "boolean", default: true}
+
+  # ÉQUIPE
+  - name: "equipe"
+    label: "👥 Équipe"
+    folder: "api/equipe"
+    create: true
+    slug: "{{slug}}"
+    identifier_field: "name"
+    format: 'json'
+    extension: 'json'
+    fields:
+      - {label: "Nom", name: "name", widget: "string", required: true}
+      - {label: "Poste", name: "role", widget: "string", required: true}
+      - {label: "Photo", name: "photo", widget: "image", required: true}
+      - {label: "Description", name: "description", widget: "text", required: true}
+      - {label: "Ordre d'affichage", name: "order", widget: "number", value_type: "int", default: 1, hint: "1 = Premier affiché"}
+      - {label: "Publié", name: "published", widget: "boolean", default: true}
+
+  # PARAMÈTRES DU SITE
+  - name: "settings"
+    label: "⚙️ Paramètres"
+    files:
+      - label: "📍 Informations générales"
+        name: "general"
+        file: "api/settings/general.json"
+        format: 'json'
+        extension: 'json'
+        fields:
+          - {label: "Nom de l'entreprise", name: "companyName", widget: "string", default: "Au Format"}
+          - {label: "Slogan", name: "slogan", widget: "string", default: "Franchissons ensemble, le pas vers le bois"}
+          - {label: "Adresse", name: "address", widget: "text", required: true}
+          - {label: "Code postal", name: "zipcode", widget: "string", required: true}
+          - {label: "Ville", name: "city", widget: "string", required: true}
+          - {label: "Téléphone", name: "phone", widget: "string", required: true}
+          - {label: "Email", name: "email", widget: "string", required: true}
+          - label: "Horaires"
+            name: "hours"
+            widget: "object"
+            fields:
+              - {label: "Lundi-Vendredi", name: "weekdays", widget: "string", default: "8h - 18h"}
+              - {label: "Samedi", name: "saturday", widget: "string", default: "9h - 12h"}
+              - {label: "Dimanche", name: "sunday", widget: "string", default: "Fermé"}
+          - {label: "Lien Google Maps", name: "mapLink", widget: "string", required: false}
+          - {label: "Numéro WhatsApp", name: "whatsapp", widget: "string", required: false}
+          - {label: "Facebook", name: "facebook", widget: "string", required: false}
+          - {label: "Instagram", name: "instagram", widget: "string", required: false}
+
+      - label: "🏠 Page d'accueil"
+        name: "homepage"
+        file: "api/settings/homepage.json"
+        format: 'json'
+        extension: 'json'
+        fields:
+          - {label: "Titre Hero", name: "heroTitle", widget: "string", default: "AU FORMAT"}
+          - {label: "Sous-titre Hero", name: "heroSubtitle", widget: "string", default: "Franchissons ensemble, le pas vers le bois"}
+          - {label: "Texte bouton principal", name: "ctaButton", widget: "string", default: "Demander un devis"}
+          - {label: "Texte bouton secondaire", name: "secondaryButton", widget: "string", default: "Nos réalisations"}
+
+# Configuration de l'éditeur
+editor:
+  preview: true

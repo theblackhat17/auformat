@@ -1,0 +1,33 @@
+# Configuration Netlify pour Au Format
+
+[build]
+  # Commande de build pour agréger les JSON
+  command = "node build-api.js"
+  
+  # Dossier à publier
+  publish = "."
+
+# Configuration pour Netlify Identity (authentification CMS)
+[build.environment]
+  NODE_VERSION = "16"
+
+# Redirection pour l'admin
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+# Headers de sécurité
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    X-XSS-Protection = "1; mode=block"
+
+# Configuration CMS - Permettre l'accès aux fichiers API
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Content-Type = "application/json"
