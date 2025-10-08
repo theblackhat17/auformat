@@ -1,33 +1,75 @@
-# Configuration Netlify pour Au Format
-
+# ============================
+# BUILD & DEPLOIEMENT
+# ============================
 [build]
-  # Commande de build pour agréger les JSON
   command = "node build-api.js"
-  
-  # Dossier à publier
   publish = "."
 
-# Configuration pour Netlify Identity (authentification CMS)
 [build.environment]
-  NODE_VERSION = "16"
+  NODE_VERSION = "18"
+  NODE_ENV = "production"
 
-# Redirection pour l'admin
+# ============================
+# REDIRECTIONS
+# ============================
 [[redirects]]
   from = "/admin"
-  to = "/admin/index.html"
+  to = "/admin/index_soon.html"
   status = 200
 
-# Headers de sécurité
+# ============================
+# HEADERS DE SÉCURITÉ GLOBAUX
+# ============================
 [[headers]]
   for = "/*"
   [headers.values]
+    # 🔒 Protection clickjacking
     X-Frame-Options = "DENY"
+
+    # 🧩 Empêche le mime sniffing
     X-Content-Type-Options = "nosniff"
+
+    # ⚔️ Protection XSS ancienne (désormais CSP fait mieux)
     X-XSS-Protection = "1; mode=block"
 
-# Configuration CMS - Permettre l'accès aux fichiers API
+    # 🧱 Isolation du site (évite fuite inter-origin)
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Resource-Policy = "same-origin"
+
+    # 🌐 Referrer Policy : protège la vie privée
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # 🧑‍💻 Permissions Policy (ancien Feature Policy)
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), payment=(), usb=(), interest-cohort=()"
+
+    # 🧠 CSP : politique de contenu stricte et moderne
+    Content-Security-Policy = '''
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' https://identity.netlify.com;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' data:;
+      font-src 'self';
+      connect-src 'self' https://api.netlify.com https://identity.netlify.com;
+      frame-src https://identity.netlify.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    '''
+
+    # 🕶️ Sécurité transport
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+
+    # ✅ Cache intelligent
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ============================
+# HEADERS POUR LES API
+# ============================
 [[headers]]
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
     Content-Type = "application/json"
+    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate"
