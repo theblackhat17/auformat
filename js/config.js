@@ -8,7 +8,18 @@ const SUPABASE_CONFIG = {
 // =========================================
 const supabase = window.supabase.createClient(
   SUPABASE_CONFIG.url,
-  SUPABASE_CONFIG.anonKey
+  SUPABASE_CONFIG.anonKey,
+  {
+    auth: {
+      // CRITIQUE : Persister la session dans le localStorage
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      storage: window.localStorage,
+      storageKey: 'auformat-auth-token',
+      flowType: 'pkce'
+    }
+  }
 );
 
 // =========================================
@@ -17,23 +28,39 @@ const supabase = window.supabase.createClient(
 const AUTH = {
   // Vérifier si l'utilisateur est connecté
   async getCurrentUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    return user;
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Erreur getSession:', error);
+        return null;
+      }
+      
+      return session?.user || null;
+    } catch (error) {
+      console.error('Erreur getCurrentUser:', error);
+      return null;
+    }
   },
 
   // Récupérer le profil complet de l'utilisateur
   async getProfile(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (error) {
-      console.error('Erreur lors de la récupération du profil:', error);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Erreur lors de la récupération du profil:', error);
+        return null;
+      }
+      return data;
+    } catch (error) {
+      console.error('Erreur getProfile:', error);
       return null;
     }
-    return data;
   },
 
   // Vérifier si l'utilisateur est admin
@@ -49,7 +76,8 @@ const AUTH = {
   async requireAuth(redirectTo = '/login.html') {
     const user = await this.getCurrentUser();
     if (!user) {
-      window.location.href = redirectTo;
+      const currentPath = window.location.pathname;
+      window.location.href = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
       return false;
     }
     return true;

@@ -56,10 +56,18 @@ const AuthSystem = {
 
       if (error) throw error;
 
+      // Vérifier que la session est bien créée
+      if (!data.session) {
+        throw new Error('Aucune session créée après connexion');
+      }
+
+      console.log('✅ Connexion réussie, session créée:', data.session.user.id);
+
       return {
         success: true,
         message: '✅ Connexion réussie !',
-        user: data.user
+        user: data.user,
+        session: data.session
       };
 
     } catch (error) {
@@ -76,6 +84,8 @@ const AuthSystem = {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      console.log('✅ Déconnexion réussie');
 
       return {
         success: true,
@@ -161,28 +171,38 @@ const AuthSystem = {
 
   // ========== ÉTAT DE CONNEXION ==========
   async getAuthState() {
-    const user = await AUTH.getCurrentUser();
-    
-    if (!user) {
+    try {
+      const user = await AUTH.getCurrentUser();
+      
+      if (!user) {
+        return {
+          isAuthenticated: false,
+          user: null,
+          profile: null
+        };
+      }
+
+      const profile = await AUTH.getProfile(user.id);
+
+      return {
+        isAuthenticated: true,
+        user: user,
+        profile: profile
+      };
+    } catch (error) {
+      console.error('Erreur getAuthState:', error);
       return {
         isAuthenticated: false,
         user: null,
         profile: null
       };
     }
-
-    const profile = await AUTH.getProfile(user.id);
-
-    return {
-      isAuthenticated: true,
-      user: user,
-      profile: profile
-    };
   },
 
   // ========== ÉCOUTER LES CHANGEMENTS D'AUTH ==========
   onAuthStateChange(callback) {
     return supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 Auth state change:', event, session?.user?.id);
       callback(event, session);
     });
   }
@@ -192,43 +212,49 @@ const AuthSystem = {
 // MISE À JOUR HEADER AUTOMATIQUE
 // =========================================
 async function updateHeaderAuthState() {
-  const authState = await AuthSystem.getAuthState();
-  
-  const loggedOut = document.getElementById('logged-out');
-  const loggedIn = document.getElementById('logged-in');
-  const userName = document.getElementById('user-name');
-
-  if (!loggedOut || !loggedIn) return; // Si les éléments n'existent pas
-
-  if (authState.isAuthenticated) {
-    // Utilisateur connecté
-    loggedOut.style.display = 'none';
-    loggedIn.style.display = 'flex';
+  try {
+    const authState = await AuthSystem.getAuthState();
     
-    if (userName && authState.profile) {
-      const displayName = authState.profile.full_name || 
-                         authState.profile.company_name || 
-                         authState.user.email.split('@')[0];
-      userName.textContent = `👤 ${displayName}`;
+    const loggedOut = document.getElementById('logged-out');
+    const loggedIn = document.getElementById('logged-in');
+    const userName = document.getElementById('user-name-display');
+
+    if (!loggedOut || !loggedIn) {
+      console.warn('Éléments header auth non trouvés');
+      return;
     }
 
-    // Ajouter le bouton admin si c'est un admin
-    if (authState.profile?.role === 'admin') {
-      const adminBtn = document.getElementById('admin-btn');
-      if (!adminBtn) {
-        const btn = document.createElement('a');
-        btn.id = 'admin-btn';
-        btn.href = '/admin.html';
-        btn.className = 'btn-admin';
-        btn.textContent = '⚙️ Admin';
-        loggedIn.insertBefore(btn, loggedIn.firstChild);
+    if (authState.isAuthenticated && authState.profile) {
+      // Utilisateur connecté
+      loggedOut.style.display = 'none';
+      loggedIn.style.display = 'flex';
+      
+      if (userName) {
+        const displayName = authState.profile.full_name || 
+                           authState.profile.company_name || 
+                           authState.user.email.split('@')[0];
+        userName.textContent = displayName;
       }
-    }
 
-  } else {
-    // Utilisateur non connecté
-    loggedOut.style.display = 'flex';
-    loggedIn.style.display = 'none';
+      // Ajouter le bouton admin si c'est un admin
+      if (authState.profile?.role === 'admin') {
+        const adminLink = document.getElementById('admin-link');
+        if (adminLink) {
+          adminLink.style.display = 'flex';
+        }
+      }
+
+      console.log('✅ Header mis à jour - Utilisateur connecté');
+
+    } else {
+      // Utilisateur non connecté
+      loggedOut.style.display = 'flex';
+      loggedIn.style.display = 'none';
+      
+      console.log('ℹ️ Header mis à jour - Utilisateur non connecté');
+    }
+  } catch (error) {
+    console.error('Erreur updateHeaderAuthState:', error);
   }
 }
 
@@ -258,16 +284,23 @@ async function setupLogoutButton() {
 // INITIALISATION AUTO
 // =========================================
 document.addEventListener('DOMContentLoaded', () => {
-  updateHeaderAuthState();
-  setupLogoutButton();
+  console.log('🚀 Initialisation AuthSystem...');
+  
+  // Attendre un peu que le header soit chargé
+  setTimeout(() => {
+    updateHeaderAuthState();
+    setupLogoutButton();
+  }, 500);
 });
 
 // Écouter les changements d'authentification
 AuthSystem.onAuthStateChange((event, session) => {
   if (event === 'SIGNED_IN') {
-    updateHeaderAuthState();
+    console.log('✅ Utilisateur connecté');
+    setTimeout(updateHeaderAuthState, 300);
   } else if (event === 'SIGNED_OUT') {
-    updateHeaderAuthState();
+    console.log('👋 Utilisateur déconnecté');
+    setTimeout(updateHeaderAuthState, 300);
   }
 });
 

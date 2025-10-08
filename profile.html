@@ -201,71 +201,117 @@
 
   <div data-include="partials/footer.html"></div>
 
-  <script>
-    let currentProfile = null;
+ <script>
+  let currentProfile = null;
 
-    // Charger le profil au chargement de la page
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Vérifier l'authentification
-      const isAuth = await AUTH.requireAuth();
-      if (!isAuth) return;
+  // Attendre que les dépendances soient chargées
+  async function waitForDependencies() {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 secondes max
+    
+    while (attempts < maxAttempts) {
+      if (window.AUTH && window.AuthSystem && window.supabaseClient) {
+        console.log('✅ Dépendances chargées');
+        return true;
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    console.error('❌ Timeout: dépendances non chargées');
+    return false;
+  }
 
-      await loadProfile();
-    });
+  // Charger le profil au chargement de la page
+  document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Initialisation de la page profil...');
+    
+    // Attendre que tout soit prêt
+    const ready = await waitForDependencies();
+    if (!ready) {
+      alert('❌ Erreur de chargement. Veuillez rafraîchir la page.');
+      return;
+    }
 
-    // Charger les données du profil
-    async function loadProfile() {
-      try {
-        const user = await AUTH.getCurrentUser();
-        const profile = await AUTH.getProfile(user.id);
+    // Vérifier l'authentification
+    const user = await AUTH.getCurrentUser();
+    
+    if (!user) {
+      console.log('❌ Utilisateur non connecté, redirection...');
+      window.location.href = '/login.html?redirect=/profile.html';
+      return;
+    }
 
-        if (!profile) {
-          showAlert('personal', 'error', 'Erreur lors du chargement du profil');
-          return;
-        }
+    console.log('✅ Utilisateur connecté:', user.id);
 
-        currentProfile = profile;
+    await loadProfile();
+  });
 
-        // Header
-        const initials = (profile.full_name || profile.email)
-          .split(' ')
-          .map(n => n[0])
-          .join('')
-          .toUpperCase()
-          .slice(0, 2);
+  // Charger les données du profil
+  async function loadProfile() {
+    try {
+      const user = await AUTH.getCurrentUser();
+      
+      if (!user) {
+        console.error('❌ Pas d\'utilisateur');
+        return;
+      }
 
-        document.getElementById('profile-avatar').textContent = initials;
-        document.getElementById('profile-name').textContent = profile.full_name || 'Utilisateur';
-        document.getElementById('profile-email').textContent = user.email;
+      console.log('📥 Chargement du profil pour:', user.id);
 
-        // Badge role
-        const roleBadge = document.getElementById('profile-role-badge');
-        if (profile.role === 'admin') {
-          roleBadge.textContent = 'Administrateur';
-          roleBadge.className = 'badge badge-admin';
-        }
+      const profile = await AUTH.getProfile(user.id);
 
-        // Remise
-        if (profile.discount_rate > 0) {
-          document.getElementById('discount-badge').style.display = 'inline-flex';
-          document.getElementById('discount-value').textContent = profile.discount_rate;
-        }
+      if (!profile) {
+        console.error('❌ Profil non trouvé');
+        showAlert('personal', 'error', 'Erreur lors du chargement du profil');
+        return;
+      }
 
-        // Stats (à implémenter avec les données réelles)
-        const memberSince = new Date(profile.created_at);
-        const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-        document.getElementById('stat-member-since').textContent = 
-          `${monthNames[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
+      console.log('✅ Profil chargé:', profile);
 
-        // Formulaire personnel
-        document.getElementById('full-name').value = profile.full_name || '';
-        document.getElementById('company-name').value = profile.company_name || '';
-        document.getElementById('phone').value = profile.phone || '';
-        document.getElementById('address').value = profile.address || '';
+      currentProfile = profile;
 
-        // Compte
-        document.getElementById('account-email').textContent = user.email;
-        
+      // Header
+      const initials = (profile.full_name || profile.email || user.email)
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+      document.getElementById('profile-avatar').textContent = initials;
+      document.getElementById('profile-name').textContent = profile.full_name || 'Utilisateur';
+      document.getElementById('profile-email').textContent = user.email;
+
+      // Badge role
+      const roleBadge = document.getElementById('profile-role-badge');
+      if (profile.role === 'admin') {
+        roleBadge.textContent = 'Administrateur';
+        roleBadge.className = 'badge badge-admin';
+      }
+
+      // Remise
+      if (profile.discount_rate && profile.discount_rate > 0) {
+        document.getElementById('discount-badge').style.display = 'inline-flex';
+        document.getElementById('discount-value').textContent = profile.discount_rate;
+      }
+
+      // Stats (à implémenter avec les données réelles)
+      const memberSince = new Date(profile.created_at);
+      const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+      document.getElementById('stat-member-since').textContent = 
+        `${monthNames[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
+
+      // Formulaire personnel
+      document.getElementById('full-name').value = profile.full_name || '';
+      document.getElementById('company-name').value = profile.company_name || '';
+      document.getElementById('phone').value = profile.phone || '';
+      document.getElementById('address').value = profile.address || '';
+
+      // Compte
+      document.getElementById('account-email').textContent = user.email;
+      
+      if (user.last_sign_in_at) {
         const lastLogin = new Date(user.last_sign_in_at);
         const now = new Date();
         const diffMs = now - lastLogin;
@@ -279,156 +325,154 @@
         else if (diffDays > 0) lastLoginText = `Il y a ${diffDays}j`;
 
         document.getElementById('last-login').textContent = lastLoginText;
-
-      } catch (error) {
-        console.error('Erreur chargement profil:', error);
-        showAlert('personal', 'error', 'Erreur lors du chargement du profil');
       }
+
+    } catch (error) {
+      console.error('❌ Erreur chargement profil:', error);
+      showAlert('personal', 'error', 'Erreur lors du chargement du profil');
+    }
+  }
+
+  // Toggle mode édition
+  function toggleEdit(section) {
+    if (section === 'personal') {
+      const inputs = ['full-name', 'company-name', 'phone'];
+      const isDisabled = document.getElementById('full-name').disabled;
+
+      inputs.forEach(id => {
+        document.getElementById(id).disabled = !isDisabled;
+      });
+
+      document.getElementById('save-personal-btn').style.display = isDisabled ? 'block' : 'none';
+    } else if (section === 'address') {
+      const addressField = document.getElementById('address');
+      const isDisabled = addressField.disabled;
+
+      addressField.disabled = !isDisabled;
+      document.getElementById('save-address-btn').style.display = isDisabled ? 'block' : 'none';
+    }
+  }
+
+  // Sauvegarder informations personnelles
+  document.getElementById('personal-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('save-personal-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
+
+    hideAlerts('personal');
+
+    const updates = {
+      full_name: document.getElementById('full-name').value.trim(),
+      company_name: document.getElementById('company-name').value.trim(),
+      phone: document.getElementById('phone').value.trim()
+    };
+
+    const user = await AUTH.getCurrentUser();
+    const result = await AuthSystem.updateProfile(user.id, updates);
+
+    if (result.success) {
+      showAlert('personal', 'success', '✅ Informations mises à jour avec succès');
+      currentProfile = result.profile;
+      
+      // Désactiver les champs
+      toggleEdit('personal');
+      
+      // Recharger le header
+      if (window.updateHeaderAuthState) {
+        await window.updateHeaderAuthState();
+      }
+    } else {
+      showAlert('personal', 'error', result.message);
     }
 
-    // Toggle mode édition
-    function toggleEdit(section) {
-      if (section === 'personal') {
-        const inputs = ['full-name', 'company-name', 'phone'];
-        const isDisabled = document.getElementById('full-name').disabled;
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer les modifications';
+  });
 
-        inputs.forEach(id => {
-          document.getElementById(id).disabled = !isDisabled;
-        });
+  // Sauvegarder adresse
+  document.getElementById('address-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-        document.getElementById('save-personal-btn').style.display = isDisabled ? 'block' : 'none';
-      } else if (section === 'address') {
-        const addressField = document.getElementById('address');
-        const isDisabled = addressField.disabled;
+    const btn = document.getElementById('save-address-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
 
-        addressField.disabled = !isDisabled;
-        document.getElementById('save-address-btn').style.display = isDisabled ? 'block' : 'none';
-      }
+    hideAlerts('address');
+
+    const updates = {
+      address: document.getElementById('address').value.trim()
+    };
+
+    const user = await AUTH.getCurrentUser();
+    const result = await AuthSystem.updateProfile(user.id, updates);
+
+    if (result.success) {
+      showAlert('address', 'success', '✅ Adresse mise à jour avec succès');
+      currentProfile = result.profile;
+      toggleEdit('address');
+    } else {
+      showAlert('address', 'error', result.message);
     }
 
-    // Sauvegarder informations personnelles
-    document.getElementById('personal-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer l\'adresse';
+  });
 
-      const btn = document.getElementById('save-personal-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
+  // Réinitialiser mot de passe
+  async function resetPassword() {
+    const user = await AUTH.getCurrentUser();
+    const email = user?.email || currentProfile?.email;
 
-      hideAlerts('personal');
-
-      const updates = {
-        full_name: document.getElementById('full-name').value.trim(),
-        company_name: document.getElementById('company-name').value.trim(),
-        phone: document.getElementById('phone').value.trim()
-      };
-
-      const user = await AUTH.getCurrentUser();
-      const result = await AuthSystem.updateProfile(user.id, updates);
-
-      if (result.success) {
-        showAlert('personal', 'success', '✅ Informations mises à jour avec succès');
-        currentProfile = result.profile;
-        
-        // Désactiver les champs
-        toggleEdit('personal');
-        
-        // Recharger le header
-        await loadProfile();
-      } else {
-        showAlert('personal', 'error', result.message);
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer les modifications';
-    });
-
-    // Sauvegarder adresse
-    document.getElementById('address-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const btn = document.getElementById('save-address-btn');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
-
-      hideAlerts('address');
-
-      const updates = {
-        address: document.getElementById('address').value.trim()
-      };
-
-      const user = await AUTH.getCurrentUser();
-      const result = await AuthSystem.updateProfile(user.id, updates);
-
-      if (result.success) {
-        showAlert('address', 'success', '✅ Adresse mise à jour avec succès');
-        currentProfile = result.profile;
-        toggleEdit('address');
-      } else {
-        showAlert('address', 'error', result.message);
-      }
-
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer l\'adresse';
-    });
-
-    // Réinitialiser mot de passe
-    async function resetPassword() {
-      const email = currentProfile?.email || (await AUTH.getCurrentUser()).email;
-
-      if (confirm('Un email de réinitialisation va être envoyé à ' + email)) {
-        const result = await AuthSystem.resetPassword(email);
-        
-        if (result.success) {
-          alert(result.message);
-        } else {
-          alert(result.message);
-        }
-      }
+    if (!email) {
+      alert('❌ Email non trouvé');
+      return;
     }
 
-    // Supprimer compte
-    async function deleteAccount() {
-      const confirmation = prompt(
-        '⚠️ ATTENTION : Cette action est irréversible !\n\n' +
-        'Tous vos projets, devis et données seront définitivement supprimés.\n\n' +
-        'Tapez "SUPPRIMER" pour confirmer :'
-      );
-
-      if (confirmation === 'SUPPRIMER') {
-        alert('⚠️ La suppression de compte sera bientôt disponible. Contactez le support pour supprimer votre compte.');
-        
-        // TODO: Implémenter la suppression de compte
-        // const user = await AUTH.getCurrentUser();
-        // await supabase.auth.admin.deleteUser(user.id);
-        // await AuthSystem.logout();
-        // window.location.href = '/';
-      } else if (confirmation !== null) {
-        alert('❌ Suppression annulée : le texte ne correspond pas.');
-      }
+    if (confirm('Un email de réinitialisation va être envoyé à ' + email)) {
+      const result = await AuthSystem.resetPassword(email);
+      alert(result.message);
     }
+  }
 
-    // Afficher une alerte
-    function showAlert(section, type, message) {
+  // Supprimer compte
+  async function deleteAccount() {
+    const confirmation = prompt(
+      '⚠️ ATTENTION : Cette action est irréversible !\n\n' +
+      'Tous vos projets, devis et données seront définitivement supprimés.\n\n' +
+      'Tapez "SUPPRIMER" pour confirmer :'
+    );
+
+    if (confirmation === 'SUPPRIMER') {
+      alert('⚠️ La suppression de compte sera bientôt disponible. Contactez le support pour supprimer votre compte.');
+    } else if (confirmation !== null) {
+      alert('❌ Suppression annulée : le texte ne correspond pas.');
+    }
+  }
+
+  // Afficher une alerte
+  function showAlert(section, type, message) {
+    const alertElement = document.getElementById(`alert-${section}-${type}`);
+    if (alertElement) {
+      alertElement.textContent = message;
+      alertElement.style.display = 'block';
+
+      setTimeout(() => {
+        alertElement.style.display = 'none';
+      }, 5000);
+    }
+  }
+
+  // Masquer les alertes
+  function hideAlerts(section) {
+    ['success', 'error'].forEach(type => {
       const alertElement = document.getElementById(`alert-${section}-${type}`);
       if (alertElement) {
-        alertElement.textContent = message;
-        alertElement.style.display = 'block';
-
-        setTimeout(() => {
-          alertElement.style.display = 'none';
-        }, 5000);
+        alertElement.style.display = 'none';
       }
-    }
-
-    // Masquer les alertes
-    function hideAlerts(section) {
-      ['success', 'error'].forEach(type => {
-        const alertElement = document.getElementById(`alert-${section}-${type}`);
-        if (alertElement) {
-          alertElement.style.display = 'none';
-        }
-      });
-    }
-  </script>
+    });
+  }
+</script>
 </body>
 </html>
