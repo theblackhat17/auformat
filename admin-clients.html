@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion Clients — Admin Au Format</title>
+  
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Scripts auth -->
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+
+    <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_about.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+
+
+</head>
+
+<body>
+
+      <div data-include="partials/header.html"></div>
+  <!-- Sidebar (identique au dashboard) -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="/sources/img/logo_tmp.png" alt="Au Format">
+        <div>
+          <div class="sidebar-title">Au Format</div>
+          <div class="admin-badge">⚡ ADMIN</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Tableau de bord</div>
+      <a href="/admin.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Vue d'ensemble
+      </a>
+
+      <div class="nav-section-title">Gestion</div>
+      <a href="/admin-clients.html" class="nav-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        Clients
+      </a>
+
+      <a href="/admin-quotes.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+        </svg>
+        Devis
+      </a>
+
+      <a href="/admin-projects.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Projets
+      </a>
+
+      <div class="nav-section-title">Paramètres</div>
+      <a href="/admin-settings.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6"></path>
+        </svg>
+        Configuration
+      </a>
+
+      <div class="nav-section-title">Retour</div>
+      <a href="/admin.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"></path>
+        </svg>
+        Dashboard
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">👥 Gestion des Clients</h1>
+        <p class="page-subtitle">Gérez vos clients et leurs remises</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="exportClients()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Exporter CSV
+        </button>
+        <button class="btn btn-primary" onclick="refreshClients()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Actualiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+      <div class="search-box">
+        <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input 
+          type="text" 
+          class="search-input" 
+          id="search-input" 
+          placeholder="Rechercher un client (nom, email, entreprise...)"
+          onkeyup="filterClients()"
+        >
+      </div>
+
+      <select class="filter-select" id="role-filter" onchange="filterClients()">
+        <option value="all">Tous les rôles</option>
+        <option value="client">Clients</option>
+        <option value="admin">Admins</option>
+      </select>
+
+      <select class="filter-select" id="discount-filter" onchange="filterClients()">
+        <option value="all">Toutes les remises</option>
+        <option value="0">Sans remise</option>
+        <option value="1-10">1-10%</option>
+        <option value="11-25">11-25%</option>
+        <option value="26+">26%+</option>
+      </select>
+    </div>
+
+    <!-- Table des clients -->
+    <div class="clients-table-container">
+      <table class="clients-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Entreprise</th>
+            <th>Inscription</th>
+            <th>Remise</th>
+            <th>Rôle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="clients-tbody">
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">⏳</div>
+                <div class="empty-title">Chargement des clients...</div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Modal Modifier Remise -->
+  <div class="modal" id="discount-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Modifier la remise</h3>
+        <button class="modal-close" onclick="closeModal('discount-modal')">✕</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Client</label>
+        <input type="text" class="form-input" id="modal-client-name" disabled>
+      </div>
+
+      <div class="discount-value-display">
+        <span id="discount-display">0</span>%
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Remise accordée (%)</label>
+        <input 
+          type="range" 
+          class="discount-slider" 
+          id="discount-slider" 
+          min="0" 
+          max="50" 
+          value="0"
+          oninput="document.getElementById('discount-display').textContent = this.value"
+        >
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #64748b;">
+          <span>0%</span>
+          <span>25%</span>
+          <span>50%</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" style="flex: 1;" onclick="closeModal('discount-modal')">
+          Annuler
+        </button>
+        <button class="btn btn-primary" style="flex: 1;" onclick="saveDiscount()">
+          Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+
+      <div data-include="partials/footer.html"></div>
+
+  <script>
+    let allClients = [];
+    let currentClientId = null;
+
+    // Vérifier accès admin
+    (async function checkAccess() {
+      const isAdmin = await AUTH.requireAdmin();
+      if (!isAdmin) return;
+
+      await loadClients();
+    })();
+
+    // Charger tous les clients
+    async function loadClients() {
+      try {
+        const { data: clients, error } = await supabaseClient
+          .from('admin_client_stats')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allClients = clients || [];
+        displayClients(allClients);
+
+      } catch (error) {
+        console.error('Erreur chargement clients:', error);
+        document.getElementById('clients-tbody').innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">❌</div>
+                <div class="empty-title">Erreur de chargement</div>
+                <div class="empty-desc">${error.message}</div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Afficher les clients dans le tableau
+    function displayClients(clients) {
+      const tbody = document.getElementById('clients-tbody');
+
+      if (clients.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <div class="empty-icon">🔍</div>
+                <div class="empty-title">Aucun client trouvé</div>
+                <div class="empty-desc">Aucun résultat ne correspond à vos critères</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = clients.map(client => {
+        const initials = (client.full_name || client.email)
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+
+        const createdDate = new Date(client.created_at).toLocaleDateString('fr-FR');
+        const roleBadge = client.role === 'admin' 
+          ? '<span class="badge badge-admin">Admin</span>'
+          : '<span class="badge badge-client">Client</span>';
+
+        return `
+          <tr>
+            <td>
+              <div class="client-info">
+                <div class="client-avatar">${initials}</div>
+                <div class="client-details">
+                  <div class="client-name">${client.full_name || 'Utilisateur'}</div>
+                  <div class="client-email">${client.email}</div>
+                </div>
+              </div>
+            </td>
+            <td>${client.company_name || '-'}</td>
+            <td>${createdDate}</td>
+            <td>
+              ${client.discount_rate > 0 
+                ? `<span class="discount-badge">${client.discount_rate}%</span>` 
+                : '-'}
+            </td>
+            <td>${roleBadge}</td>
+            <td>
+              <div class="actions-cell">
+                <button class="action-btn action-btn-discount" onclick="openDiscountModal('${client.id}')" title="Modifier remise">
+                  💰
+                </button>
+                <button class="action-btn action-btn-promote" onclick="toggleAdmin('${client.id}')" title="${client.role === 'admin' ? 'Rétrograder' : 'Promouvoir admin'}">
+                  ${client.role === 'admin' ? '⬇️' : '⬆️'}
+                </button>
+                <button class="action-btn action-btn-edit" onclick="window.location.href='/admin-client-detail.html?id=${client.id}'" title="Voir détails">
+                  👁️
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Filtrer les clients
+    function filterClients() {
+      const searchTerm = document.getElementById('search-input').value.toLowerCase();
+      const roleFilter = document.getElementById('role-filter').value;
+      const discountFilter = document.getElementById('discount-filter').value;
+
+      let filtered = allClients.filter(client => {
+        // Filtre recherche
+        const matchesSearch = !searchTerm || 
+          client.full_name?.toLowerCase().includes(searchTerm) ||
+          client.email.toLowerCase().includes(searchTerm) ||
+          client.company_name?.toLowerCase().includes(searchTerm);
+
+        // Filtre rôle
+        const matchesRole = roleFilter === 'all' || client.role === roleFilter;
+
+        // Filtre remise
+        let matchesDiscount = true;
+        if (discountFilter !== 'all') {
+          const discount = client.discount_rate || 0;
+          if (discountFilter === '0') matchesDiscount = discount === 0;
+          else if (discountFilter === '1-10') matchesDiscount = discount >= 1 && discount <= 10;
+          else if (discountFilter === '11-25') matchesDiscount = discount >= 11 && discount <= 25;
+          else if (discountFilter === '26+') matchesDiscount = discount >= 26;
+        }
+
+        return matchesSearch && matchesRole && matchesDiscount;
+      });
+
+      displayClients(filtered);
+    }
+
+    // Ouvrir modal remise
+    function openDiscountModal(clientId) {
+      const client = allClients.find(c => c.id === clientId);
+      if (!client) return;
+
+      currentClientId = clientId;
+      document.getElementById('modal-client-name').value = client.full_name || client.email;
+      document.getElementById('discount-slider').value = client.discount_rate || 0;
+      document.getElementById('discount-display').textContent = client.discount_rate || 0;
+
+      openModal('discount-modal');
+    }
+
+    // Sauvegarder la remise
+    async function saveDiscount() {
+      if (!currentClientId) return;
+
+      const newDiscount = parseInt(document.getElementById('discount-slider').value);
+
+      try {
+        const { error } = await supabaseClient
+          .from('profiles')
+          .update({ discount_rate: newDiscount })
+          .eq('id', currentClientId);
+
+        if (error) throw error;
+
+        // Logger l'activité
+        const user = await AUTH.getCurrentUser();
+        await supabaseClient.rpc('log_admin_activity', {
+          p_admin_id: user.id,
+          p_action_type: 'update_client_discount',
+          p_target_type: 'client',
+          p_target_id: currentClientId,
+          p_details: { old_discount: allClients.find(c => c.id === currentClientId).discount_rate, new_discount: newDiscount }
+        });
+
+        alert(`✅ Remise mise à jour : ${newDiscount}%`);
+        closeModal('discount-modal');
+        await loadClients();
+
+      } catch (error) {
+        console.error('Erreur mise à jour remise:', error);
+        alert('❌ Erreur lors de la mise à jour de la remise');
+      }
+    }
+
+    // Toggle admin
+    async function toggleAdmin(clientId) {
+      const client = allClients.find(c => c.id === clientId);
+      if (!client) return;
+
+      const newRole = client.role === 'admin' ? 'client' : 'admin';
+      const action = newRole === 'admin' ? 'promouvoir en administrateur' : 'rétrograder en client';
+
+      if (!confirm(`Êtes-vous sûr de vouloir ${action} ${client.full_name || client.email} ?`)) {
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('profiles')
+          .update({ role: newRole })
+          .eq('id', clientId);
+
+        if (error) throw error;
+
+        // Logger l'activité
+        const user = await AUTH.getCurrentUser();
+        await supabaseClient.rpc('log_admin_activity', {
+          p_admin_id: user.id,
+          p_action_type: newRole === 'admin' ? 'promote_admin' : 'demote_admin',
+          p_target_type: 'client',
+          p_target_id: clientId,
+          p_details: { old_role: client.role, new_role: newRole }
+        });
+
+        alert(`✅ ${client.full_name || client.email} est maintenant ${newRole === 'admin' ? 'administrateur' : 'client'}`);
+        await loadClients();
+
+      } catch (error) {
+        console.error('Erreur changement rôle:', error);
+        alert('❌ Erreur lors du changement de rôle');
+      }
+    }
+
+    // Exporter les clients en CSV
+    function exportClients() {
+      const csv = [
+        ['Nom', 'Email', 'Entreprise', 'Téléphone', 'Remise', 'Rôle', 'Inscription', 'Projets', 'Devis', 'CA Total'].join(','),
+        ...allClients.map(c => [
+          c.full_name || '',
+          c.email,
+          c.company_name || '',
+          c.phone || '',
+          c.discount_rate || 0,
+          c.role,
+          new Date(c.created_at).toLocaleDateString('fr-FR'),
+          c.total_projects || 0,
+          c.total_quotes || 0,
+          c.total_revenue || 0
+        ].join(','))
+      ].join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `clients_auformat_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+
+      alert('✅ Export CSV téléchargé');
+    }
+
+    // Actualiser
+    async function refreshClients() {
+      await loadClients();
+      alert('✅ Liste des clients actualisée');
+    }
+
+    // Helpers modal
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+      currentClientId = null;
+    }
+
+    // Fermer modal en cliquant à l'extérieur
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          closeModal(modal.id);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
