@@ -46,7 +46,6 @@
     # 🧠 CSP : politique de contenu stricte et moderne
     Content-Security-Policy = '''
       default-src 'self';
-      script-src 'self' 'unsafe-inline' https://identity.netlify.com;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data:;
       font-src 'self';
