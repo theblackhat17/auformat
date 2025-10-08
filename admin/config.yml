@@ -12,7 +12,7 @@ media_library:
 
 # URL publique du site
 publish_mode: editorial_workflow
-media_folder: "sources/images/uploads" # Dossier de fallback
+media_folder: "sources/images/uploads" # Dossier de fallback si Cloudinary ne marche pas
 public_folder: "/sources/images/uploads"
 
 # Langue de l'interface
