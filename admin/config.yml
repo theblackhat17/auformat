@@ -1,25 +1,25 @@
 # Configuration Netlify CMS pour Au Format
 backend:
   name: git-gateway
-  branch: main # ou master selon votre repo
+  branch: main
 
-# # Configuration de l'upload d'images avec Cloudinary
-# media_library:
-#   name: cloudinary
-#   config:
-#     cloud_name: do3txikfd # À remplacer par votre cloud name Cloudinary
-#     api_key: CMtRdssLu6YJLKlsd5odjKWL-6E # À remplacer par votre API key Cloudinary
+# Configuration de l'upload d'images avec Cloudinary
+# IMPORTANT: Seul le cloud_name est nécessaire pour Netlify CMS
+media_library:
+  name: cloudinary
+  config:
+    cloud_name: do3txikfd
+    # PAS d'API key nécessaire ici - Cloudinary gère l'authentification côté serveur
 
 # URL publique du site
 publish_mode: editorial_workflow
-media_folder: "sources/images/uploads" # Dossier de fallback si Cloudinary ne marche pas
-public_folder: "/sources/images/uploads"
+media_folder: "sources/img/uploads"
+public_folder: "/sources/img/uploads"
 
 # Langue de l'interface
 locale: 'fr'
 
 # IMPORTANT : Format de sortie
-# Les fichiers seront en JSON pour faciliter le chargement JavaScript
 extension: 'json'
 format: 'json'
 
