@@ -11,6 +11,7 @@ const AuthSystem = {
         email: email,
         password: password,
         options: {
+          emailRedirectTo: `${window.location.origin}/auth-callback.html`,
           data: {
             full_name: fullName,
             company_name: companyName

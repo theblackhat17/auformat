@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirmation — Au Format</title>
+  
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/config.js"></script>
+
+ 
+</head>
+
+<body>
+  <div class="callback-container">
+    <!-- État de chargement -->
+    <div id="loading">
+      <div class="spinner"></div>
+      <h1>Vérification en cours...</h1>
+      <p>Veuillez patienter pendant que nous confirmons votre compte.</p>
+    </div>
+
+    <!-- Message de succès -->
+    <div id="message">
+      <div id="icon"></div>
+      <h1 id="title"></h1>
+      <p id="description"></p>
+      <a href="/profile.html" class="btn" id="cta-btn">Accéder à mon compte</a>
+      <div class="countdown" id="countdown"></div>
+    </div>
+  </div>
+
+  <script>
+    (async function handleAuthCallback() {
+      try {
+        // Récupérer les paramètres de l'URL
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+        const error = hashParams.get('error');
+        const errorDescription = hashParams.get('error_description');
+
+        // Si erreur dans l'URL
+        if (error) {
+          showMessage(
+            'error',
+            '❌',
+            'Erreur de confirmation',
+            errorDescription || 'Une erreur est survenue lors de la confirmation de votre compte.',
+            '/register.html',
+            'Créer un nouveau compte'
+          );
+          return;
+        }
+
+        // Si pas de token
+        if (!accessToken) {
+          showMessage(
+            'error',
+            '⚠️',
+            'Lien invalide',
+            'Le lien de confirmation est invalide ou a expiré. Veuillez vous inscrire à nouveau.',
+            '/register.html',
+            'Créer un compte'
+          );
+          return;
+        }
+
+        // Vérifier le type d'action
+        if (type === 'signup') {
+          // Confirmation d'inscription
+          const { data: { user }, error: userError } = await supabaseClient.auth.getUser(accessToken);
+
+          if (userError || !user) {
+            throw new Error('Impossible de récupérer les informations utilisateur');
+          }
+
+          // Succès !
+          showMessage(
+            'success',
+            '✅',
+            'Compte confirmé avec succès !',
+            `Bienvenue ${user.user_metadata?.full_name || user.email} ! Votre compte a été activé. Vous allez être redirigé vers votre profil.`,
+            '/profile.html',
+            'Accéder à mon compte'
+          );
+
+          // Redirection automatique après 3 secondes
+          startCountdown(3);
+
+        } else if (type === 'recovery') {
+          // Réinitialisation de mot de passe
+          showMessage(
+            'success',
+            '🔐',
+            'Réinitialisation du mot de passe',
+            'Vous allez être redirigé vers la page de changement de mot de passe.',
+            '/reset-password.html',
+            'Changer le mot de passe'
+          );
+
+          startCountdown(2);
+
+        } else {
+          // Type inconnu - rediriger vers login
+          showMessage(
+            'success',
+            '✅',
+            'Authentification réussie',
+            'Vous allez être redirigé vers votre espace.',
+            '/profile.html',
+            'Continuer'
+          );
+
+          startCountdown(2);
+        }
+
+      } catch (error) {
+        console.error('Erreur callback auth:', error);
+        
+        showMessage(
+          'error',
+          '❌',
+          'Erreur inattendue',
+          'Une erreur est survenue. Veuillez réessayer ou contacter le support.',
+          '/login.html',
+          'Retour à la connexion'
+        );
+      }
+    })();
+
+    function showMessage(type, icon, title, description, href, btnText) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('message').style.display = 'block';
+
+      document.getElementById('icon').innerHTML = `<div class="${type}-icon">${icon}</div>`;
+      document.getElementById('title').textContent = title;
+      document.getElementById('description').textContent = description;
+      
+      const btn = document.getElementById('cta-btn');
+      btn.href = href;
+      btn.textContent = btnText;
+    }
+
+    function startCountdown(seconds) {
+      const countdownEl = document.getElementById('countdown');
+      const btn = document.getElementById('cta-btn');
+      let remaining = seconds;
+
+      const updateCountdown = () => {
+        if (remaining > 0) {
+          countdownEl.textContent = `Redirection automatique dans ${remaining} seconde${remaining > 1 ? 's' : ''}...`;
+          remaining--;
+          setTimeout(updateCountdown, 1000);
+        } else {
+          window.location.href = btn.href;
+        }
+      };
+
+      updateCountdown();
+    }
+  </script>
+</body>
+</html>
