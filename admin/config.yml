@@ -8,8 +8,11 @@ backend:
 media_library:
   name: cloudinary
   config:
-    cloud_name: do3txikfd
-    # PAS d'API key nécessaire ici - Cloudinary gère l'authentification côté serveur
+    cloud_name: do3txikfd           # ton Cloud Name
+    api_key: "vtMHkhSfk0yK5w4rqGc9xM8RFt0"  # clé API publique Cloudinary
+    # (facultatif) dossier par défaut dans Cloudinary
+    default_transformations: []
+    upload_preset: "netlify_cms"
 
 # URL publique du site
 publish_mode: editorial_workflow
