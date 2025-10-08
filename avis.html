@@ -10,7 +10,7 @@
 </head>
 <body>
     <!-- Header -->
-<div data-include="partials/header.html"></div>
+    <div data-include="partials/header.html"></div>
 
     <!-- Hero Section -->
     <section class="page-hero">
@@ -20,354 +20,65 @@
         </div>
     </section>
 
-    <!-- Stats Section -->
+    <!-- Stats Section (DYNAMIQUE depuis CMS) -->
     <section class="stats-section">
         <div class="stats-container">
-            <div class="stats-grid">
+            <div class="stats-grid" id="avis-stats">
+                <!-- Les statistiques seront calculées dynamiquement -->
                 <div class="stat-box">
                     <div class="stat-icon">⭐</div>
-                    <div class="stat-number">4.9/5</div>
+                    <div class="stat-number" data-stat="average">5.0/5</div>
                     <div class="stat-label">Note Moyenne</div>
-                    <div class="stat-sublabel">Sur 127 avis</div>
+                    <div class="stat-sublabel">Sur <span data-stat="total">0</span> avis</div>
                 </div>
 
                 <div class="stat-box">
-                    <div class="stat-icon">😊</div>
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Clients Satisfaits</div>
-                    <div class="stat-sublabel">Recommanderaient nos services</div>
+                    <div class="stat-icon">✓</div>
+                    <div class="stat-number" data-stat="verified">0</div>
+                    <div class="stat-label">Avis Vérifiés</div>
+                    <div class="stat-sublabel">Témoignages authentiques</div>
                 </div>
 
                 <div class="stat-box">
-                    <div class="stat-icon">🔄</div>
-                    <div class="stat-number">85%</div>
-                    <div class="stat-label">Clients Fidèles</div>
-                    <div class="stat-sublabel">Refont appel à nous</div>
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number" data-stat="particuliers">0</div>
+                    <div class="stat-label">Particuliers</div>
+                    <div class="stat-sublabel">Clients satisfaits</div>
                 </div>
 
                 <div class="stat-box">
-                    <div class="stat-icon">🏆</div>
-                    <div class="stat-number">500+</div>
-                    <div class="stat-label">Projets Réalisés</div>
-                    <div class="stat-sublabel">Depuis 2010</div>
+                    <div class="stat-icon">🏢</div>
+                    <div class="stat-number" data-stat="professionnels">0</div>
+                    <div class="stat-label">Professionnels</div>
+                    <div class="stat-sublabel">Entreprises partenaires</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Filtres -->
+    <!-- Filtres (DYNAMIQUE - générés selon les types de projets disponibles) -->
     <section class="filter-section">
-        <div class="filter-container">
+        <div class="filter-container" id="avis-filters">
             <button class="filter-btn active" data-filter="tous">Tous les avis</button>
-            <button class="filter-btn" data-filter="cuisines">Cuisines</button>
-            <button class="filter-btn" data-filter="dressings">Dressings</button>
-            <button class="filter-btn" data-filter="bibliotheques">Bibliothèques</button>
-            <button class="filter-btn" data-filter="commerces">Commerces</button>
-            <button class="filter-btn" data-filter="escaliers">Escaliers</button>
+            <!-- Les autres filtres seront générés dynamiquement -->
         </div>
     </section>
 
-    <!-- Avis Section -->
-<section class="avis-section">
-    <h2 class="section-title">Ce Que Disent Nos Clients</h2>
-    <p class="section-subtitle">Témoignages authentiques et vérifiés</p>
+    <!-- Avis Section (DYNAMIQUE depuis CMS) -->
+    <section class="avis-section">
+        <h2 class="section-title">Ce Que Disent Nos Clients</h2>
+        <p class="section-subtitle">Témoignages authentiques et vérifiés</p>
 
-    <div class="avis-grid">
-        <!-- Avis 1 -->
-        <div class="avis-card" data-category="cuisines">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Clément
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Lille Centre • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
+        <div class="avis-grid" id="avis-grid">
+            <!-- Les avis seront chargés dynamiquement depuis Netlify CMS -->
+            <div class="loading" style="grid-column: 1/-1; text-align: center; padding: 4rem;">
+                <p>Chargement des avis...</p>
             </div>
-            <span class="avis-project">Cuisine sur-mesure</span>
-            <p class="avis-text">
-                Nous avons confié notre cuisine à Au Format et le résultat est exceptionnel. 
-                Les matériaux sont de qualité et l’équipe a su optimiser l’espace. 
-                Le rendu est chaleureux et fonctionnel, au-delà de nos attentes.
-            </p>
-            <div class="avis-date">Il y a 2 semaines</div>
         </div>
+    </section>
 
-        <!-- Avis 2 -->
-        <div class="avis-card" data-category="dressings">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Gilles
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Villeneuve-d’Ascq • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Dressing sur-mesure</span>
-            <p class="avis-text">
-                Excellent travail ! Mon dressing exploite chaque recoin disponible avec des finitions impeccables. 
-                Équipe à l’écoute, délais respectés et un rendu au top. 
-                Je recommande sans hésitation.
-            </p>
-            <div class="avis-date">Il y a 1 mois</div>
-        </div>
-
-        <!-- Avis 3 -->
-        <div class="avis-card" data-category="bibliotheques">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Florian
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">La Madeleine • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Bibliothèque murale</span>
-            <p class="avis-text">
-                Une bibliothèque splendide qui habille parfaitement notre salon. 
-                Le bois choisi et l’éclairage intégré font toute la différence. 
-                Travail artisanal soigné et résultat élégant.
-            </p>
-            <div class="avis-date">Il y a 1 mois</div>
-        </div>
-
-        <!-- Avis 4 -->
-        <div class="avis-card" data-category="commerces">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Clément
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Roubaix • Professionnel</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Agencement boutique</span>
-            <p class="avis-text">
-                En tant que commerçant, j’avais besoin d’un agencement unique. 
-                Au Format a conçu un espace fonctionnel et esthétique qui séduit nos clients. 
-                Une équipe créative et fiable.
-            </p>
-            <div class="avis-date">Il y a 2 mois</div>
-        </div>
-
-        <!-- Avis 5 -->
-        <div class="avis-card" data-category="cuisines">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Gilles
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Tourcoing • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Cuisine & îlot central</span>
-            <p class="avis-text">
-                Transformation réussie ! L’îlot central est pratique et magnifique. 
-                L’équipe a su répondre à toutes nos attentes avec patience et professionnalisme. 
-                Une vraie valeur ajoutée à notre maison.
-            </p>
-            <div class="avis-date">Il y a 2 mois</div>
-        </div>
-
-        <!-- Avis 6 -->
-        <div class="avis-card" data-category="escaliers">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Florian
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Marcq-en-Barœul • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Escalier design</span>
-            <p class="avis-text">
-                Notre escalier est une véritable pièce maîtresse. 
-                Mélange bois et métal réussi, finitions parfaites et robustesse assurée. 
-                Bravo à toute l’équipe !
-            </p>
-            <div class="avis-date">Il y a 3 mois</div>
-        </div>
-
-        <!-- Avis 7 -->
-        <div class="avis-card" data-category="dressings">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Clément
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Wasquehal • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Dressing d’angle</span>
-            <p class="avis-text">
-                Optimisation parfaite d’un espace compliqué. 
-                Solutions astucieuses et qualité irréprochable. 
-                Je recommande fortement Au Format.
-            </p>
-            <div class="avis-date">Il y a 3 mois</div>
-        </div>
-
-        <!-- Avis 8 -->
-        <div class="avis-card" data-category="bibliotheques">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Gilles
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Lambersart • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Meuble TV & bibliothèque</span>
-            <p class="avis-text">
-                Résultat impeccable ! 
-                Meuble TV et bibliothèque parfaitement intégrés à notre salon. 
-                Respect des délais et travail soigné. 
-                Un rapport qualité-prix imbattable.
-            </p>
-            <div class="avis-date">Il y a 4 mois</div>
-        </div>
-
-        <!-- Avis 9 -->
-        <div class="avis-card" data-category="cuisines">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Florian
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Armentières • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Cuisine rustique moderne</span>
-            <p class="avis-text">
-                Une cuisine qui combine charme et modernité. 
-                Bois patiné superbe, équipements bien pensés et chantier parfaitement géré. 
-                Résultat qui correspond exactement à nos attentes.
-            </p>
-            <div class="avis-date">Il y a 4 mois</div>
-        </div>
-
-        <!-- Avis 10 -->
-        <div class="avis-card" data-category="commerces">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Gilles
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Lille Wazemmes • Professionnel</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Bar - restaurant</span>
-            <p class="avis-text">
-                Aménagement complet de notre restaurant. 
-                Comptoir en bois massif splendide et banquettes sur-mesure confortables. 
-                Équipe créative et respectueuse des délais. 
-                Un vrai partenaire de confiance.
-            </p>
-            <div class="avis-date">Il y a 5 mois</div>
-        </div>
-
-        <!-- Avis 11 -->
-        <div class="avis-card" data-category="dressings">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Clément
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Seclin • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Dressing avec miroirs</span>
-            <p class="avis-text">
-                Dressing parfaitement conçu avec miroirs intégrés. 
-                Optimisation intelligente et finitions haut de gamme. 
-                Je suis ravi du résultat. Merci Au Format !
-            </p>
-            <div class="avis-date">Il y a 5 mois</div>
-        </div>
-
-        <!-- Avis 12 -->
-        <div class="avis-card" data-category="bibliotheques">
-            <span class="quote-icon">"</span>
-            <div class="avis-header">
-                <div class="avis-author">
-                    <div class="author-name">
-                        Florian
-                        <span class="verified-badge">✓ Vérifié</span>
-                    </div>
-                    <div class="author-info">Hem • Particulier</div>
-                </div>
-                <div class="avis-rating">
-                    <span class="stars">★★★★★</span>
-                </div>
-            </div>
-            <span class="avis-project">Bibliothèque bureau</span>
-            <p class="avis-text">
-                Une bibliothèque de bureau élégante et pratique. 
-                Le choix du bois est superbe et l’éclairage met parfaitement en valeur mes livres. 
-                Travail de grande qualité et équipe passionnée. 
-            </p>
-            <div class="avis-date">Il y a 6 mois</div>
-        </div>
-    </div>
-</section>
-
-
-    <!-- Témoignages Vidéo -->
-    <section class="video-section">
+    <!-- Témoignages Vidéo (STATIQUE - optionnel pour l'instant) -->
+    <section class="video-section" style="display: none;">
         <div class="video-container">
             <h2 class="section-title">Témoignages Vidéo</h2>
             <p class="section-subtitle">Nos clients partagent leur expérience</p>
@@ -378,45 +89,11 @@
                         <div class="play-button">▶</div>
                     </div>
                     <div class="video-info">
-                        <h3 class="video-title">Cuisine complète à Lyon 3</h3>
+                        <h3 class="video-title">Cuisine complète</h3>
                         <p class="video-description">Marie nous raconte son expérience et nous fait découvrir sa cuisine sur-mesure en chêne massif.</p>
                     </div>
                 </div>
-
-                <div class="video-card">
-                    <div class="video-thumbnail">
-                        <div class="play-button">▶</div>
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">Agencement boutique Presqu'île</h3>
-                        <p class="video-description">Julien, gérant de boutique, explique comment Au Format a transformé son espace commercial.</p>
-                    </div>
-                </div>
-
-                <div class="video-card">
-                    <div class="video-thumbnail">
-                        <div class="play-button">▶</div>
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">Dressing suite parentale</h3>
-                        <p class="video-description">Découverte d'un dressing optimisé avec Thomas et les solutions de rangement ingénieuses.</p>
-                    </div>
-                </div>
             </div>
-        </div>
-    </section>
-
-    <!-- Google Reviews -->
-    <section class="google-section">
-        <h2 class="section-title">Retrouvez-nous sur Google</h2>
-        <p class="section-subtitle">Consultez tous nos avis clients</p>
-
-        <div class="google-widget">
-            <div class="google-logo">🔍</div>
-            <div class="google-rating">4.9</div>
-            <div class="google-stars">★★★★★</div>
-            <div class="google-count">Basé sur 127 avis Google</div>
-            <a href="#" class="btn btn-primary">Voir tous les avis Google</a>
         </div>
     </section>
 
@@ -427,92 +104,254 @@
         <a href="contact.html" class="btn btn-white">Demander un devis gratuit</a>
     </section>
 
-<div data-include="partials/footer.html"></div>
+    <div data-include="partials/footer.html"></div>
 
-  <!-- charge le script en bas pour éviter le FOUC -->
-  <script src="js/include.js" defer></script>
+    <!-- Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 
-  <!-- Fallback si JS désactivé (SEO ok) -->
-  <noscript>
-    <div>Activez JavaScript pour afficher l’en-tête et le pied de page.</div>
-  </noscript>
+    <!-- Script pour charger le contenu depuis le CMS -->
+    <script src="js/load-content.js"></script>
 
+    <!-- Script pour inclure header/footer -->
+    <script src="js/include.js" defer></script>
+
+    <!-- Script principal pour charger et afficher les avis -->
     <script>
-        // Gestion des filtres
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const avisCards = document.querySelectorAll('.avis-card');
+        let allAvis = [];
 
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Retirer la classe active de tous les boutons
-                filterBtns.forEach(b => b.classList.remove('active'));
-                // Ajouter la classe active au bouton cliqué
-                btn.classList.add('active');
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllAvisPage();
+        });
 
-                const filter = btn.dataset.filter;
+        // Fonction pour charger tous les avis
+        async function loadAllAvisPage() {
+            try {
+                const response = await fetch('/api/avis.json');
+                const avis = await response.json();
 
-                avisCards.forEach(card => {
-                    if (filter === 'tous' || card.dataset.category === filter) {
-                        card.style.display = 'block';
-                        setTimeout(() => {
-                            card.style.opacity = '1';
-                            card.style.transform = 'translateY(0)';
-                        }, 10);
-                    } else {
-                        card.style.opacity = '0';
-                        card.style.transform = 'translateY(20px)';
-                        setTimeout(() => {
-                            card.style.display = 'none';
-                        }, 300);
-                    }
+                const container = document.getElementById('avis-grid');
+                if (!container) return;
+
+                // Trier par date (plus récent en premier)
+                avis.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                // Filtrer uniquement les avis publiés
+                const published = avis.filter(a => a.published !== false);
+                allAvis = published;
+
+                // Afficher les avis
+                displayAvis(published);
+
+                // Créer les filtres dynamiques
+                createAvisFilters(published);
+
+                // Calculer et afficher les statistiques
+                displayAvisStatistics(published);
+
+                // Réinitialiser les animations
+                initAnimations();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des avis:', error);
+                const container = document.getElementById('avis-grid');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-message" style="grid-column: 1/-1; text-align: center; padding: 2rem;">
+                            <p>❌ Impossible de charger les avis pour le moment.</p>
+                            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
+                                Vérifiez que le fichier /api/avis.json existe.
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Afficher les avis dans la grille
+        function displayAvis(avisList) {
+            const container = document.getElementById('avis-grid');
+            
+            container.innerHTML = avisList.map(avisItem => {
+                const stars = '★'.repeat(avisItem.rating || 5) + '☆'.repeat(5 - (avisItem.rating || 5));
+                const projectType = avisItem.projectType || 'Autre';
+                const verified = avisItem.verified ? '<span class="verified-badge">✓ Vérifié</span>' : '';
+                const clientType = avisItem.clientType || 'Particulier';
+                
+                return `
+                    <div class="avis-card" data-category="${projectType.toLowerCase()}">
+                        <span class="quote-icon">"</span>
+                        <div class="avis-header">
+                            <div class="avis-author">
+                                <div class="author-name">
+                                    ${avisItem.name}
+                                    ${verified}
+                                </div>
+                                <div class="author-info">${avisItem.location} • ${clientType}</div>
+                            </div>
+                            <div class="avis-rating">
+                                <span class="stars">${stars}</span>
+                            </div>
+                        </div>
+                        <span class="avis-project">${projectType}</span>
+                        <p class="avis-text">${avisItem.testimonial}</p>
+                        <div class="avis-date">${formatDate(avisItem.date)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Créer les filtres dynamiques selon les types de projets
+        function createAvisFilters(avisList) {
+            const filterContainer = document.getElementById('avis-filters');
+            if (!filterContainer) return;
+
+            // Obtenir les types de projets uniques
+            const projectTypes = [...new Set(avisList.map(a => a.projectType))].filter(Boolean);
+
+            // Mapper les types aux catégories pour correspondre aux data-category
+            const typeToCategory = {
+                'Cuisine': 'cuisine',
+                'Dressing': 'dressing',
+                'Bibliothèque': 'bibliothèque',
+                'Commerce': 'commerce',
+                'Escalier': 'escalier',
+                'Autre': 'autre'
+            };
+
+            filterContainer.innerHTML = `
+                <button class="filter-btn active" data-filter="tous">Tous les avis</button>
+                ${projectTypes.map(type => `
+                    <button class="filter-btn" data-filter="${typeToCategory[type] || type.toLowerCase()}">
+                        ${type}
+                    </button>
+                `).join('')}
+            `;
+
+            // Ajouter les événements aux filtres
+            setupFilterButtons();
+        }
+
+        // Configurer les boutons de filtre
+        function setupFilterButtons() {
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            const avisCards = document.querySelectorAll('.avis-card');
+
+            filterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Retirer la classe active de tous les boutons
+                    filterBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+
+                    const filter = btn.dataset.filter;
+
+                    avisCards.forEach(card => {
+                        const cardCategory = card.dataset.category;
+                        if (filter === 'tous' || cardCategory === filter || cardCategory.includes(filter)) {
+                            card.style.display = 'block';
+                            setTimeout(() => {
+                                card.style.opacity = '1';
+                                card.style.transform = 'translateY(0)';
+                            }, 10);
+                        } else {
+                            card.style.opacity = '0';
+                            card.style.transform = 'translateY(20px)';
+                            setTimeout(() => {
+                                card.style.display = 'none';
+                            }, 300);
+                        }
+                    });
                 });
             });
-        });
+        }
 
-        // Animation au scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
+        // Calculer et afficher les statistiques
+        function displayAvisStatistics(avisList) {
+            const totalAvis = avisList.length;
+            const averageRating = (avisList.reduce((sum, a) => sum + (a.rating || 5), 0) / totalAvis).toFixed(1);
+            const verifiedCount = avisList.filter(a => a.verified).length;
+            const particuliersCount = avisList.filter(a => a.clientType === 'Particulier').length;
+            const professionnelsCount = avisList.filter(a => a.clientType === 'Professionnel').length;
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
+            // Mettre à jour les statistiques
+            document.querySelector('[data-stat="average"]').textContent = averageRating + '/5';
+            document.querySelector('[data-stat="total"]').textContent = totalAvis;
+            document.querySelector('[data-stat="verified"]').textContent = verifiedCount;
+            document.querySelector('[data-stat="particuliers"]').textContent = particuliersCount;
+            document.querySelector('[data-stat="professionnels"]').textContent = professionnelsCount;
+        }
+
+        // Formater la date
+        function formatDate(dateString) {
+            if (!dateString) return 'Récemment';
+            
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 7) return 'Il y a quelques jours';
+            if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaine${Math.floor(diffDays / 7) > 1 ? 's' : ''}`;
+            if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
+            return `Il y a ${Math.floor(diffDays / 365)} an${Math.floor(diffDays / 365) > 1 ? 's' : ''}`;
+        }
+
+        // Initialiser les animations
+        function initAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observer pour les cartes d'avis
+            const avisCards = document.querySelectorAll('.avis-card');
+            avisCards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
+                observer.observe(card);
             });
-        }, observerOptions);
 
-        // Observer pour les cartes d'avis
-        avisCards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
-            observer.observe(card);
-        });
+            // Observer pour les stats
+            const statBoxes = document.querySelectorAll('.stat-box');
+            statBoxes.forEach((box, index) => {
+                box.style.opacity = '0';
+                box.style.transform = 'scale(0.8)';
+                box.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+                observer.observe(box);
+            });
 
-        // Observer pour les stats
-        const statBoxes = document.querySelectorAll('.stat-box');
-        statBoxes.forEach((box, index) => {
-            box.style.opacity = '0';
-            box.style.transform = 'scale(0.8)';
-            box.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
-            observer.observe(box);
-        });
+            // Animation des nombres dans les stats
+            const statsObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const statNumbers = entry.target.querySelectorAll('.stat-number, [data-stat]');
+                        statNumbers.forEach(statNumber => {
+                            const text = statNumber.textContent;
+                            if (text && !isNaN(parseInt(text))) {
+                                animateNumber(statNumber, parseInt(text));
+                            }
+                        });
+                        statsObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 });
 
-        // Observer pour les vidéos
-        const videoCards = document.querySelectorAll('.video-card');
-        videoCards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
-            observer.observe(card);
-        });
+            const statsGrid = document.getElementById('avis-stats');
+            if (statsGrid) statsObserver.observe(statsGrid);
+        }
 
-        // Animation des nombres dans les stats
-        const animateNumber = (element, target) => {
-            const duration = 2000;
+        // Animer un nombre
+        function animateNumber(element, target) {
+            const duration = 1500;
             const start = 0;
             const increment = target / (duration / 16);
             let current = start;
@@ -523,57 +362,28 @@
                     element.textContent = target;
                     clearInterval(timer);
                 } else {
-                    if (target % 1 === 0) {
-                        element.textContent = Math.floor(current);
-                    } else {
-                        element.textContent = current.toFixed(1);
-                    }
+                    element.textContent = Math.floor(current);
                 }
             }, 16);
-        };
+        }
 
-        // Observer pour animer les nombres
-        const statsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const statNumber = entry.target.querySelector('.stat-number');
-                    const text = statNumber.textContent;
-                    
-                    if (text.includes('%')) {
-                        const num = parseInt(text);
-                        statNumber.textContent = '0%';
-                        setTimeout(() => {
-                            animateNumber(statNumber, num);
-                            setTimeout(() => {
-                                statNumber.textContent = num + '%';
-                            }, 2000);
-                        }, 300);
-                    } else if (text.includes('/')) {
-                        const num = parseFloat(text);
-                        statNumber.textContent = '0.0/5';
-                        setTimeout(() => {
-                            animateNumber(statNumber, num);
-                            setTimeout(() => {
-                                statNumber.textContent = num + '/5';
-                            }, 2000);
-                        }, 300);
-                    } else if (text.includes('+')) {
-                        const num = parseInt(text);
-                        statNumber.textContent = '0+';
-                        setTimeout(() => {
-                            animateNumber(statNumber, num);
-                            setTimeout(() => {
-                                statNumber.textContent = num + '+';
-                            }, 2000);
-                        }, 300);
-                    }
-                    
-                    statsObserver.unobserve(entry.target);
+        // Gestion Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
                 }
             });
-        }, { threshold: 0.5 });
-
-        statBoxes.forEach(box => statsObserver.observe(box));
+        }
     </script>
+
+    <!-- Fallback si JS désactivé -->
+    <noscript>
+        <div style="padding: 2rem; text-align: center; background: #f5f1e8;">
+            <p>Activez JavaScript pour afficher les avis clients.</p>
+        </div>
+    </noscript>
 </body>
 </html>

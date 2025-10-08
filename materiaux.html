@@ -10,7 +10,7 @@
 </head>
 <body>
     <!-- Header -->
-<div data-include="partials/header.html"></div>
+    <div data-include="partials/header.html"></div>
 
     <!-- Hero Section -->
     <section class="page-hero">
@@ -31,206 +31,272 @@
         </p>
     </section>
 
-    <!-- Catégories Navigation -->
-    <nav class="categories-nav">
-        <a href="#bois-nobles" class="category-btn active">Bois Nobles</a>
-        <a href="#bois-locaux" class="category-btn">Bois Locaux</a>
-        <a href="#bois-exotiques" class="category-btn">Bois Exotiques</a>
-        <a href="#exterieurs" class="category-btn">Extérieurs</a>
+    <!-- Catégories Navigation (DYNAMIQUE - générée selon les catégories disponibles) -->
+    <nav class="categories-nav" id="categories-nav">
+        <!-- Les liens seront générés dynamiquement -->
     </nav>
 
-    <!-- Bois Nobles -->
-    <section class="materiaux-section" id="bois-nobles">
-        <h2 class="section-title">Bois Nobles</h2>
-        <p class="section-subtitle">Les essences d'exception pour vos réalisations haut de gamme</p>
-
-        <div class="materiaux-grid">
-            <!-- Chêne -->
-            <div class="materiau-card">
-                <div class="materiau-image">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250'%3E%3Crect fill='%23C19A6B' width='400' height='250'/%3E%3Cpath fill='%23A0826A' d='M0 0 L400 0 L400 100 Q 350 120 300 100 Q 250 80 200 100 Q 150 120 100 100 Q 50 80 0 100 Z' opacity='0.7'/%3E%3Cpath fill='%238B6F47' d='M0 120 L400 120 L400 180 Q 350 200 300 180 Q 250 160 200 180 Q 150 200 100 180 Q 50 160 0 180 Z' opacity='0.6'/%3E%3C/svg%3E" alt="Chêne">
-                    <div class="materiau-tag">Noble</div>
-                </div>
-                <div class="materiau-content">
-                    <div class="materiau-header">
-                        <div>
-                            <h3 class="materiau-name">Chêne</h3>
-                            <p class="materiau-latin">Quercus robur</p>
-                        </div>
-                    </div>
-                    <p class="materiau-description">
-                        Le chêne est le bois noble par excellence de la menuiserie française. Extrêmement résistant et durable, il se patine magnifiquement avec le temps pour acquérir un caractère unique. Ses veines prononcées et sa couleur miel en font un choix intemporel.
-                    </p>
-                    
-                    <div class="materiau-specs">
-                        <div class="spec-item">
-                            <span class="spec-label">Dureté</span>
-                            <span class="spec-value">★★★★★</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Stabilité</span>
-                            <span class="spec-value">★★★★☆</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Origine</span>
-                            <span class="spec-value">France / Europe</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Teinte</span>
-                            <span class="spec-value">Brun clair à doré</span>
-                        </div>
-                    </div>
-
-                    <ul class="materiau-features">
-                        <li>Résistance exceptionnelle aux chocs</li>
-                        <li>Excellente durabilité (50+ ans)</li>
-                        <li>Se patine avec le temps</li>
-                        <li>Idéal pour un usage intensif</li>
-                    </ul>
-
-                    <div class="materiau-usage">
-                        <span class="usage-badge">Cuisines</span>
-                        <span class="usage-badge">Escaliers</span>
-                        <span class="usage-badge">Parquets</span>
-                        <span class="usage-badge">Meubles</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Noyer -->
-            <div class="materiau-card">
-                <div class="materiau-image">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250'%3E%3Crect fill='%235D4E37' width='400' height='250'/%3E%3Cpath fill='%237B6854' d='M0 50 L400 50 L400 150 Q 350 170 300 150 Q 250 130 200 150 Q 150 170 100 150 Q 50 130 0 150 Z' opacity='0.7'/%3E%3Cpath fill='%23493C2F' d='M0 170 L400 170 L400 230 Q 350 210 300 230 Q 250 250 200 230 Q 150 210 100 230 Q 50 250 0 230 Z' opacity='0.6'/%3E%3C/svg%3E" alt="Noyer">
-                    <div class="materiau-tag">Premium</div>
-                </div>
-                <div class="materiau-content">
-                    <h3 class="materiau-name">Noyer</h3>
-                    <p class="materiau-latin">Juglans regia</p>
-                    <p class="materiau-description">
-                        Essence de prestige par excellence, le noyer séduit par ses nuances chaudes allant du brun chocolat au brun violacé. Son grain fin et ses veinures élégantes en font le choix privilégié pour les réalisations haut de gamme et intemporelles.
-                    </p>
-                    
-                    <div class="materiau-specs">
-                        <div class="spec-item">
-                            <span class="spec-label">Dureté</span>
-                            <span class="spec-value">★★★★☆</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Stabilité</span>
-                            <span class="spec-value">★★★★★</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Origine</span>
-                            <span class="spec-value">Europe / Amérique</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Teinte</span>
-                            <span class="spec-value">Brun chocolat</span>
-                        </div>
-                    </div>
-
-                    <ul class="materiau-features">
-                        <li>Esthétique raffinée et élégante</li>
-                        <li>Excellente stabilité dimensionnelle</li>
-                        <li>Facilité de travail et finition</li>
-                        <li>Résistance naturelle aux insectes</li>
-                    </ul>
-
-                    <div class="materiau-usage">
-                        <span class="usage-badge">Bibliothèques</span>
-                        <span class="usage-badge">Bureaux</span>
-                        <span class="usage-badge">Mobilier haut de gamme</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hêtre -->
-            <div class="materiau-card">
-                <div class="materiau-image">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250'%3E%3Crect fill='%23E8D4B8' width='400' height='250'/%3E%3Cpath fill='%23D4C0A8' d='M0 40 L400 40 L400 140 Q 350 160 300 140 Q 250 120 200 140 Q 150 160 100 140 Q 50 120 0 140 Z' opacity='0.7'/%3E%3Cpath fill='%23C19A6B' d='M0 160 L400 160 L400 220 Q 350 200 300 220 Q 250 240 200 220 Q 150 200 100 220 Q 50 240 0 220 Z' opacity='0.5'/%3E%3C/svg%3E" alt="Hêtre">
-                    <div class="materiau-tag">Noble</div>
-                </div>
-                <div class="materiau-content">
-                    <h3 class="materiau-name">Hêtre</h3>
-                    <p class="materiau-latin">Fagus sylvatica</p>
-                    <p class="materiau-description">
-                        Bois clair et lumineux, le hêtre présente un grain fin et homogène. Sa couleur blanc-rosé apporte de la luminosité aux intérieurs. Très résistant, il est parfait pour les réalisations contemporaines et épurées.
-                    </p>
-                    
-                    <div class="materiau-specs">
-                        <div class="spec-item">
-                            <span class="spec-label">Dureté</span>
-                            <span class="spec-value">★★★★☆</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Stabilité</span>
-                            <span class="spec-value">★★★☆☆</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Origine</span>
-                            <span class="spec-value">France / Europe</span>
-                        </div>
-                        <div class="spec-item">
-                            <span class="spec-label">Teinte</span>
-                            <span class="spec-value">Blanc-rosé</span>
-                        </div>
-                    </div>
-
-                    <ul class="materiau-features">
-                        <li>Grain fin et homogène</li>
-                        <li>Facile à teinter et vernir</li>
-                        <li>Excellent rapport qualité-prix</li>
-                        <li>Idéal pour intérieurs clairs</li>
-                    </ul>
-
-                    <div class="materiau-usage">
-                        <span class="usage-badge">Cuisines</span>
-                        <span class="usage-badge">Dressings</span>
-                        <span class="usage-badge">Escaliers</span>
-                    </div>
-                </div>
-            </div>
+    <!-- Container pour tous les matériaux (DYNAMIQUE depuis CMS) -->
+    <div id="materiaux-container">
+        <div class="loading" style="text-align: center; padding: 4rem;">
+            <p>Chargement des matériaux...</p>
         </div>
-    </section>
+    </div>
 
-    <!-- Bois Locaux -->
-    <section class="materiaux-section" id="bois-locaux">
-        <h2 class="section-title">Bois Locaux</h2>
-        <p class="section-subtitle">Des essences françaises pour une démarche éco-responsable</p>
+    <div data-include="partials/footer.html"></div>
 
-        <div class="materiaux-grid">
-            <!-- Frêne -->
-            <div class="materiau-card">
-                <div class="materiau-image">
-                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 250'%3E%3Crect fill='%23F5E6D3' width='400' height='250'/%3E%3Cpath fill='%23D4C0A8' d='M0 30 L400 30 L400 130 Q 350 150 300 130 Q 250 110 200 130 Q 150 150 100 130 Q 50 110 0 130 Z' opacity='0.8'/%3E%3Cpath fill='%23A68A64' d='M0 150 L400 150 L400 210 Q 350 190 300 210 Q 250 230 200 210 Q 150 190 100 210 Q 50 230 0 210 Z' opacity='0.6'/%3E%3C/svg%3E" alt="Frêne">
-                    <div class="materiau-tag">Local</div>
-                </div>
-                <div class="materiau-content">
-                    <h3 class="materiau-name">Frêne</h3>
-                    <p class="materiau-latin">Fraxinus excelsior</p>
-                    <p class="materiau-description">
-                        Le frêne se distingue par ses veines prononcées et sa couleur claire. Bois élastique et résistant, il est apprécié pour son caractère dynamique et moderne. Excellent choix pour les intérieurs contemporains.
-                    </p>
-                    
-                    <div class="materiau-specs">
-                        <div class="spec-item">
-                            <span class="spec-label">Dureté</span>
-                            <span class="spec-value"></span>
+    <!-- Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+
+    <!-- Script pour charger le contenu depuis le CMS -->
+    <script src="js/load-content.js"></script>
+
+    <!-- Script pour inclure header/footer -->
+    <script src="js/include.js" defer></script>
+
+    <!-- Script principal pour charger et afficher les matériaux -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllMateriauxPage();
+        });
+
+        // Fonction pour charger tous les matériaux
+        async function loadAllMateriauxPage() {
+            try {
+                const response = await fetch('/api/materiaux.json');
+                const materiaux = await response.json();
+
+                const container = document.getElementById('materiaux-container');
+                if (!container) return;
+
+                // Filtrer uniquement les matériaux publiés
+                const published = materiaux.filter(m => m.published !== false);
+
+                // Grouper par catégorie
+                const grouped = groupByCategory(published);
+
+                // Créer la navigation des catégories
+                createCategoriesNav(grouped);
+
+                // Afficher les matériaux par catégorie
+                displayMateriauxByCategory(grouped);
+
+                // Gérer la navigation smooth scroll
+                setupSmoothScroll();
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des matériaux:', error);
+                const container = document.getElementById('materiaux-container');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="error-message" style="text-align: center; padding: 2rem;">
+                            <p>❌ Impossible de charger les matériaux pour le moment.</p>
+                            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">
+                                Vérifiez que le fichier /api/materiaux.json existe.
+                            </p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Grouper les matériaux par catégorie
+        function groupByCategory(materiaux) {
+            const categories = {
+                'nobles': { label: '💎 Bois Nobles', subtitle: 'Les essences d\'exception pour vos réalisations haut de gamme', items: [] },
+                'locaux': { label: '🇫🇷 Bois Locaux', subtitle: 'Des essences françaises pour une démarche éco-responsable', items: [] },
+                'exotiques': { label: '🌴 Bois Exotiques', subtitle: 'Des bois d\'exception venus d\'ailleurs', items: [] },
+                'exterieurs': { label: '🚪 Bois pour Extérieurs', subtitle: 'Résistants aux intempéries et au temps', items: [] }
+            };
+
+            materiaux.forEach(materiau => {
+                const cat = materiau.category || 'autres';
+                if (categories[cat]) {
+                    categories[cat].items.push(materiau);
+                }
+            });
+
+            // Supprimer les catégories vides
+            Object.keys(categories).forEach(key => {
+                if (categories[key].items.length === 0) {
+                    delete categories[key];
+                }
+            });
+
+            return categories;
+        }
+
+        // Créer la navigation des catégories
+        function createCategoriesNav(grouped) {
+            const nav = document.getElementById('categories-nav');
+            if (!nav) return;
+
+            const categoryIds = {
+                'nobles': 'bois-nobles',
+                'locaux': 'bois-locaux',
+                'exotiques': 'bois-exotiques',
+                'exterieurs': 'exterieurs'
+            };
+
+            nav.innerHTML = Object.entries(grouped).map(([key, data], index) => `
+                <a href="#${categoryIds[key] || key}" class="category-btn ${index === 0 ? 'active' : ''}">
+                    ${data.label}
+                </a>
+            `).join('');
+        }
+
+        // Afficher les matériaux groupés par catégorie
+        function displayMateriauxByCategory(grouped) {
+            const container = document.getElementById('materiaux-container');
+
+            const categoryIds = {
+                'nobles': 'bois-nobles',
+                'locaux': 'bois-locaux',
+                'exotiques': 'bois-exotiques',
+                'exterieurs': 'exterieurs'
+            };
+
+            container.innerHTML = Object.entries(grouped).map(([key, data]) => `
+                <section class="materiaux-section" id="${categoryIds[key] || key}">
+                    <h2 class="section-title">${data.label}</h2>
+                    <p class="section-subtitle">${data.subtitle}</p>
+
+                    <div class="materiaux-grid">
+                        ${data.items.map(materiau => createMateriauCard(materiau)).join('')}
+                    </div>
+                </section>
+            `).join('');
+        }
+
+        // Créer une carte de matériau
+        function createMateriauCard(materiau) {
+            const stars = (count) => '★'.repeat(count) + '☆'.repeat(5 - count);
+            const hardness = stars(materiau.hardness || 3);
+            const stability = stars(materiau.stability || 3);
+
+            return `
+                <div class="materiau-card">
+                    <div class="materiau-image">
+                        <img src="${materiau.image}" 
+                             alt="${materiau.name}" 
+                             loading="lazy">
+                        <div class="materiau-tag">${materiau.tag || 'Premium'}</div>
+                    </div>
+                    <div class="materiau-content">
+                        <div class="materiau-header">
+                            <div>
+                                <h3 class="materiau-name">${materiau.name}</h3>
+                                ${materiau.latinName ? `<p class="materiau-latin">${materiau.latinName}</p>` : ''}
+                            </div>
+                        </div>
+                        <p class="materiau-description">
+                            ${materiau.description}
+                        </p>
+                        
+                        <div class="materiau-specs">
+                            <div class="spec-item">
+                                <span class="spec-label">Dureté</span>
+                                <span class="spec-value">${hardness}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Stabilité</span>
+                                <span class="spec-value">${stability}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Origine</span>
+                                <span class="spec-value">${materiau.origin || 'Non spécifié'}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label">Teinte</span>
+                                <span class="spec-value">${materiau.color || 'Variable'}</span>
+                            </div>
                         </div>
 
-        </section>
+                        ${materiau.features && materiau.features.length > 0 ? `
+                            <ul class="materiau-features">
+                                ${materiau.features.map(f => `<li>${f.feature || f}</li>`).join('')}
+                            </ul>
+                        ` : ''}
 
+                        ${materiau.usages && materiau.usages.length > 0 ? `
+                            <div class="materiau-usage">
+                                ${materiau.usages.map(u => `<span class="usage-badge">${u.usage || u}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
 
-<div data-include="partials/footer.html"></div>
+        // Configuration du smooth scroll pour la navigation
+        function setupSmoothScroll() {
+            const categoryBtns = document.querySelectorAll('.category-btn');
+            
+            categoryBtns.forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Retirer active de tous les boutons
+                    categoryBtns.forEach(b => b.classList.remove('active'));
+                    // Ajouter active au bouton cliqué
+                    this.classList.add('active');
+                    
+                    // Scroll vers la section
+                    const targetId = this.getAttribute('href').substring(1);
+                    const targetSection = document.getElementById(targetId);
+                    
+                    if (targetSection) {
+                        const navHeight = document.querySelector('.categories-nav').offsetHeight;
+                        const targetPosition = targetSection.offsetTop - navHeight - 20;
+                        
+                        window.scrollTo({
+                            top: targetPosition,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            });
 
-  <!-- charge le script en bas pour éviter le FOUC -->
-  <script src="js/include.js" defer></script>
+            // Mise à jour du bouton actif au scroll
+            window.addEventListener('scroll', () => {
+                const sections = document.querySelectorAll('.materiaux-section');
+                const navHeight = document.querySelector('.categories-nav')?.offsetHeight || 0;
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - navHeight - 100;
+                    const sectionBottom = sectionTop + section.offsetHeight;
+                    const scrollPosition = window.scrollY;
+                    
+                    if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                        const id = section.getAttribute('id');
+                        categoryBtns.forEach(btn => {
+                            btn.classList.remove('active');
+                            if (btn.getAttribute('href') === `#${id}`) {
+                                btn.classList.add('active');
+                            }
+                        });
+                    }
+                });
+            });
+        }
 
-  <!-- Fallback si JS désactivé (SEO ok) -->
-  <noscript>
-    <div>Activez JavaScript pour afficher l’en-tête et le pied de page.</div>
-  </noscript>
+        // Gestion Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
+                    });
+                }
+            });
+        }
+    </script>
 
-  
- </body>
+    <!-- Fallback si JS désactivé -->
+    <noscript>
+        <div style="padding: 2rem; text-align: center; background: #f5f1e8;">
+            <p>Activez JavaScript pour afficher les matériaux.</p>
+        </div>
+    </noscript>
+</body>
 </html>
