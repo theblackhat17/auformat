@@ -9,8 +9,9 @@ media_library:
   name: cloudinary
   config:
     cloud_name: do3txikfd
-    # PAS d'API key nécessaire ici - Cloudinary gère l'authentification côté serveur
-
+    default_transformations:
+      - - fetch_format: auto
+        - quality: auto
 # URL publique du site
 publish_mode: editorial_workflow
 media_folder: "sources/img/uploads"
