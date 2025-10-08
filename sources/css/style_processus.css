@@ -43,21 +43,15 @@
 
 /* Timeline vertical line */
 .timeline-line {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--bois-clair);
-    transform: translateX(-50%);
+  background: linear-gradient(to bottom, var(--bois-clair) 0%, rgba(255,255,255,0) 100%);
+  opacity: 0.3;
+  z-index: 0;
+}
+.timeline-step {
+  position: relative;
+  z-index: 1;
 }
 
-.timeline-step {
-    position: relative;
-    margin-bottom: 4rem;
-    display: flex;
-    align-items: center;
-}
 
 .timeline-step:nth-child(even) {
     flex-direction: row-reverse;
