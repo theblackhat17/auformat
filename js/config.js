@@ -1,7 +1,3 @@
-// Configuration Supabase
-const SUPABASE_URL = '';
-const SUPABASE_ANON_KEY = '';
-
 const SUPABASE_CONFIG = {
   url: 'https://qlcvkdfypvkhobizqtmm.supabase.co',
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFsY3ZrZGZ5cHZraG9iaXpxdG1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk5NDU3NTQsImV4cCI6MjA3NTUyMTc1NH0.6-EnRdRxryQCS3wsJsT2Fah_M6rmBpjo32FYxX4VTME'
