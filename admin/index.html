@@ -2,23 +2,23 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
   <title>Content Manager - Au Format</title>
-
-  <!-- Widget d'identité Netlify (connexion admin) -->
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-</head>
-<body>
-  <!-- Script principal du CMS -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
-
-  <!-- ⚙️ Ajout Cloudinary Media Library -->
-  <script src="https://unpkg.com/netlify-cms-media-library-cloudinary@^1.3.10/dist/netlify-cms-media-library-cloudinary.js"></script>
-
-  <!-- ✅ Initialisation de la media library Cloudinary -->
+  <link rel="icon" href="/sources/img/logo_tmp.png">
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js" defer></script>
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js" defer></script>
+  <script src="https://unpkg.com/netlify-cms-media-library-cloudinary@^1.3.10/dist/netlify-cms-media-library-cloudinary.js" defer></script>
   <script>
-    CMS.registerMediaLibrary(cloudinary);
+    // s’enregistrer quand tout est chargé
+    window.addEventListener('load', function () {
+      if (window.CMS && window.cloudinary) {
+        CMS.registerMediaLibrary(window.cloudinary);
+      } else {
+        console.error('Cloudinary media library not loaded');
+      }
+    });
   </script>
-</body>
+</head>
+<body></body>
 </html>
