@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/sources/css/style_global.css">
+    <link rel="stylesheet" href="/sources/css/style_configurateur.css">
+
+    <title>Configurateur de Menuiserie</title>
+</head>
+<body>
+    <!-- Header -->
+    <div data-include="partials/header.html"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Configurateur de Menuiserie</h1>
+            <p>Créez votre pièce sur mesure</p>
+        </div>
+
+        <div class="main-grid">
+            <!-- Zone de visualisation -->
+            <div>
+                <div class="card">
+                    <h2 class="card-title">Visualisation</h2>
+                    <div id="canvas-container">
+                        <svg id="canvas" viewBox="0 0 600 400">
+                            <!-- Grille de fond -->
+                            <defs>
+                                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="0.5"/>
+                                </pattern>
+                            </defs>
+                            <rect width="600" height="400" fill="url(#grid)"/>
+                            <g id="shape-group"></g>
+                            <text id="label-length" x="300" y="380" text-anchor="middle" font-size="12" fill="#718096" font-weight="600"></text>
+                            <text id="label-width" x="30" y="200" text-anchor="middle" font-size="12" fill="#718096" font-weight="600" transform="rotate(-90 30 200)"></text>
+                        </svg>
+                    </div>
+                    <div class="dimension-labels">
+                        <div class="dimension-label">
+                            <span>Surface:</span>
+                            <strong id="surface-display">0.18 m²</strong>
+                        </div>
+                        <div class="dimension-label">
+                            <span>Épaisseur:</span>
+                            <strong id="thickness-display">19 mm</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau de configuration -->
+            <div>
+                <!-- Matériau -->
+                <div class="accordion-section">
+                    <div class="accordion-header active" onclick="toggleAccordion(this)">
+                        <span>1. Épicéa 3 plis</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-content active">
+                        <div class="material-grid" id="material-grid"></div>
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label class="form-label">Finition</label>
+                            <div class="finish-buttons">
+                                <button class="finish-btn active" onclick="setFinish('brut')">Brut</button>
+                                <button class="finish-btn" onclick="setFinish('standard')">Standard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forme -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>2. LD1</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="shape-grid" id="shape-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Propriétés -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>3. Propriétés</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <div class="form-group">
+                            <label class="form-label">Épaisseur</label>
+                            <select class="form-select" id="thickness" onchange="updateConfig()">
+                                <option value="19">19 mm</option>
+                                <option value="22">22 mm</option>
+                                <option value="27">27 mm</option>
+                                <option value="30">30 mm</option>
+                                <option value="38">38 mm</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Longueur (mm)</label>
+                            <input type="number" class="form-input" id="length" value="600" min="100" max="3000" onchange="updateConfig()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Largeur (mm)</label>
+                            <input type="number" class="form-input" id="width" value="300" min="100" max="3000" onchange="updateConfig()">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Coins</label>
+                            <div class="corners-grid">
+                                <div class="corner-option">
+                                    <div class="corner-label">Coin haut gauche</div>
+                                    <div class="corner-types">
+                                        <button class="corner-type-btn active" onclick="setCorner('tl', 'square', this)">┌</button>
+                                        <button class="corner-type-btn" onclick="setCorner('tl', 'round', this)">╭</button>
+                                        <button class="corner-type-btn" onclick="setCorner('tl', 'bevel', this)">◸</button>
+                                    </div>
+                                </div>
+                                <div class="corner-option">
+                                    <div class="corner-label">Coin haut droit</div>
+                                    <div class="corner-types">
+                                        <button class="corner-type-btn active" onclick="setCorner('tr', 'square', this)">┐</button>
+                                        <button class="corner-type-btn" onclick="setCorner('tr', 'round', this)">╮</button>
+                                        <button class="corner-type-btn" onclick="setCorner('tr', 'bevel', this)">◹</button>
+                                    </div>
+                                </div>
+                                <div class="corner-option">
+                                    <div class="corner-label">Coin bas gauche</div>
+                                    <div class="corner-types">
+                                        <button class="corner-type-btn active" onclick="setCorner('bl', 'square', this)">└</button>
+                                        <button class="corner-type-btn" onclick="setCorner('bl', 'round', this)">╰</button>
+                                        <button class="corner-type-btn" onclick="setCorner('bl', 'bevel', this)">◺</button>
+                                    </div>
+                                </div>
+                                <div class="corner-option">
+                                    <div class="corner-label">Coin bas droit</div>
+                                    <div class="corner-types">
+                                        <button class="corner-type-btn active" onclick="setCorner('br', 'square', this)">┘</button>
+                                        <button class="corner-type-btn" onclick="setCorner('br', 'round', this)">╯</button>
+                                        <button class="corner-type-btn" onclick="setCorner('br', 'bevel', this)">◿</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Options d'usinage -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>4. Options</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <p style="margin-bottom: 15px; color: #718096; font-size: 14px;">Aucun chant disponible</p>
+                        <div class="machining-options">
+                            <label class="machining-option">
+                                <input type="checkbox" id="hinge-machining" onchange="updateConfig()">
+                                <span class="machining-label">Usinage charnières</span>
+                                <span class="machining-count">2</span>
+                            </label>
+                            <label class="machining-option">
+                                <input type="checkbox" id="tablet-holes" onchange="updateConfig()">
+                                <span class="machining-label">Trous pour tablettes réglables</span>
+                            </label>
+                        </div>
+                        <div id="tablet-holes-info" style="display: none; margin-top: 15px; padding: 12px; background: #edf2f7; border-left: 3px solid #4299e1; border-radius: 4px;">
+                            <div style="display: flex; gap: 8px; align-items: start;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" style="flex-shrink: 0; margin-top: 2px;">
+                                    <circle cx="8" cy="8" r="7" fill="none" stroke="#4299e1" stroke-width="2"/>
+                                    <text x="8" y="12" text-anchor="middle" fill="#4299e1" font-size="12" font-weight="bold">i</text>
+                                </svg>
+                                <div style="font-size: 13px; color: #2d3748; line-height: 1.5;">
+                                    Les trous démarrent et s'arrêtent à 80mm des bords haut et bas ; Trou de diamètre 8mm et entraxe 32mm.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quantité -->
+                <div class="accordion-section">
+                    <div class="accordion-header" onclick="toggleAccordion(this)">
+                        <span>5. Quantité</span>
+                        <span>▼</span>
+                    </div>
+                    <div class="accordion-content">
+                        <input type="number" class="form-input" id="quantity" value="1" min="1" onchange="updateConfig()">
+                    </div>
+                </div>
+
+                <!-- Prix -->
+                <div class="price-section">
+                    <div class="price-row">
+                        <span class="price-label">1 pièce</span>
+                        <span class="price-value" id="unit-price">54.37 €</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Accessoires</span>
+                        <span class="price-value" id="accessories-price">0 €</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">Livraison</span>
+                        <span class="price-value">11.99 €</span>
+                    </div>
+                    <div class="price-row">
+                        <span class="price-label">TVA</span>
+                        <span class="price-value" id="tax-price">9.06 €</span>
+                    </div>
+                    <div class="price-row total">
+                        <span class="price-label">Total</span>
+                        <span class="price-value" id="total-price">66.36 €</span>
+                    </div>
+                    <button class="add-to-cart">AJOUTER AU PANIER</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+  <div data-include="partials/footer.html"></div>
+
+  <script src="/js/include.js" defer></script>
+  <script src="/js/configurateur.js" defer></script>
+
+
+</body>
+</html>
