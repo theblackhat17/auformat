@@ -15,16 +15,13 @@
 
   <link rel="stylesheet" href="/sources/css/style_global.css">
   <link rel="stylesheet" href="/sources/css/style_contact.css">
-
   <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
   <link rel="apple-touch-icon" href="/sources/img/logo_tmp.png">
-
-  <script defer src="/sources/js/include.js"></script>
 </head>
 
 <body>
     <!-- Header -->
-   <div data-include="partials/header.html"></div>
+    <div data-include="partials/header.html"></div>
 
     <!-- Hero Section -->
     <section class="page-hero">
@@ -37,7 +34,7 @@
     <!-- Contact Section -->
     <section class="contact-section">
         <div class="contact-container">
-            <!-- Formulaire -->
+            <!-- Formulaire (STATIQUE) -->
             <div class="form-container">
                 <div class="form-header">
                     <h2>Demande de Devis Gratuit</h2>
@@ -131,25 +128,11 @@
                         <textarea name="message" required placeholder="Décrivez-nous votre projet en quelques lignes : dimensions, matériaux souhaités, style, contraintes particulières..."></textarea>
                     </div>
 
-                    <!-- Upload -->
-                    <div class="form-group">
-                        <label>Joindre des Photos / Plans (facultatif)</label>
-                        <div class="file-upload">
-                            <input type="file" id="fileUpload" name="fichiers" accept="image/*,.pdf" multiple>
-                            <label for="fileUpload" class="file-upload-label">
-                                <span>📎</span>
-                                <span>Cliquez pour ajouter des fichiers</span>
-                            </label>
-                            <div class="file-name" id="fileName"></div>
-                        </div>
-                    </div>
-
                     <!-- RGPD -->
                     <div class="checkbox-group">
                         <input type="checkbox" id="rgpd" name="rgpd" required>
                         <label for="rgpd">
-                            J'accepte que mes données soient utilisées pour traiter ma demande de devis. 
-                            <a href="#" style="color: var(--vert-foret);">En savoir plus sur la protection des données</a>
+                            J'accepte que mes données soient utilisées pour traiter ma demande de devis.
                         </label>
                     </div>
 
@@ -160,7 +143,7 @@
                 </form>
             </div>
 
-            <!-- Info Contact -->
+            <!-- Info Contact (DYNAMIQUE depuis CMS) -->
             <div class="contact-info">
                 <!-- Coordonnées -->
                 <div class="info-card">
@@ -170,7 +153,7 @@
                         <div class="info-item-icon">🏢</div>
                         <div class="info-item-content">
                             <h4>Adresse</h4>
-                            <p>88 Imp. de la Briqueterie<br>59830 Cysoing</p>
+                            <p data-contact="address">Chargement...</p>
                         </div>
                     </div>
 
@@ -178,7 +161,7 @@
                         <div class="info-item-icon">📞</div>
                         <div class="info-item-content">
                             <h4>Téléphone</h4>
-                            <p><a href="tel:+330788916068">07 88 91 60 68</a></p>
+                            <p><a href="tel:" id="phone-link" data-contact="phone">Chargement...</a></p>
                         </div>
                     </div>
 
@@ -186,7 +169,7 @@
                         <div class="info-item-icon">✉️</div>
                         <div class="info-item-content">
                             <h4>Email</h4>
-                            <p><a href="mailto:contact@auformat.fr">contact@auformat.f</a></p>
+                            <p><a href="mailto:" id="email-link" data-contact="email">Chargement...</a></p>
                         </div>
                     </div>
 
@@ -194,9 +177,9 @@
                         <div class="info-item-icon">🕐</div>
                         <div class="info-item-content">
                             <h4>Horaires</h4>
-                            <p>Lun - Ven : 8h - 18h<br>
-                            Sam : Fermé<br>
-                            Dim : Fermé</p>
+                            <div data-contact="hours">
+                                <p>Chargement...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -205,17 +188,17 @@
                 <div class="quick-actions">
                     <h3>Contactez-nous directement</h3>
                     
-                    <a href="tel:+330788916068" class="action-btn">
+                    <a href="tel:" id="call-btn" class="action-btn">
                         <span class="action-icon">📞</span>
                         <span>Appelez-nous</span>
                     </a>
 
-                    <a href="https://wa.me/330788916068" class="action-btn" target="_blank">
+                    <a href="https://wa.me/" id="whatsapp-btn" class="action-btn" target="_blank">
                         <span class="action-icon">💬</span>
                         <span>WhatsApp</span>
                     </a>
 
-                    <a href="mailto:contact@auformat.fr" class="action-btn">
+                    <a href="mailto:" id="mailto-btn" class="action-btn">
                         <span class="action-icon">✉️</span>
                         <span>Email</span>
                     </a>
@@ -253,229 +236,187 @@
         </div>
     </section>
 
-    <!-- Map Section -->
-    <section class="map-section">
-        <div class="map-container">
-            <h2 class="section-title">Nous Trouver</h2>
-            <p class="section-subtitle">Venez découvrir notre atelier et showroom</p>
-
-            <div class="map-wrapper">
-                <div class="map-placeholder">
-                    <div class="map-icon">🗺️</div>
-                    <div class="map-text">Carte Interactive</div>
-                    <p style="margin-top: 1rem; color: #666;">Intégrez ici votre carte Google Maps</p>
-                </div>
-            </div>
-        </div>
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Prêt à Concrétiser Votre Projet ?</h2>
+        <p>Demandez votre devis gratuit dès maintenant</p>
+        <a href="#contactForm" class="btn btn-primary">Remplir le formulaire</a>
     </section>
-
-    <!-- Zone d'intervention -->
-   <section class="zone-section">
-    <h2 class="section-title">Notre Zone d'Intervention</h2>
-    <p class="section-subtitle">Nous intervenons à Lille et dans toute la Métropole Lilloise</p>
-
-    <div class="zone-grid">
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Lille (Centre, Wazemmes, Vauban, Fives...)</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>La Madeleine</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Marcq-en-Barœul</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Roubaix</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Tourcoing</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Villeneuve-d'Ascq</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Wasquehal</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Halluin</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Hem</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Armentières</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Seclin</h4>
-        </div>
-
-        <div class="zone-item">
-            <div class="zone-item-icon">📍</div>
-            <h4>Et plus encore dans la MEL...</h4>
-        </div>
-    </div>
-</section>
-
-
-    <!-- FAQ Rapide -->
-    <div data-include="/partials/faq.html"></div>
 
     <!-- Footer -->
     <div data-include="partials/footer.html"></div>
 
-  <!-- charge le script en bas pour éviter le FOUC -->
-  <script src="js/include.js" defer></script>
+    <!-- Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 
+    <!-- Script pour charger le contenu depuis le CMS -->
+    <script src="js/load-content.js"></script>
 
+    <!-- Script pour inclure header/footer -->
+    <script src="js/include.js" defer></script>
+
+    <!-- Script principal -->
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les informations de contact depuis le CMS
+            loadContactInfo();
+            
+            // Gestion du formulaire
+            setupContactForm();
+            
+            // Animations
+            initAnimations();
+        });
+
+        // Fonction pour charger les infos de contact
+        async function loadContactInfo() {
+            try {
+                const response = await fetch('/api/settings/general.json');
+                const settings = await response.json();
+
+                // Adresse
+                const addressEl = document.querySelector('[data-contact="address"]');
+                if (addressEl && settings.address) {
+                    addressEl.textContent = `${settings.address}, ${settings.zipcode} ${settings.city}`;
+                }
+
+                // Téléphone
+                const phoneEl = document.querySelector('[data-contact="phone"]');
+                const phoneLink = document.getElementById('phone-link');
+                const callBtn = document.getElementById('call-btn');
+                if (settings.phone) {
+                    const cleanPhone = settings.phone.replace(/\s/g, '');
+                    if (phoneEl) phoneEl.textContent = settings.phone;
+                    if (phoneLink) {
+                        phoneLink.textContent = settings.phone;
+                        phoneLink.href = `tel:${cleanPhone}`;
+                    }
+                    if (callBtn) callBtn.href = `tel:${cleanPhone}`;
+                }
+
+                // Email
+                const emailEl = document.querySelector('[data-contact="email"]');
+                const emailLink = document.getElementById('email-link');
+                const mailtoBtn = document.getElementById('mailto-btn');
+                if (settings.email) {
+                    if (emailEl) emailEl.textContent = settings.email;
+                    if (emailLink) {
+                        emailLink.textContent = settings.email;
+                        emailLink.href = `mailto:${settings.email}`;
+                    }
+                    if (mailtoBtn) mailtoBtn.href = `mailto:${settings.email}`;
+                }
+
+                // Horaires
+                const hoursEl = document.querySelector('[data-contact="hours"]');
+                if (hoursEl && settings.hours) {
+                    hoursEl.innerHTML = `
+                        <p>Lun - Ven : ${settings.hours.weekdays || '8h - 18h'}</p>
+                        <p>Sam : ${settings.hours.saturday || 'Fermé'}</p>
+                        <p>Dim : ${settings.hours.sunday || 'Fermé'}</p>
+                    `;
+                }
+
+                // WhatsApp
+                const whatsappBtn = document.getElementById('whatsapp-btn');
+                if (whatsappBtn && settings.whatsapp) {
+                    whatsappBtn.href = `https://wa.me/${settings.whatsapp.replace(/\D/g, '')}`;
+                }
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des infos de contact:', error);
+                // Garder les valeurs par défaut en cas d'erreur
+            }
+        }
+
         // Gestion du formulaire
-        const contactForm = document.getElementById('contactForm');
-        const successMessage = document.getElementById('successMessage');
-        const submitBtn = contactForm.querySelector('.submit-btn');
+        function setupContactForm() {
+            const contactForm = document.getElementById('contactForm');
+            const successMessage = document.getElementById('successMessage');
+            const submitBtn = contactForm.querySelector('.submit-btn');
 
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-
-            // Désactiver le bouton
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Envoi en cours...';
-
-            // Simuler l'envoi (remplacer par votre logique d'envoi réelle)
-            setTimeout(() => {
-                // Afficher le message de succès
-                successMessage.classList.add('show');
-                
-                // Réinitialiser le formulaire
-                contactForm.reset();
-                
-                // Réactiver le bouton
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Envoyer ma demande de devis';
-
-                // Faire défiler vers le message de succès
-                successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                // Masquer le message après 5 secondes
-                setTimeout(() => {
-                    successMessage.classList.remove('show');
-                }, 5000);
-            }, 1500);
-        });
-
-        // Gestion de l'upload de fichiers
-        const fileUpload = document.getElementById('fileUpload');
-        const fileName = document.getElementById('fileName');
-
-        fileUpload.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                const fileNames = Array.from(this.files).map(f => f.name).join(', ');
-                fileName.textContent = `Fichier(s) sélectionné(s) : ${fileNames}`;
-            } else {
-                fileName.textContent = '';
-            }
-        });
-
-        // Gestion FAQ
-        const faqQuestions = document.querySelectorAll('.faq-question');
-
-        faqQuestions.forEach(question => {
-            question.addEventListener('click', () => {
-                const faqItem = question.parentElement;
-                const isActive = faqItem.classList.contains('active');
-
-                // Fermer tous les autres items
-                document.querySelectorAll('.faq-item').forEach(item => {
-                    item.classList.remove('active');
-                    item.querySelector('.faq-question').classList.remove('active');
-                });
-
-                // Toggle l'item cliqué
-                if (!isActive) {
-                    faqItem.classList.add('active');
-                    question.classList.add('active');
-                }
-            });
-        });
-
-        // Animation au scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, observerOptions);
-
-        // Animer les éléments
-        const animatedElements = document.querySelectorAll('.form-container, .info-card, .quick-actions, .zone-item, .faq-item');
-        animatedElements.forEach((element, index) => {
-            element.style.opacity = '0';
-            element.style.transform = 'translateY(20px)';
-            element.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
-            observer.observe(element);
-        });
-
-        // Validation du téléphone (format français)
-        const telInput = document.querySelector('input[name="telephone"]');
-        telInput.addEventListener('input', function(e) {
-            // Supprimer tout sauf les chiffres et espaces
-            let value = e.target.value.replace(/[^\d\s]/g, '');
-            
-            // Formatter automatiquement
-            if (value.length >= 2) {
-                value = value.match(/.{1,2}/g).join(' ');
-            }
-            
-            e.target.value = value;
-        });
-
-        // Validation du code postal
-        const cpInput = document.querySelector('input[name="cp"]');
-        cpInput.addEventListener('input', function(e) {
-            // Limiter à 5 chiffres
-            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 5);
-        });
-
-        // Smooth scroll pour les ancres
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            contactForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start'
+
+                // Désactiver le bouton
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Envoi en cours...';
+
+                // Simuler l'envoi (remplacer par votre logique d'envoi réelle)
+                setTimeout(() => {
+                    // Afficher le message de succès
+                    successMessage.classList.add('show');
+                    
+                    // Réinitialiser le formulaire
+                    contactForm.reset();
+                    
+                    // Réactiver le bouton
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Envoyer ma demande de devis';
+
+                    // Faire défiler vers le message de succès
+                    successMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // Masquer le message après 5 secondes
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                }, 1500);
+            });
+
+            // Validation du téléphone (format français)
+            const telInput = document.querySelector('input[name="telephone"]');
+            telInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^\d\s]/g, '');
+                if (value.length >= 2) {
+                    value = value.match(/.{1,2}/g).join(' ');
+                }
+                e.target.value = value;
+            });
+
+            // Validation du code postal
+            const cpInput = document.querySelector('input[name="cp"]');
+            cpInput.addEventListener('input', function(e) {
+                e.target.value = e.target.value.replace(/\D/g, '').substring(0, 5);
+            });
+        }
+
+        // Initialiser les animations
+        function initAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Animer les éléments
+            const animatedElements = document.querySelectorAll('.form-container, .info-card, .quick-actions');
+            animatedElements.forEach((element, index) => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(20px)';
+                element.style.transition = `opacity 0.5s ease ${index * 0.05}s, transform 0.5s ease ${index * 0.05}s`;
+                observer.observe(element);
+            });
+        }
+
+        // Gestion Netlify Identity
+        if (window.netlifyIdentity) {
+            window.netlifyIdentity.on("init", user => {
+                if (!user) {
+                    window.netlifyIdentity.on("login", () => {
+                        document.location.href = "/admin/";
                     });
                 }
             });
-        });
+        }
     </script>
 </body>
 </html>
