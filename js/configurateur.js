@@ -391,3 +391,24 @@
 
         // Initialisation au chargement
         document.addEventListener('DOMContentLoaded', init);
+        function validerConfiguration() {
+        const clientConfig = {
+            material: config.material,
+            finish: config.finish,
+            shape: config.shape,
+            thickness: config.thickness,
+            length: config.length,
+            width: config.width,
+            corners: config.corners,
+            quantity: config.quantity,
+            hingeMachining: config.hingeMachining,
+            tabletHoles: config.tabletHoles,
+            totalPrice: document.getElementById('total-price').textContent
+        };
+
+        // Sauvegarde dans le localStorage
+        localStorage.setItem('clientConfig', JSON.stringify(clientConfig));
+
+        // Redirection vers la page récapitulative
+        window.location.href = "recap-configurateur.html";
+        }
