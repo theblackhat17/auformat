@@ -7,6 +7,11 @@
     height: 50vh;
     background: linear-gradient(rgba(43, 43, 43, 0.5), rgba(43, 43, 43, 0.5)),
                 url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600"><rect fill="%238B6F47" width="1200" height="600"/><rect fill="%23C19A6B" x="100" y="100" width="300" height="400" opacity="0.4"/><rect fill="%23D4A574" x="450" y="150" width="250" height="350" opacity="0.4"/><rect fill="%23A68A64" x="750" y="120" width="350" height="380" opacity="0.4"/></svg>');
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
 }
 
 /* Filtres */
@@ -59,19 +64,104 @@
     color: var(--blanc);
 }
 
-/* Portfolio Grid */
+/* Portfolio Section */
 .portfolio-section {
     padding: 4rem 2rem;
     max-width: 1400px;
     margin: 0 auto;
 }
 
-.portfolio-grid {
+/* Portfolio Grid - NOUVELLE VERSION AVEC CARTES UNIFORMES */
+.portfolio-grid,
+#realisations-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
     gap: 2rem;
 }
 
+/* Carte de réalisation - NOUVEAU STYLE */
+.realisation-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    transition: all 0.4s;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.realisation-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+}
+
+/* IMAGE - TAILLE FIXE ET UNIFORME */
+.realisation-img {
+    width: 100%;
+    height: 280px; /* Hauteur fixe pour toutes les images */
+    object-fit: cover; /* Recadrage intelligent sans déformer */
+    object-position: center;
+    display: block;
+    transition: transform 0.5s;
+}
+
+.realisation-card:hover .realisation-img {
+    transform: scale(1.1);
+}
+
+/* Info de la réalisation */
+.realisation-info {
+    padding: 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.category-tag {
+    display: inline-block;
+    background: var(--vert-foret, #2d5016);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    width: fit-content;
+}
+
+.realisation-info h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+    color: var(--bois-fonce, #333);
+}
+
+.realisation-info p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.realisation-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: #888;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+.realisation-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* Ancien style portfolio (si encore utilisé) */
 .portfolio-item {
     position: relative;
     border-radius: 15px;
@@ -299,6 +389,42 @@
     font-size: 1.3rem;
 }
 
+/* Galerie modal */
+.modal-gallery {
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.modal-gallery h3 {
+    grid-column: 1 / -1;
+    color: var(--bois-fonce);
+    margin-bottom: 0.5rem;
+}
+
+.gallery-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.3s;
+}
+
+.gallery-img:hover {
+    transform: scale(1.05);
+}
+
+/* Message d'erreur et de chargement */
+.loading,
+.error-message {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #666;
+}
+
 /* CTA Section */
 .cta-section {
     background: linear-gradient(135deg, var(--vert-foret), var(--bois-fonce));
@@ -319,7 +445,8 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .portfolio-grid {
+    .portfolio-grid,
+    #realisations-grid {
         grid-template-columns: 1fr;
     }
 
@@ -337,5 +464,19 @@
 
     .modal-image {
         height: 300px;
+    }
+
+    .realisation-img {
+        height: 250px; /* Légèrement plus petit sur mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .realisation-img {
+        height: 220px;
+    }
+
+    .modal-details {
+        grid-template-columns: 1fr;
     }
 }
