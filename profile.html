@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mon Profil — Au Format</title>
+  
+  <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/include.js"></script>
+
+  <!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Vos scripts d'auth -->
+<script defer src="/js/config.js"></script>
+<script defer src="/js/auth.js"></script>
+<script defer src="/js/header-auth.js"></script>
+<script defer src="/js/include.js"></script>
+
+
+</head>
+
+<body>
+  <div data-include="partials/header.html"></div>
+
+  <div class="profile-container">
+    <!-- Header du profil -->
+    <div class="profile-header">
+      <div class="profile-header-content">
+        <div class="profile-avatar" id="profile-avatar">?</div>
+        <div class="profile-info">
+          <h1 id="profile-name">Chargement...</h1>
+          <p id="profile-email">-</p>
+          <div style="margin-top: 15px;">
+            <span class="badge badge-client" id="profile-role-badge">Client</span>
+            <span class="discount-badge" id="discount-badge" style="display: none;">
+              🎉 <span id="discount-value">0</span>% de remise
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-card">
+          <span class="stat-number" id="stat-projects">0</span>
+          <span class="stat-label">Projets</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-quotes">0</span>
+          <span class="stat-label">Devis</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-orders">0</span>
+          <span class="stat-label">Commandes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number" id="stat-member-since">-</span>
+          <span class="stat-label">Membre depuis</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grille de contenu -->
+    <div class="profile-grid">
+      <!-- Informations personnelles -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-icon">👤</span>
+            Informations personnelles
+          </h2>
+          <button class="btn-edit" onclick="toggleEdit('personal')">✏️ Modifier</button>
+        </div>
+
+        <div id="alert-personal-success" class="alert alert-success"></div>
+        <div id="alert-personal-error" class="alert alert-error"></div>
+
+        <form id="personal-form">
+          <div class="form-group">
+            <label class="form-label" for="full-name">Nom complet</label>
+            <input 
+              type="text" 
+              id="full-name" 
+              class="form-input" 
+              disabled
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="company-name">Entreprise</label>
+            <input 
+              type="text" 
+              id="company-name" 
+              class="form-input" 
+              disabled
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Téléphone</label>
+            <input 
+              type="tel" 
+              id="phone" 
+              class="form-input" 
+              disabled
+            >
+          </div>
+
+          <button type="submit" class="btn-primary" id="save-personal-btn" style="display: none;">
+            Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+
+      <!-- Adresse -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-icon">📍</span>
+            Adresse
+          </h2>
+          <button class="btn-edit" onclick="toggleEdit('address')">✏️ Modifier</button>
+        </div>
+
+        <div id="alert-address-success" class="alert alert-success"></div>
+        <div id="alert-address-error" class="alert alert-error"></div>
+
+        <form id="address-form">
+          <div class="form-group">
+            <label class="form-label" for="address">Adresse complète</label>
+            <textarea 
+              id="address" 
+              class="form-textarea" 
+              disabled
+              placeholder="Numéro et nom de rue"
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn-primary" id="save-address-btn" style="display: none;">
+            Enregistrer l'adresse
+          </button>
+        </form>
+      </div>
+
+      <!-- Informations du compte -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-icon">🔐</span>
+            Sécurité du compte
+          </h2>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <span class="info-value" id="account-email">-</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Mot de passe</span>
+          <span class="info-value">••••••••</span>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Dernière connexion</span>
+          <span class="info-value" id="last-login">-</span>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <button class="btn-edit" onclick="resetPassword()" style="width: 100%;">
+            🔄 Réinitialiser le mot de passe
+          </button>
+        </div>
+      </div>
+
+      <!-- Actions du compte -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">
+            <span class="card-icon">⚙️</span>
+            Actions du compte
+          </h2>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+          <button class="btn-primary" onclick="window.location.href='/configurateur.html'" style="width: 100%;">
+            🎨 Nouveau projet
+          </button>
+
+          <button class="btn-primary" onclick="window.location.href='/mes-projets.html'" style="width: 100%; background: linear-gradient(135deg, #4a7c59 0%, #2C5F2D 100%);">
+            📂 Mes projets
+          </button>
+
+          <button class="btn-danger" onclick="deleteAccount()" style="width: 100%;">
+            🗑️ Supprimer mon compte
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-include="partials/footer.html"></div>
+
+  <script>
+    let currentProfile = null;
+
+    // Charger le profil au chargement de la page
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Vérifier l'authentification
+      const isAuth = await AUTH.requireAuth();
+      if (!isAuth) return;
+
+      await loadProfile();
+    });
+
+    // Charger les données du profil
+    async function loadProfile() {
+      try {
+        const user = await AUTH.getCurrentUser();
+        const profile = await AUTH.getProfile(user.id);
+
+        if (!profile) {
+          showAlert('personal', 'error', 'Erreur lors du chargement du profil');
+          return;
+        }
+
+        currentProfile = profile;
+
+        // Header
+        const initials = (profile.full_name || profile.email)
+          .split(' ')
+          .map(n => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+
+        document.getElementById('profile-avatar').textContent = initials;
+        document.getElementById('profile-name').textContent = profile.full_name || 'Utilisateur';
+        document.getElementById('profile-email').textContent = user.email;
+
+        // Badge role
+        const roleBadge = document.getElementById('profile-role-badge');
+        if (profile.role === 'admin') {
+          roleBadge.textContent = 'Administrateur';
+          roleBadge.className = 'badge badge-admin';
+        }
+
+        // Remise
+        if (profile.discount_rate > 0) {
+          document.getElementById('discount-badge').style.display = 'inline-flex';
+          document.getElementById('discount-value').textContent = profile.discount_rate;
+        }
+
+        // Stats (à implémenter avec les données réelles)
+        const memberSince = new Date(profile.created_at);
+        const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        document.getElementById('stat-member-since').textContent = 
+          `${monthNames[memberSince.getMonth()]} ${memberSince.getFullYear()}`;
+
+        // Formulaire personnel
+        document.getElementById('full-name').value = profile.full_name || '';
+        document.getElementById('company-name').value = profile.company_name || '';
+        document.getElementById('phone').value = profile.phone || '';
+        document.getElementById('address').value = profile.address || '';
+
+        // Compte
+        document.getElementById('account-email').textContent = user.email;
+        
+        const lastLogin = new Date(user.last_sign_in_at);
+        const now = new Date();
+        const diffMs = now - lastLogin;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMs / 3600000);
+        const diffDays = Math.floor(diffMs / 86400000);
+
+        let lastLoginText = 'À l\'instant';
+        if (diffMins > 0 && diffMins < 60) lastLoginText = `Il y a ${diffMins} min`;
+        else if (diffHours > 0 && diffHours < 24) lastLoginText = `Il y a ${diffHours}h`;
+        else if (diffDays > 0) lastLoginText = `Il y a ${diffDays}j`;
+
+        document.getElementById('last-login').textContent = lastLoginText;
+
+      } catch (error) {
+        console.error('Erreur chargement profil:', error);
+        showAlert('personal', 'error', 'Erreur lors du chargement du profil');
+      }
+    }
+
+    // Toggle mode édition
+    function toggleEdit(section) {
+      if (section === 'personal') {
+        const inputs = ['full-name', 'company-name', 'phone'];
+        const isDisabled = document.getElementById('full-name').disabled;
+
+        inputs.forEach(id => {
+          document.getElementById(id).disabled = !isDisabled;
+        });
+
+        document.getElementById('save-personal-btn').style.display = isDisabled ? 'block' : 'none';
+      } else if (section === 'address') {
+        const addressField = document.getElementById('address');
+        const isDisabled = addressField.disabled;
+
+        addressField.disabled = !isDisabled;
+        document.getElementById('save-address-btn').style.display = isDisabled ? 'block' : 'none';
+      }
+    }
+
+    // Sauvegarder informations personnelles
+    document.getElementById('personal-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('save-personal-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
+
+      hideAlerts('personal');
+
+      const updates = {
+        full_name: document.getElementById('full-name').value.trim(),
+        company_name: document.getElementById('company-name').value.trim(),
+        phone: document.getElementById('phone').value.trim()
+      };
+
+      const user = await AUTH.getCurrentUser();
+      const result = await AuthSystem.updateProfile(user.id, updates);
+
+      if (result.success) {
+        showAlert('personal', 'success', '✅ Informations mises à jour avec succès');
+        currentProfile = result.profile;
+        
+        // Désactiver les champs
+        toggleEdit('personal');
+        
+        // Recharger le header
+        await loadProfile();
+      } else {
+        showAlert('personal', 'error', result.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer les modifications';
+    });
+
+    // Sauvegarder adresse
+    document.getElementById('address-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('save-address-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loading-spinner"></span> Enregistrement...';
+
+      hideAlerts('address');
+
+      const updates = {
+        address: document.getElementById('address').value.trim()
+      };
+
+      const user = await AUTH.getCurrentUser();
+      const result = await AuthSystem.updateProfile(user.id, updates);
+
+      if (result.success) {
+        showAlert('address', 'success', '✅ Adresse mise à jour avec succès');
+        currentProfile = result.profile;
+        toggleEdit('address');
+      } else {
+        showAlert('address', 'error', result.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Enregistrer l\'adresse';
+    });
+
+    // Réinitialiser mot de passe
+    async function resetPassword() {
+      const email = currentProfile?.email || (await AUTH.getCurrentUser()).email;
+
+      if (confirm('Un email de réinitialisation va être envoyé à ' + email)) {
+        const result = await AuthSystem.resetPassword(email);
+        
+        if (result.success) {
+          alert(result.message);
+        } else {
+          alert(result.message);
+        }
+      }
+    }
+
+    // Supprimer compte
+    async function deleteAccount() {
+      const confirmation = prompt(
+        '⚠️ ATTENTION : Cette action est irréversible !\n\n' +
+        'Tous vos projets, devis et données seront définitivement supprimés.\n\n' +
+        'Tapez "SUPPRIMER" pour confirmer :'
+      );
+
+      if (confirmation === 'SUPPRIMER') {
+        alert('⚠️ La suppression de compte sera bientôt disponible. Contactez le support pour supprimer votre compte.');
+        
+        // TODO: Implémenter la suppression de compte
+        // const user = await AUTH.getCurrentUser();
+        // await supabase.auth.admin.deleteUser(user.id);
+        // await AuthSystem.logout();
+        // window.location.href = '/';
+      } else if (confirmation !== null) {
+        alert('❌ Suppression annulée : le texte ne correspond pas.');
+      }
+    }
+
+    // Afficher une alerte
+    function showAlert(section, type, message) {
+      const alertElement = document.getElementById(`alert-${section}-${type}`);
+      if (alertElement) {
+        alertElement.textContent = message;
+        alertElement.style.display = 'block';
+
+        setTimeout(() => {
+          alertElement.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    // Masquer les alertes
+    function hideAlerts(section) {
+      ['success', 'error'].forEach(type => {
+        const alertElement = document.getElementById(`alert-${section}-${type}`);
+        if (alertElement) {
+          alertElement.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

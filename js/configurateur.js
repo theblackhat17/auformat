@@ -1,471 +1,381 @@
 
-        // Configuration globale
-        const config = {
-            material: 'epicea',
-            finish: 'brut',
-            shape: 'LD1',
-            thickness: 19,
-            length: 600,
-            width: 300,
-            corners: {
-                tl: 'square',
-                tr: 'square',
-                bl: 'square',
-                br: 'square'
-            },
-            quantity: 1,
-            hingeMachining: false,
-            tabletHoles: false
+        // Configuration
+        const furniture = {
+            template: 'custom',
+            width: 800,
+            height: 720,
+            depth: 580,
+            thickness: 18,
+            modules: []
         };
 
-        const materials = [
-            { id: 'epicea', name: 'Épicéa 3 plis', pricePerM2: 45, color: '#D4A574' },
-            { id: 'mdf', name: 'MDF', pricePerM2: 28, color: '#8B7355' },
-            { id: 'contreplaque', name: 'Contreplaqué', pricePerM2: 35, color: '#C19A6B' },
-            { id: 'osb', name: 'OSB', pricePerM2: 22, color: '#B8956A' },
-            { id: 'agglomere', name: 'Aggloméré', pricePerM2: 18, color: '#9B8B7E' }
-        ];
+        const WOOD_COLOR = 0xD4A574;
+        const WOOD_PRICE_M2 = 45;
 
-        const shapes = [
-            { id: 'LD1', name: 'Rectangle', path: 'M 50 50 L 250 50 L 250 150 L 50 150 Z' },
-            { id: 'LD2', name: 'Coin arrondi', path: 'M 50 70 Q 50 50 70 50 L 230 50 Q 250 50 250 70 L 250 130 Q 250 150 230 150 L 70 150 Q 50 150 50 130 Z' },
-            { id: 'LD3', name: 'Arrondi', path: 'M 50 50 L 230 50 Q 250 50 250 70 L 250 150 L 50 150 Z' },
-            { id: 'LD4', name: 'Trapèze', path: 'M 70 50 L 230 50 L 250 150 L 50 150 Z' },
-            { id: 'LD5', name: 'Angle coupé', path: 'M 50 50 L 250 50 L 250 130 L 230 150 L 50 150 Z' },
-            { id: 'LD6', name: 'Trapèze arrondi', path: 'M 70 50 Q 50 50 50 70 L 50 130 Q 50 150 70 150 L 230 150 Q 250 150 250 130 L 250 70 Q 250 50 230 50 Z' },
-            { id: 'LD7', name: 'Demi-ovale', path: 'M 50 150 L 50 100 Q 50 50 150 50 Q 250 50 250 100 L 250 150 Z' },
-            { id: 'LD8', name: 'Ovale complet', path: 'M 50 100 Q 50 50 150 50 Q 250 50 250 100 Q 250 150 150 150 Q 50 150 50 100' }
-        ];
+        let scene, camera, renderer, controls;
+        let cabinetGroup, modulesGroup;
+        let isExploded = false;
 
         // Initialisation
         function init() {
-            renderMaterials();
-            renderShapes();
-            updateVisualization();
-            updatePricing();
+            const container = document.getElementById('viewer-container');
+            
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf7fafc);
+
+            camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 1, 10000);
+            camera.position.set(1200, 1000, 1200);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Lumières
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(1000, 1500, 1000);
+            dirLight1.castShadow = true;
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
+            dirLight2.position.set(-1000, 800, -1000);
+            scene.add(dirLight2);
+
+            // Sol
+            const floorGeometry = new THREE.PlaneGeometry(5000, 5000);
+            const floorMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xe2e8f0, 
+                roughness: 0.8 
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -10;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Grille
+            const grid = new THREE.GridHelper(3000, 30, 0xcbd5e0, 0xe2e8f0);
+            grid.position.y = -9;
+            scene.add(grid);
+
+            // Contrôles
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 500;
+            controls.maxDistance = 3000;
+
+            // Groupes
+            cabinetGroup = new THREE.Group();
+            scene.add(cabinetGroup);
+            
+            modulesGroup = new THREE.Group();
+            scene.add(modulesGroup);
+
+            // Build initial
+            buildCabinet();
+            updatePrice();
+
+            animate();
+
+            window.addEventListener('resize', onResize);
         }
 
-        // NOUVEAU : Instance du viewer 3D
-let viewer3D = null;
-
-// Initialisation modifiée
-function init() {
-    // Créer le viewer 3D
-    viewer3D = new Viewer3D('viewer-3d-container');
-    
-    // Votre code existant
-    renderMaterials();
-    renderShapes();
-    updateVisualization();
-    updatePricing();
-}
-
-// Modifier updateVisualization() pour utiliser la 3D
-function updateVisualization() {
-    // Mettre à jour le viewer 3D
-    if (viewer3D) {
-        viewer3D.updateBoard(config);
-    }
-    
-    // Votre code existant pour les labels
-    const surfaceM2 = (config.length * config.width) / 1000000;
-    document.getElementById('surface-display').textContent = `${surfaceM2.toFixed(3)} m²`;
-    document.getElementById('thickness-display').textContent = `${config.thickness} mm`;
-    
-    // NOUVEAU : Volume
-    const volumeM3 = (config.length * config.width * config.thickness) / 1000000000;
-    document.getElementById('volume-display').textContent = `${volumeM3.toFixed(4)} m³`;
-}
-
-    // Nouvelles fonctions pour les contrôles
-    function resetCamera() {
-        if (viewer3D) {
-            viewer3D.centerCamera(config);
+        function createWoodMaterial() {
+            return new THREE.MeshStandardMaterial({
+                color: WOOD_COLOR,
+                roughness: 0.7,
+                metalness: 0.1
+            });
         }
-    }
 
-    function toggleWireframe() {
-        if (viewer3D && viewer3D.currentMesh) {
-            viewer3D.currentMesh.material.wireframe = !viewer3D.currentMesh.material.wireframe;
+        function buildCabinet() {
+            // Nettoyer
+            while(cabinetGroup.children.length > 0) {
+                const child = cabinetGroup.children[0];
+                cabinetGroup.remove(child);
+                child.geometry.dispose();
+                child.material.dispose();
+            }
+
+            const w = furniture.width;
+            const h = furniture.height;
+            const d = furniture.depth;
+            const t = furniture.thickness;
+
+            const material = createWoodMaterial();
+
+            // Fond
+            const back = new THREE.Mesh(
+                new THREE.BoxGeometry(w, h, t),
+                material
+            );
+            back.position.set(0, h/2, -d/2);
+            back.castShadow = true;
+            back.receiveShadow = true;
+            cabinetGroup.add(back);
+
+            // Côtés
+            const left = new THREE.Mesh(
+                new THREE.BoxGeometry(t, h, d),
+                material
+            );
+            left.position.set(-w/2 + t/2, h/2, 0);
+            left.castShadow = true;
+            cabinetGroup.add(left);
+
+            const right = left.clone();
+            right.position.set(w/2 - t/2, h/2, 0);
+            cabinetGroup.add(right);
+
+            // Dessus
+            const top = new THREE.Mesh(
+                new THREE.BoxGeometry(w, t, d),
+                material
+            );
+            top.position.set(0, h - t/2, 0);
+            top.castShadow = true;
+            cabinetGroup.add(top);
+
+            // Dessous
+            const bottom = top.clone();
+            bottom.position.set(0, t/2, 0);
+            cabinetGroup.add(bottom);
+
+            // Centrer
+            camera.lookAt(0, h/2, 0);
+            controls.target.set(0, h/2, 0);
         }
-    }
 
-    function takeSnapshot() {
-        if (viewer3D) {
-            const screenshot = viewer3D.takeScreenshot();
-            const link = document.createElement('a');
-            link.download = 'configuration-3d.png';
-            link.href = screenshot;
-            link.click();
+        function addModule(type) {
+            const id = Date.now();
+            const w = furniture.width;
+            const h = furniture.height;
+            const d = furniture.depth;
+            
+            let module = {
+                id,
+                type,
+                width: w - furniture.thickness * 2 - 20,
+                height: type === 'drawer' ? 150 : h / 2,
+                depth: furniture.thickness,
+                position: furniture.modules.length * (type === 'drawer' ? 160 : h/2 + 20)
+            };
+
+            furniture.modules.push(module);
+            buildModule(module);
+            updateModuleList();
+            updatePrice();
         }
-}
 
-        function renderMaterials() {
-            const grid = document.getElementById('material-grid');
-            grid.innerHTML = materials.map(mat => `
-                <div class="material-option ${mat.id === config.material ? 'active' : ''}" onclick="setMaterial('${mat.id}')">
-                    <div class="material-color" style="background-color: ${mat.color}"></div>
-                    <div class="material-info">
-                        <div class="material-name">${mat.name}</div>
-                        <div class="material-price">${mat.pricePerM2} €/m²</div>
+        function buildModule(module) {
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xB8956A,
+                roughness: 0.6,
+                metalness: 0.2
+            });
+
+            const mesh = new THREE.Mesh(
+                new THREE.BoxGeometry(module.width, module.height, module.depth),
+                material
+            );
+            
+            mesh.position.set(
+                0,
+                module.position + module.height/2,
+                furniture.depth/2 + 5
+            );
+            
+            mesh.castShadow = true;
+            mesh.userData.moduleId = module.id;
+            modulesGroup.add(mesh);
+
+            // Poignée
+            if(module.type === 'door' || module.type === 'drawer') {
+                const handle = new THREE.Mesh(
+                    new THREE.BoxGeometry(100, 20, 20),
+                    new THREE.MeshStandardMaterial({ color: 0x666666, metalness: 0.8 })
+                );
+                handle.position.set(
+                    module.width/3,
+                    module.position + module.height/2,
+                    furniture.depth/2 + 15
+                );
+                modulesGroup.add(handle);
+            }
+        }
+
+        function removeModule(id) {
+            furniture.modules = furniture.modules.filter(m => m.id !== id);
+            
+            // Supprimer du rendu
+            modulesGroup.children = modulesGroup.children.filter(child => {
+                if(child.userData.moduleId === id) {
+                    child.geometry.dispose();
+                    child.material.dispose();
+                    return false;
+                }
+                return true;
+            });
+
+            updateModuleList();
+            updatePrice();
+        }
+
+        function updateModuleList() {
+            const list = document.getElementById('module-list');
+            const icons = { door: '🚪', drawer: '📦', shelf: '📐' };
+            const labels = { door: 'Porte', drawer: 'Tiroir', shelf: 'Étagère' };
+
+            list.innerHTML = furniture.modules.map(m => `
+                <div class="module-item">
+                    <div class="module-info">
+                        <div class="module-name">${icons[m.type]} ${labels[m.type]}</div>
+                        <div class="module-dims">${m.width} × ${m.height} mm</div>
+                    </div>
+                    <div class="module-actions">
+                        <button class="icon-btn" onclick="removeModule(${m.id})">🗑️</button>
                     </div>
                 </div>
             `).join('');
+
+            document.getElementById('module-count').textContent = furniture.modules.length;
         }
 
-        function renderShapes() {
-            const grid = document.getElementById('shape-grid');
-            grid.innerHTML = shapes.map(shape => `
-                <div class="shape-option ${shape.id === config.shape ? 'active' : ''}" onclick="setShape('${shape.id}')" title="${shape.name}">
-                    <svg viewBox="0 0 300 200">
-                        <path d="${shape.path}" fill="none" stroke="#2d3748" stroke-width="3"/>
-                    </svg>
-                </div>
-            `).join('');
+        function updateCabinet() {
+            furniture.width = parseInt(document.getElementById('width').value);
+            furniture.height = parseInt(document.getElementById('height').value);
+            furniture.depth = parseInt(document.getElementById('depth').value);
+            furniture.thickness = parseInt(document.getElementById('thickness').value);
+            
+            buildCabinet();
+            
+            // Rebuild modules
+            while(modulesGroup.children.length > 0) {
+                const child = modulesGroup.children[0];
+                modulesGroup.remove(child);
+                child.geometry.dispose();
+                child.material.dispose();
+            }
+            
+            furniture.modules.forEach(m => buildModule(m));
+            updatePrice();
         }
 
-        function setMaterial(id) {
-            config.material = id;
-            document.querySelectorAll('.material-option').forEach(el => {
-                el.classList.toggle('active', el.onclick.toString().includes(id));
+        function updatePrice() {
+            const w = furniture.width / 1000;
+            const h = furniture.height / 1000;
+            const d = furniture.depth / 1000;
+            const t = furniture.thickness / 1000;
+
+            // Surface caisson
+            const cabinetSurface = (w * h * 2) + (h * d * 2) + (w * d * 2);
+            const cabinetPrice = cabinetSurface * WOOD_PRICE_M2;
+
+            // Prix modules
+            let modulesPrice = 0;
+            furniture.modules.forEach(m => {
+                const mw = m.width / 1000;
+                const mh = m.height / 1000;
+                modulesPrice += mw * mh * WOOD_PRICE_M2 * 1.5;
             });
-            updateVisualization();
-            updatePricing();
+
+            const hardwarePrice = 35 + (furniture.modules.length * 15);
+            const subtotal = cabinetPrice + modulesPrice + hardwarePrice;
+            const tva = subtotal * 0.2;
+            const total = subtotal + tva;
+
+            document.getElementById('price-cabinet').textContent = cabinetPrice.toFixed(2) + ' €';
+            document.getElementById('price-modules').textContent = modulesPrice.toFixed(2) + ' €';
+            document.getElementById('price-hardware').textContent = hardwarePrice.toFixed(2) + ' €';
+            document.getElementById('total-price').textContent = total.toFixed(2) + ' €';
         }
 
-        function setFinish(finish) {
-            config.finish = finish;
-            document.querySelectorAll('.finish-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.onclick.toString().includes(finish));
+        function selectTemplate(template) {
+            document.querySelectorAll('.template-card').forEach(el => {
+                el.classList.toggle('active', el.onclick.toString().includes(template));
             });
-            updatePricing();
+
+            furniture.template = template;
+
+            // Appliquer dimensions template
+            if(template === 'kitchen-base') {
+                document.getElementById('width').value = 800;
+                document.getElementById('height').value = 720;
+                document.getElementById('depth').value = 580;
+            } else if(template === 'kitchen-high') {
+                document.getElementById('width').value = 600;
+                document.getElementById('height').value = 720;
+                document.getElementById('depth').value = 350;
+            } else if(template === 'wardrobe') {
+                document.getElementById('width').value = 1200;
+                document.getElementById('height').value = 2200;
+                document.getElementById('depth').value = 600;
+            }
+
+            updateCabinet();
         }
 
-        function setShape(id) {
-            config.shape = id;
-            document.querySelectorAll('.shape-option').forEach(el => {
-                el.classList.toggle('active', el.onclick.toString().includes(id));
+        function resetView() {
+            const maxDim = Math.max(furniture.width, furniture.height, furniture.depth);
+            camera.position.set(maxDim * 1.5, maxDim * 1.2, maxDim * 1.5);
+            controls.target.set(0, furniture.height/2, 0);
+            controls.update();
+        }
+
+        function changeView(view) {
+            const h = furniture.height / 2;
+            const maxDim = Math.max(furniture.width, furniture.height, furniture.depth);
+
+            if(view === 'front') {
+                camera.position.set(0, h, maxDim * 1.5);
+            } else if(view === 'side') {
+                camera.position.set(maxDim * 1.5, h, 0);
+            } else if(view === 'top') {
+                camera.position.set(0, maxDim * 2, 0);
+            }
+
+            controls.target.set(0, h, 0);
+            controls.update();
+        }
+
+        function toggleWireframe() {
+            cabinetGroup.children.forEach(child => {
+                if(child.material) child.material.wireframe = !child.material.wireframe;
             });
-            updateVisualization();
+            modulesGroup.children.forEach(child => {
+                if(child.material) child.material.wireframe = !child.material.wireframe;
+            });
         }
 
-        function setCorner(corner, type, btn) {
-            config.corners[corner] = type;
-            const parent = btn.parentElement;
-            parent.querySelectorAll('.corner-type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            updateVisualization();
-            updatePricing();
+        function explodeView() {
+            isExploded = !isExploded;
+            const offset = isExploded ? 200 : 0;
+
+            modulesGroup.children.forEach((child, i) => {
+                child.position.z = furniture.depth/2 + 5 + (i * offset / 5);
+            });
         }
 
-        function toggleAccordion(header) {
-            const content = header.nextElementSibling;
-            const isActive = content.classList.contains('active');
-            
-            header.classList.toggle('active', !isActive);
-            content.classList.toggle('active', !isActive);
+        function saveFurniture() {
+            localStorage.setItem('furnitureConfig', JSON.stringify(furniture));
+            alert('✅ Meuble sauvegardé !\n\nDimensions: ' + furniture.width + 'x' + furniture.height + 'x' + furniture.depth + 'mm\nModules: ' + furniture.modules.length);
         }
 
-        function updateConfig() {
-            config.thickness = parseInt(document.getElementById('thickness').value);
-            config.length = parseInt(document.getElementById('length').value);
-            config.width = parseInt(document.getElementById('width').value);
-            config.quantity = parseInt(document.getElementById('quantity').value);
-            config.hingeMachining = document.getElementById('hinge-machining').checked;
-            config.tabletHoles = document.getElementById('tablet-holes').checked;
-            
-            // Afficher/masquer le message d'info pour les trous
-            const tabletHolesInfo = document.getElementById('tablet-holes-info');
-            tabletHolesInfo.style.display = config.tabletHoles ? 'block' : 'none';
-            
-            updateVisualization();
-            updatePricing();
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
         }
 
-        function updateVisualization() {
-            const material = materials.find(m => m.id === config.material);
-            const w = Math.min(config.length / 2, 250);
-            const h = Math.min(config.width / 2, 150);
-            const cx = 300;
-            const cy = 200;
-            const radius = 20;
-
-            let path = '';
-            
-            // Utiliser la forme sélectionnée si ce n'est pas une forme personnalisée
-            const selectedShape = shapes.find(s => s.id === config.shape);
-            if (selectedShape && ['LD1', 'LD2', 'LD3', 'LD4', 'LD5', 'LD6', 'LD7', 'LD8'].includes(config.shape)) {
-                // Adapter le chemin de la forme à nos dimensions
-                const scaleX = w / 100;
-                const scaleY = h / 50;
-                
-                // Créer un chemin basé sur la forme sélectionnée mais avec gestion des coins
-                if (config.shape === 'LD1') {
-                    path = buildPathWithCorners(cx, cy, w, h, radius);
-                } else if (config.shape === 'LD2') {
-                    // Rectangle avec tous les coins arrondis
-                    path = `M ${cx - w/2 + 20} ${cy - h/2} 
-                            L ${cx + w/2 - 20} ${cy - h/2} 
-                            Q ${cx + w/2} ${cy - h/2} ${cx + w/2} ${cy - h/2 + 20} 
-                            L ${cx + w/2} ${cy + h/2 - 20} 
-                            Q ${cx + w/2} ${cy + h/2} ${cx + w/2 - 20} ${cy + h/2} 
-                            L ${cx - w/2 + 20} ${cy + h/2} 
-                            Q ${cx - w/2} ${cy + h/2} ${cx - w/2} ${cy + h/2 - 20} 
-                            L ${cx - w/2} ${cy - h/2 + 20} 
-                            Q ${cx - w/2} ${cy - h/2} ${cx - w/2 + 20} ${cy - h/2} Z`;
-                } else if (config.shape === 'LD3') {
-                    // Arrondi en haut
-                    path = `M ${cx - w/2} ${cy + h/2} 
-                            L ${cx - w/2} ${cy} 
-                            Q ${cx - w/2} ${cy - h/2} ${cx} ${cy - h/2} 
-                            Q ${cx + w/2} ${cy - h/2} ${cx + w/2} ${cy} 
-                            L ${cx + w/2} ${cy + h/2} Z`;
-                } else if (config.shape === 'LD4') {
-                    // Trapèze
-                    path = `M ${cx - w/2 + 20} ${cy - h/2} 
-                            L ${cx + w/2 - 20} ${cy - h/2} 
-                            L ${cx + w/2} ${cy + h/2} 
-                            L ${cx - w/2} ${cy + h/2} Z`;
-                } else if (config.shape === 'LD5') {
-                    // Angle coupé en bas à droite
-                    path = `M ${cx - w/2} ${cy - h/2} 
-                            L ${cx + w/2} ${cy - h/2} 
-                            L ${cx + w/2} ${cy + h/2 - 30} 
-                            L ${cx + w/2 - 30} ${cy + h/2} 
-                            L ${cx - w/2} ${cy + h/2} Z`;
-                } else if (config.shape === 'LD6') {
-                    // Trapèze avec coins arrondis
-                    path = `M ${cx - w/2 + 20} ${cy - h/2} 
-                            Q ${cx - w/2} ${cy - h/2} ${cx - w/2} ${cy - h/2 + 20} 
-                            L ${cx - w/2} ${cy + h/2 - 20} 
-                            Q ${cx - w/2} ${cy + h/2} ${cx - w/2 + 20} ${cy + h/2} 
-                            L ${cx + w/2 - 20} ${cy + h/2} 
-                            Q ${cx + w/2} ${cy + h/2} ${cx + w/2} ${cy + h/2 - 20} 
-                            L ${cx + w/2} ${cy - h/2 + 20} 
-                            Q ${cx + w/2} ${cy - h/2} ${cx + w/2 - 20} ${cy - h/2} Z`;
-                } else if (config.shape === 'LD7') {
-                    // Demi-ovale
-                    path = `M ${cx - w/2} ${cy + h/2} 
-                            L ${cx - w/2} ${cy} 
-                            Q ${cx - w/2} ${cy - h/2} ${cx} ${cy - h/2} 
-                            Q ${cx + w/2} ${cy - h/2} ${cx + w/2} ${cy} 
-                            L ${cx + w/2} ${cy + h/2} Z`;
-                } else if (config.shape === 'LD8') {
-                    // Ovale complet
-                    path = `M ${cx - w/2} ${cy} 
-                            Q ${cx - w/2} ${cy - h/2} ${cx} ${cy - h/2} 
-                            Q ${cx + w/2} ${cy - h/2} ${cx + w/2} ${cy} 
-                            Q ${cx + w/2} ${cy + h/2} ${cx} ${cy + h/2} 
-                            Q ${cx - w/2} ${cy + h/2} ${cx - w/2} ${cy}`;
-                }
-            } else {
-                path = buildPathWithCorners(cx, cy, w, h, radius);
-            }
-
-            let svgContent = `<path d="${path}" fill="${material.color}" stroke="#333" stroke-width="2"/>`;
-
-            // Ajouter les charnières si sélectionnées
-            if (config.hingeMachining) {
-                const hingeY1 = cy - h/3;
-                const hingeY2 = cy + h/3;
-                const hingeX = cx - w/2;
-                
-                // Charnière 1
-                svgContent += `
-                    <g transform="translate(${hingeX}, ${hingeY1})">
-                        <rect x="-15" y="-20" width="15" height="40" fill="#666" stroke="#333" stroke-width="1.5" rx="3"/>
-                        <circle cx="-7.5" cy="-12" r="2.5" fill="#333"/>
-                        <circle cx="-7.5" cy="0" r="2.5" fill="#333"/>
-                        <circle cx="-7.5" cy="12" r="2.5" fill="#333"/>
-                        <line x1="-15" y1="-20" x2="0" y2="-20" stroke="#333" stroke-width="1.5"/>
-                        <line x1="-15" y1="20" x2="0" y2="20" stroke="#333" stroke-width="1.5"/>
-                    </g>
-                `;
-                
-                // Charnière 2
-                svgContent += `
-                    <g transform="translate(${hingeX}, ${hingeY2})">
-                        <rect x="-15" y="-20" width="15" height="40" fill="#666" stroke="#333" stroke-width="1.5" rx="3"/>
-                        <circle cx="-7.5" cy="-12" r="2.5" fill="#333"/>
-                        <circle cx="-7.5" cy="0" r="2.5" fill="#333"/>
-                        <circle cx="-7.5" cy="12" r="2.5" fill="#333"/>
-                        <line x1="-15" y1="-20" x2="0" y2="-20" stroke="#333" stroke-width="1.5"/>
-                        <line x1="-15" y1="20" x2="0" y2="20" stroke="#333" stroke-width="1.5"/>
-                    </g>
-                `;
-            }
-
-            // Ajouter les trous pour tablettes si sélectionnés
-            if (config.tabletHoles) {
-                const holeSpacing = 32; // Entraxe de 32mm
-                const startMargin = 80; // Démarre à 80mm du bord
-                const holeRadius = 4; // Diamètre 8mm = rayon 4mm
-                
-                // Convertir les dimensions réelles en pixels du canvas
-                const pixelPerMm = h / config.width;
-                const startY = cy - h/2 + (startMargin * pixelPerMm);
-                const endY = cy + h/2 - (startMargin * pixelPerMm);
-                const spacingPx = holeSpacing * pixelPerMm;
-                
-                // Trous sur le côté gauche
-                const leftX = cx - w/2 + 15;
-                for (let y = startY; y <= endY; y += spacingPx) {
-                    svgContent += `<circle cx="${leftX}" cy="${y}" r="${holeRadius}" fill="white" stroke="#333" stroke-width="1.5"/>`;
-                }
-                
-                // Trous sur le côté droit
-                const rightX = cx + w/2 - 15;
-                for (let y = startY; y <= endY; y += spacingPx) {
-                    svgContent += `<circle cx="${rightX}" cy="${y}" r="${holeRadius}" fill="white" stroke="#333" stroke-width="1.5"/>`;
-                }
-            }
-
-            const shapeGroup = document.getElementById('shape-group');
-            shapeGroup.innerHTML = svgContent;
-
-            // Labels
-            document.getElementById('label-length').textContent = `C: ${config.length} mm`;
-            document.getElementById('label-width').textContent = `D: ${config.width} mm`;
-            
-            // Surface et épaisseur
-            const surfaceM2 = (config.length * config.width) / 1000000;
-            document.getElementById('surface-display').textContent = `${surfaceM2.toFixed(3)} m²`;
-            document.getElementById('thickness-display').textContent = `${config.thickness} mm`;
+        function onResize() {
+            const container = document.getElementById('viewer-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
         }
 
-        function buildPathWithCorners(cx, cy, w, h, radius) {
-            const tl = config.corners.tl;
-            const tr = config.corners.tr;
-            const bl = config.corners.bl;
-            const br = config.corners.br;
-            let path = '';
-
-            // Coin haut gauche
-            if (tl === 'square') {
-                path += `M ${cx - w/2} ${cy - h/2} `;
-            } else if (tl === 'round') {
-                path += `M ${cx - w/2 + radius} ${cy - h/2} `;
-            } else {
-                path += `M ${cx - w/2} ${cy - h/2} `;
-            }
-
-            // Ligne haut
-            if (tr === 'round') {
-                path += `L ${cx + w/2 - radius} ${cy - h/2} Q ${cx + w/2} ${cy - h/2} ${cx + w/2} ${cy - h/2 + radius} `;
-            } else if (tr === 'bevel') {
-                path += `L ${cx + w/2 - radius} ${cy - h/2} L ${cx + w/2} ${cy - h/2 + radius} `;
-            } else {
-                path += `L ${cx + w/2} ${cy - h/2} `;
-            }
-
-            // Ligne droite
-            if (br === 'round') {
-                path += `L ${cx + w/2} ${cy + h/2 - radius} Q ${cx + w/2} ${cy + h/2} ${cx + w/2 - radius} ${cy + h/2} `;
-            } else if (br === 'bevel') {
-                path += `L ${cx + w/2} ${cy + h/2 - radius} L ${cx + w/2 - radius} ${cy + h/2} `;
-            } else {
-                path += `L ${cx + w/2} ${cy + h/2} `;
-            }
-
-            // Ligne bas
-            if (bl === 'round') {
-                path += `L ${cx - w/2 + radius} ${cy + h/2} Q ${cx - w/2} ${cy + h/2} ${cx - w/2} ${cy + h/2 - radius} `;
-            } else if (bl === 'bevel') {
-                path += `L ${cx - w/2 + radius} ${cy + h/2} L ${cx - w/2} ${cy + h/2 - radius} `;
-            } else {
-                path += `L ${cx - w/2} ${cy + h/2} `;
-            }
-
-            // Ligne gauche
-            if (tl === 'round') {
-                path += `L ${cx - w/2} ${cy - h/2 + radius} Q ${cx - w/2} ${cy - h/2} ${cx - w/2 + radius} ${cy - h/2} `;
-            } else if (tl === 'bevel') {
-                path += `L ${cx - w/2} ${cy - h/2 + radius} L ${cx - w/2 + radius} ${cy - h/2} `;
-            } else {
-                path += `L ${cx - w/2} ${cy - h/2} `;
-            }
-
-            path += 'Z';
-
-            const shapeGroup = document.getElementById('shape-group');
-            shapeGroup.innerHTML = `<path d="${path}" fill="${material.color}" stroke="#333" stroke-width="2"/>`;
-
-            // Labels
-            document.getElementById('label-length').textContent = `C: ${config.length} mm`;
-            document.getElementById('label-width').textContent = `D: ${config.width} mm`;
-            
-            // Surface et épaisseur
-            const surfaceM2 = (config.length * config.width) / 1000000;
-            document.getElementById('surface-display').textContent = `${surfaceM2.toFixed(3)} m²`;
-            document.getElementById('thickness-display').textContent = `${config.thickness} mm`;
-        }
-
-        function updatePricing() {
-            const material = materials.find(m => m.id === config.material);
-            const surfaceM2 = (config.length * config.width) / 1000000;
-            
-            let basePrice = surfaceM2 * material.pricePerM2;
-            
-            // Finition
-            if (config.finish === 'standard') {
-                basePrice *= 1.15;
-            }
-            
-            // Épaisseur
-            if (config.thickness > 19) {
-                basePrice *= (1 + (config.thickness - 19) * 0.02);
-            }
-            
-            // Forme
-            if (config.shape === 'LD2' || config.shape === 'LD6') basePrice *= 1.1;
-            if (config.shape === 'LD3' || config.shape === 'LD7' || config.shape === 'LD8') basePrice *= 1.2;
-            if (config.shape === 'LD4' || config.shape === 'LD5') basePrice *= 1.15;
-            
-            // Coins
-            const roundedCorners = Object.values(config.corners).filter(c => c === 'round').length;
-            const beveledCorners = Object.values(config.corners).filter(c => c === 'bevel').length;
-            basePrice += roundedCorners * 5;
-            basePrice += beveledCorners * 3;
-            
-            // Options d'usinage
-            let accessoriesPrice = 0;
-            if (config.hingeMachining) accessoriesPrice += 8;
-            if (config.tabletHoles) accessoriesPrice += 12;
-            
-            const unitPrice = basePrice;
-            const subtotal = unitPrice * config.quantity;
-            const shipping = 11.99;
-            const tax = subtotal * 0.2;
-            const total = subtotal + accessoriesPrice + shipping + tax;
-            
-            document.getElementById('unit-price').textContent = `${unitPrice.toFixed(2)} €`;
-            document.getElementById('accessories-price').textContent = `${accessoriesPrice.toFixed(2)} €`;
-            document.getElementById('tax-price').textContent = `${tax.toFixed(2)} €`;
-            document.getElementById('total-price').textContent = `${total.toFixed(2)} €`;
-        }
-
-        
-
-        // Initialisation au chargement
-        document.addEventListener('DOMContentLoaded', init);
-        function validerConfiguration() {
-        const clientConfig = {
-            material: config.material,
-            finish: config.finish,
-            shape: config.shape,
-            thickness: config.thickness,
-            length: config.length,
-            width: config.width,
-            corners: config.corners,
-            quantity: config.quantity,
-            hingeMachining: config.hingeMachining,
-            tabletHoles: config.tabletHoles,
-            totalPrice: document.getElementById('total-price').textContent
-        };
-
-        // Sauvegarde dans le localStorage
-        localStorage.setItem('clientConfig', JSON.stringify(clientConfig));
-
-        // Redirection vers la page récapitulative
-        window.location.href = "recap-configurateur.html";
-        }
+        init();

@@ -17,6 +17,16 @@
   to = "/admin/index.html"
   status = 200
 
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 # Headers pour les pages HTML - SUPPRESSION des headers restrictifs
 [[headers]]
   for = "/*.html"

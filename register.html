@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inscription — Au Format</title>
+  
+  <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/include.js"></script>
+  <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_register.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  <link rel="apple-touch-icon" href="/sources/img/logo_tmp.png">
+
+  <script defer src="/sources/js/include.js"></script>
+
+  <!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- Vos scripts d'auth -->
+<script defer src="/js/config.js"></script>
+<script defer src="/js/auth.js"></script>
+<script defer src="/js/header-auth.js"></script>
+<script defer src="/js/include.js"></script>
+</head>
+
+
+<body>
+  <div class="auth-container">
+    <!-- Partie visuelle gauche -->
+    <div class="auth-visual">
+      <div class="visual-content">
+        <div class="visual-icon">🏗️</div>
+        <h1>Rejoignez<br>Au Format</h1>
+        <p>Plus de 1000 clients nous font confiance pour leurs projets de menuiserie sur mesure. Créez votre compte en 30 secondes.</p>
+        
+        <div class="stats-grid">
+          <div class="stat-item">
+            <span class="stat-number">1000+</span>
+            <span class="stat-label">Clients satisfaits</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">5000+</span>
+            <span class="stat-label">Projets réalisés</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">4.9★</span>
+            <span class="stat-label">Note moyenne</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Partie formulaire droite -->
+    <div class="auth-form-section">
+      <div class="form-wrapper">
+        <div class="form-header">
+          <h2>Créer un compte</h2>
+          <p>Commencez votre projet dès maintenant</p>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="form-progress">
+          <div class="progress-step active"></div>
+          <div class="progress-step"></div>
+          <div class="progress-step"></div>
+        </div>
+
+        <!-- Alertes -->
+        <div id="alert-success" class="alert alert-success"></div>
+        <div id="alert-error" class="alert alert-error"></div>
+
+        <!-- Formulaire -->
+        <form id="register-form">
+          <div class="form-group">
+            <label class="form-label" for="email">Email *</label>
+            <div class="input-wrapper">
+              <input 
+                type="email" 
+                id="email" 
+                class="form-input" 
+                placeholder="votre@email.com"
+                required
+                autocomplete="email"
+              >
+              <span class="input-icon">📧</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="password">Mot de passe *</label>
+              <div class="input-wrapper">
+                <input 
+                  type="password" 
+                  id="password" 
+                  class="form-input" 
+                  placeholder="••••••••"
+                  required
+                  minlength="6"
+                  autocomplete="new-password"
+                >
+                <span class="input-icon">🔒</span>
+                <button type="button" class="password-toggle-btn" onclick="togglePassword('password')">
+                  <span id="toggle-icon-1">👁️</span>
+                </button>
+              </div>
+              <div class="password-strength" id="password-strength">
+                <div class="strength-bar"></div>
+                <div class="strength-bar"></div>
+                <div class="strength-bar"></div>
+                <div class="strength-bar"></div>
+              </div>
+              <div class="password-hint">Min. 6 caractères</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="password-confirm">Confirmer *</label>
+              <div class="input-wrapper">
+                <input 
+                  type="password" 
+                  id="password-confirm" 
+                  class="form-input" 
+                  placeholder="••••••••"
+                  required
+                  minlength="6"
+                  autocomplete="new-password"
+                >
+                <span class="input-icon">🔐</span>
+                <button type="button" class="password-toggle-btn" onclick="togglePassword('password-confirm')">
+                  <span id="toggle-icon-2">👁️</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="full-name">Nom complet *</label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="full-name" 
+                class="form-input" 
+                placeholder="Jean Dupont"
+                required
+                autocomplete="name"
+              >
+              <span class="input-icon">👤</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="company-name">Entreprise (optionnel)</label>
+            <div class="input-wrapper">
+              <input 
+                type="text" 
+                id="company-name" 
+                class="form-input" 
+                placeholder="Nom de votre entreprise"
+                autocomplete="organization"
+              >
+              <span class="input-icon">🏢</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="phone">Téléphone (optionnel)</label>
+            <div class="input-wrapper">
+              <input 
+                type="tel" 
+                id="phone" 
+                class="form-input" 
+                placeholder="06 12 34 56 78"
+                autocomplete="tel"
+              >
+              <span class="input-icon">📱</span>
+            </div>
+          </div>
+
+          <div class="checkbox-wrapper">
+            <input type="checkbox" id="terms" required>
+            <label for="terms">
+              J'accepte les <a href="/cgv.html" target="_blank">conditions générales</a> et la <a href="/privacy.html" target="_blank">politique de confidentialité</a>
+            </label>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submit-btn">
+            <span>Créer mon compte</span>
+          </button>
+        </form>
+
+        <div class="auth-links">
+          <p>Vous avez déjà un compte ? <a href="/login.html">Se connecter</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStep = 1;
+
+    // Gestion du formulaire d'inscription
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('password-confirm').value;
+      const fullName = document.getElementById('full-name').value.trim();
+      const companyName = document.getElementById('company-name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const termsAccepted = document.getElementById('terms').checked;
+      const submitBtn = document.getElementById('submit-btn');
+
+      // Validation
+      if (password !== passwordConfirm) {
+        showAlert('error', '❌ Les mots de passe ne correspondent pas');
+        return;
+      }
+
+      if (!termsAccepted) {
+        showAlert('error', '❌ Veuillez accepter les conditions générales');
+        return;
+      }
+
+      // Désactiver le bouton
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="loading-spinner"></span> Création du compte...';
+      updateProgress(2);
+
+      // Masquer les alertes
+      hideAlerts();
+
+      // Tentative d'inscription
+      const result = await AuthSystem.register(email, password, fullName, companyName);
+
+      if (result.success) {
+        updateProgress(3);
+        showAlert('success', result.message);
+
+        // Si profil créé, mettre à jour avec téléphone
+        if (!result.requiresConfirmation && phone) {
+          const user = result.user;
+          await AuthSystem.updateProfile(user.id, { phone });
+        }
+        
+        // Redirection
+        setTimeout(() => {
+          if (result.requiresConfirmation) {
+            window.location.href = '/login.html?message=confirm-email';
+          } else {
+            window.location.href = '/profile.html';
+          }
+        }, 2000);
+      } else {
+        showAlert('error', result.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Créer mon compte</span>';
+        updateProgress(1);
+      }
+    });
+
+    // Indicateur de force du mot de passe
+    document.getElementById('password').addEventListener('input', (e) => {
+      const password = e.target.value;
+      const bars = document.querySelectorAll('.strength-bar');
+      const hint = document.querySelector('.password-hint');
+      
+      bars.forEach(bar => {
+        bar.classList.remove('weak', 'medium', 'strong');
+      });
+
+      if (password.length === 0) {
+        hint.textContent = 'Min. 6 caractères';
+        return;
+      }
+
+      let strength = 0;
+      if (password.length >= 6) strength++;
+      if (password.length >= 10) strength++;
+      if (/[A-Z]/.test(password) && /[a-z]/.test(password)) strength++;
+      if (/[0-9]/.test(password) && /[^A-Za-z0-9]/.test(password)) strength++;
+
+      if (strength <= 1) {
+        bars[0].classList.add('weak');
+        hint.textContent = '❌ Mot de passe faible';
+        hint.style.color = '#ef4444';
+      } else if (strength === 2) {
+        bars[0].classList.add('medium');
+        bars[1].classList.add('medium');
+        hint.textContent = '⚠️ Mot de passe moyen';
+        hint.style.color = '#f59e0b';
+      } else if (strength === 3) {
+        bars[0].classList.add('strong');
+        bars[1].classList.add('strong');
+        bars[2].classList.add('strong');
+        hint.textContent = '✅ Mot de passe correct';
+        hint.style.color = '#10b981';
+      } else {
+        bars.forEach(bar => bar.classList.add('strong'));
+        hint.textContent = '✅ Mot de passe fort';
+        hint.style.color = '#10b981';
+      }
+    });
+
+    // Toggle mot de passe
+    function togglePassword(inputId) {
+      const passwordInput = document.getElementById(inputId);
+      const iconId = inputId === 'password' ? 'toggle-icon-1' : 'toggle-icon-2';
+      const toggleIcon = document.getElementById(iconId);
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = '👁️';
+      }
+    }
+
+    // Mise à jour de la barre de progression
+    function updateProgress(step) {
+      currentStep = step;
+      const steps = document.querySelectorAll('.progress-step');
+      steps.forEach((el, index) => {
+        if (index < step) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    // Afficher une alerte
+    function showAlert(type, message) {
+      const alertElement = document.getElementById(`alert-${type}`);
+      alertElement.textContent = message;
+      alertElement.style.display = 'block';
+    }
+
+    // Masquer les alertes
+    function hideAlerts() {
+      document.getElementById('alert-success').style.display = 'none';
+      document.getElementById('alert-error').style.display = 'none';
+    }
+
+    // Vérifier si déjà connecté
+    (async () => {
+      const user = await AUTH.getCurrentUser();
+      if (user) {
+        window.location.href = '/profile.html';
+      }
+    })();
+  </script>
+</body>
+</html>
