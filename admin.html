@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Admin — Au Format</title>
+  
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Chart.js pour les graphiques -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_admin.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+  
+  <!-- Scripts auth -->
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+
+
+</head>
+
+<body>
+
+    <div data-include="partials/header.html"></div>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <img src="/sources/img/logo_tmp.png" alt="Au Format">
+        <div>
+          <div class="sidebar-title">Au Format</div>
+          <div class="admin-badge">⚡ ADMIN</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Tableau de bord</div>
+      <a href="/admin.html" class="nav-link active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Vue d'ensemble
+      </a>
+
+      <div class="nav-section-title">Gestion</div>
+      <a href="/admin-clients.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        Clients
+      </a>
+
+      <a href="/admin-quotes.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        Devis
+        <span class="nav-link-badge" id="pending-quotes-count">0</span>
+      </a>
+
+      <a href="/admin-projects.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Projets
+      </a>
+
+      <div class="nav-section-title">Paramètres</div>
+      <a href="/admin-settings.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M12 1v6m0 6v6M5.6 5.6l4.2 4.2m4.2 4.2l4.2 4.2M1 12h6m6 0h6M5.6 18.4l4.2-4.2m4.2-4.2l4.2-4.2"></path>
+        </svg>
+        Configuration
+      </a>
+
+      <a href="/admin-logs.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="12" y1="18" x2="12" y2="12"></line>
+          <line x1="9" y1="15" x2="15" y2="15"></line>
+        </svg>
+        Logs d'activité
+      </a>
+
+      <div class="nav-section-title">Retour</div>
+      <a href="/profile.html" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Mon profil
+      </a>
+
+      <a href="/" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+        Retour au site
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="admin-content">
+    <div class="admin-header">
+      <div>
+        <h1>📊 Dashboard Admin</h1>
+        <p style="color: #64748b; margin-top: 8px;">Vue d'ensemble de votre activité</p>
+      </div>
+      <div class="admin-header-actions">
+        <button class="btn btn-secondary" onclick="refreshDashboard()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          Actualiser
+        </button>
+        <button class="btn btn-primary" onclick="window.location.href='/admin-quotes.html?action=new'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          Nouveau devis
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--stat-color-from: #3b82f6; --stat-color-to: #2563eb;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">Clients Total</div>
+            <div class="stat-value" id="stat-clients">-</div>
+            <div class="stat-change positive">
+              <span>↗</span> +12% ce mois
+            </div>
+          </div>
+          <div class="stat-icon">👥</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="--stat-color-from: #f59e0b; --stat-color-to: #d97706;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">Devis en attente</div>
+            <div class="stat-value" id="stat-pending-quotes">-</div>
+            <div class="stat-change">
+              <span>→</span> 3 aujourd'hui
+            </div>
+          </div>
+          <div class="stat-icon">📄</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="--stat-color-from: #10b981; --stat-color-to: #059669;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">CA du mois</div>
+            <div class="stat-value" id="stat-monthly-revenue">-</div>
+            <div class="stat-change positive">
+              <span>↗</span> +23% vs mois dernier
+            </div>
+          </div>
+          <div class="stat-icon">💰</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="--stat-color-from: #8b5cf6; --stat-color-to: #7c3aed;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">Projets actifs</div>
+            <div class="stat-value" id="stat-active-projects">-</div>
+            <div class="stat-change positive">
+              <span>↗</span> +5 cette semaine
+            </div>
+          </div>
+          <div class="stat-icon">🚀</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="--stat-color-from: #ec4899; --stat-color-to: #db2777;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">Commandes</div>
+            <div class="stat-value" id="stat-total-orders">-</div>
+            <div class="stat-change positive">
+              <span>↗</span> Taux: 78%
+            </div>
+          </div>
+          <div class="stat-icon">📦</div>
+        </div>
+      </div>
+
+      <div class="stat-card" style="--stat-color-from: #06b6d4; --stat-color-to: #0891b2;">
+        <div class="stat-card-header">
+          <div>
+            <div class="stat-label">Taux conversion</div>
+            <div class="stat-value" style="font-size: 28px;">78%</div>
+            <div class="stat-change positive">
+              <span>↗</span> +8% ce mois
+            </div>
+          </div>
+          <div class="stat-icon">📈</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="quick-action-card" onclick="window.location.href='/admin-clients.html'">
+        <div class="quick-action-icon">👥</div>
+        <div class="quick-action-label">Gérer les clients</div>
+      </div>
+      <div class="quick-action-card" onclick="window.location.href='/admin-quotes.html?action=new'">
+        <div class="quick-action-icon">📝</div>
+        <div class="quick-action-label">Créer un devis</div>
+      </div>
+      <div class="quick-action-card" onclick="window.location.href='/admin-projects.html'">
+        <div class="quick-action-icon">📂</div>
+        <div class="quick-action-label">Voir les projets</div>
+      </div>
+      <div class="quick-action-card" onclick="exportData()">
+        <div class="quick-action-icon">📊</div>
+        <div class="quick-action-label">Export données</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">📈 Chiffre d'affaires</h3>
+          <select class="chart-select" id="revenue-period" onchange="updateRevenueChart()">
+            <option value="7">7 derniers jours</option>
+            <option value="30" selected>30 derniers jours</option>
+            <option value="90">90 derniers jours</option>
+            <option value="365">Cette année</option>
+          </select>
+        </div>
+        <canvas id="revenueChart" height="100"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3 class="chart-title">📊 Statuts devis</h3>
+        </div>
+        <canvas id="quotesChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3 class="chart-title">🕐 Activité récente</h3>
+        <button class="btn btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="window.location.href='/admin-logs.html'">
+          Voir tout
+        </button>
+      </div>
+      <div class="activity-list" id="activity-list">
+        <p style="text-align: center; color: #94a3b8; padding: 20px;">Chargement de l'activité...</p>
+      </div>
+    </div>
+  </main>
+
+    <div data-include="partials/footer.html"></div>
+
+  <script>
+    let revenueChart, quotesChart;
+
+    // Vérifier que c'est un admin
+    (async function checkAdminAccess() {
+      const isAdmin = await AUTH.requireAdmin();
+      if (!isAdmin) return;
+
+      await loadDashboardData();
+      initCharts();
+    })();
+
+    // Charger les données du dashboard
+    async function loadDashboardData() {
+      try {
+        // Récupérer les stats globales
+        const { data: stats, error } = await supabaseClient
+          .from('admin_dashboard_stats')
+          .select('*')
+          .single();
+
+        if (error) throw error;
+
+        // Mettre à jour les cartes de stats
+        document.getElementById('stat-clients').textContent = stats.total_clients || 0;
+        document.getElementById('stat-pending-quotes').textContent = stats.pending_quotes || 0;
+        document.getElementById('stat-monthly-revenue').textContent = 
+          new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(stats.monthly_revenue || 0);
+        document.getElementById('stat-active-projects').textContent = stats.active_projects || 0;
+        document.getElementById('stat-total-orders').textContent = stats.total_orders || 0;
+
+        // Mettre à jour le badge de devis en attente
+        document.getElementById('pending-quotes-count').textContent = stats.pending_quotes || 0;
+
+        // Charger l'activité récente
+        await loadRecentActivity();
+
+      } catch (error) {
+        console.error('Erreur chargement dashboard:', error);
+      }
+    }
+
+    // Charger l'activité récente
+    async function loadRecentActivity() {
+      try {
+        const { data: logs, error } = await supabaseClient
+          .from('activity_logs')
+          .select('*, profiles(full_name, email)')
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        const activityList = document.getElementById('activity-list');
+        
+        if (!logs || logs.length === 0) {
+          activityList.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 20px;">Aucune activité récente</p>';
+          return;
+        }
+
+        activityList.innerHTML = logs.map(log => {
+          const iconClass = getActivityIconClass(log.action_type);
+          const icon = getActivityIcon(log.action_type);
+          const timeAgo = getTimeAgo(new Date(log.created_at));
+
+          return `
+            <div class="activity-item">
+              <div class="activity-icon ${iconClass}">${icon}</div>
+              <div class="activity-content">
+                <div class="activity-title">${getActivityTitle(log)}</div>
+                <div class="activity-desc">${getActivityDescription(log)}</div>
+              </div>
+              <div class="activity-time">${timeAgo}</div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('Erreur chargement activité:', error);
+      }
+    }
+
+    // Helpers pour l'activité
+    function getActivityIconClass(actionType) {
+      if (actionType.includes('client')) return 'new-client';
+      if (actionType.includes('quote')) return 'new-quote';
+      if (actionType.includes('order')) return 'order';
+      return 'new-client';
+    }
+
+    function getActivityIcon(actionType) {
+      const icons = {
+        'create_client': '👤',
+        'update_client': '✏️',
+        'create_quote': '📄',
+        'update_quote': '📝',
+        'accept_order': '✅',
+        'export': '📊'
+      };
+      return icons[actionType] || '📋';
+    }
+
+    function getActivityTitle(log) {
+      const actions = {
+        'create_client': 'Nouveau client',
+        'update_client': 'Client modifié',
+        'create_quote': 'Devis créé',
+        'update_quote': 'Devis mis à jour',
+        'accept_order': 'Commande acceptée',
+        'export': 'Export de données'
+      };
+      return actions[log.action_type] || 'Action';
+    }
+
+    function getActivityDescription(log) {
+      if (log.details) {
+        return log.details.description || 'Aucune description';
+      }
+      return `${log.target_type} - ${log.action_type}`;
+    }
+
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diffMs = now - date;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'À l\'instant';
+      if (diffMins < 60) return `Il y a ${diffMins} min`;
+      if (diffHours < 24) return `Il y a ${diffHours}h`;
+      return `Il y a ${diffDays}j`;
+    }
+
+    // Initialiser les graphiques
+    function initCharts() {
+      initRevenueChart();
+      initQuotesChart();
+    }
+
+    // Graphique du chiffre d'affaires
+    function initRevenueChart() {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      
+      revenueChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+          datasets: [{
+            label: 'Chiffre d\'affaires (€)',
+            data: [12500, 15800, 14200, 18900],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => value.toLocaleString() + ' €'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Graphique des statuts de devis
+    function initQuotesChart() {
+      const ctx = document.getElementById('quotesChart').getContext('2d');
+      
+      quotesChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['En attente', 'Acceptés', 'Refusés', 'En production'],
+          datasets: [{
+            data: [15, 42, 8, 35],
+            backgroundColor: [
+              '#f59e0b',
+              '#10b981',
+              '#ef4444',
+              '#3b82f6'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    // Actualiser le dashboard
+    async function refreshDashboard() {
+      await loadDashboardData();
+      alert('✅ Dashboard actualisé');
+    }
+
+    // Export de données
+    function exportData() {
+      alert('🚧 Fonctionnalité d\'export en cours de développement');
+    }
+
+    // Mettre à jour le graphique de revenus
+    function updateRevenueChart() {
+      const period = document.getElementById('revenue-period').value;
+      // TODO: Charger les vraies données selon la période
+      alert(`Chargement des données pour ${period} jours`);
+    }
+  </script>
+</body>
+</html>
