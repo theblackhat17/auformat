@@ -360,10 +360,72 @@
             });
         }
 
-        function saveFurniture() {
-            localStorage.setItem('furnitureConfig', JSON.stringify(furniture));
-            alert('✅ Meuble sauvegardé !\n\nDimensions: ' + furniture.width + 'x' + furniture.height + 'x' + furniture.depth + 'mm\nModules: ' + furniture.modules.length);
+        // Dans /js/configurateur.js
+// Remplacez la fonction saveFurniture() existante (lignes ~330-333) par celle-ci :
+
+async function saveFurniture() {
+    try {
+        // Vérifier si l'utilisateur est connecté
+        const user = await AUTH.getCurrentUser();
+        
+        if (!user) {
+            // Si non connecté, proposer de se connecter
+            if (confirm('⚠️ Connectez-vous pour sauvegarder votre projet de manière permanente.\n\nVoulez-vous vous connecter maintenant ?')) {
+                // Sauvegarder temporairement dans localStorage
+                localStorage.setItem('unsaved-furniture', JSON.stringify(furniture));
+                window.location.href = '/login.html?redirect=/configurateur.html';
+            } else {
+                // Sauvegarde locale uniquement
+                localStorage.setItem('furnitureConfig', JSON.stringify(furniture));
+                alert('💾 Sauvegardé localement dans votre navigateur (temporaire)\n\nConnectez-vous pour une sauvegarde permanente.');
+            }
+            return;
         }
+
+        // Demander le nom du projet
+        const projectName = prompt('📝 Donnez un nom à votre projet :', `Meuble ${furniture.template || 'personnalisé'}`);
+        if (!projectName || projectName.trim() === '') {
+            alert('❌ Nom requis pour sauvegarder');
+            return;
+        }
+
+        // Préparer les données du projet
+        const projectData = {
+            user_id: user.id,
+            name: projectName.trim(),
+            type: furniture.template || 'custom',
+            config: furniture, // Toute la configuration du meuble
+            status: 'draft',
+            notes: '',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+
+        // Sauvegarder dans Supabase
+        const { data, error } = await supabaseClient
+            .from('projects')
+            .insert([projectData])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        // Succès
+        alert(`✅ Projet "${projectName}" sauvegardé avec succès !\n\n📊 Résumé :\n- Dimensions : ${furniture.width}×${furniture.height}×${furniture.depth} mm\n- Modules : ${furniture.modules.length}\n\n📂 Retrouvez-le dans "Mes Projets"`);
+        
+        // Proposer de voir tous les projets
+        if (confirm('Voulez-vous voir tous vos projets maintenant ?')) {
+            window.location.href = '/mes-projets.html';
+        }
+
+    } catch (error) {
+        console.error('Erreur sauvegarde projet:', error);
+        alert('❌ Erreur lors de la sauvegarde : ' + error.message + '\n\n💾 Sauvegarde locale effectuée en secours.');
+        
+        // Fallback : sauvegarde locale
+        localStorage.setItem('furnitureConfig', JSON.stringify(furniture));
+    }
+}
 
         function animate() {
             requestAnimationFrame(animate);
@@ -377,5 +439,71 @@
             camera.updateProjectionMatrix();
             renderer.setSize(container.clientWidth, container.clientHeight);
         }
+
+        // Fonction pour charger un projet depuis l'URL
+        async function loadProjectFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const projectId = urlParams.get('project');
+            
+            if (!projectId) {
+                // Vérifier s'il y a un projet non sauvegardé dans localStorage
+                const unsaved = localStorage.getItem('unsaved-furniture');
+                if (unsaved) {
+                    if (confirm('📦 Un projet non sauvegardé a été trouvé. Voulez-vous le restaurer ?')) {
+                        try {
+                            const loadedFurniture = JSON.parse(unsaved);
+                            Object.assign(furniture, loadedFurniture);
+                            localStorage.removeItem('unsaved-furniture');
+                            updateCabinet();
+                            furniture.modules.forEach(m => buildModule(m));
+                            updateModuleList();
+                            updatePrice();
+                            alert('✅ Projet restauré !');
+                        } catch (e) {
+                            console.error('Erreur restauration:', e);
+                        }
+                    }
+                }
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('projects')
+                    .select('*')
+                    .eq('id', projectId)
+                    .single();
+
+                if (error) throw error;
+
+                // Charger la configuration
+                const loadedConfig = data.config;
+                Object.assign(furniture, loadedConfig);
+                
+                // Mettre à jour les inputs
+                document.getElementById('width').value = furniture.width;
+                document.getElementById('height').value = furniture.height;
+                document.getElementById('depth').value = furniture.depth;
+                document.getElementById('thickness').value = furniture.thickness;
+                
+                // Rebuild le meuble
+                updateCabinet();
+                furniture.modules.forEach(m => buildModule(m));
+                updateModuleList();
+                updatePrice();
+                
+                alert(`✅ Projet "${data.name}" chargé !`);
+
+            } catch (error) {
+                console.error('Erreur chargement projet:', error);
+                alert('❌ Impossible de charger le projet : ' + error.message);
+            }
+        }
+
+        // Appeler au chargement de la page
+        window.addEventListener('load', () => {
+            // Attendre un peu que AUTH soit initialisé
+            setTimeout(loadProjectFromUrl, 500);
+        });
 
         init();

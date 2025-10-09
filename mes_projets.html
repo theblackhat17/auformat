@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mes Projets – Au Format</title>
+  
+  <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/js/include.js"></script>
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/header.js"></script>
+  <script defer src="/js/header-auth.js"></script>
+
+ 
+</head>
+
+<body>
+  <div data-include="partials/header.html"></div>
+
+  <div class="page-container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">🛠️ Mes Projets</h1>
+        <p class="page-subtitle">Gérez vos configurateurs sauvegardés</p>
+      </div>
+      <a href="/configurateur.html" class="btn btn-primary">
+        ➕ Nouveau projet
+      </a>
+    </div>
+
+    <div class="projects-grid" id="projects-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement de vos projets...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal demande de devis -->
+  <div class="modal" id="quote-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Demander un devis</h3>
+        <button class="modal-close" onclick="closeModal('quote-modal')">✕</button>
+      </div>
+
+      <form id="quote-form">
+        <div class="form-group">
+          <label class="form-label">Projet</label>
+          <input type="text" class="form-input" id="quote-project-name" disabled>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message / Demande spéciale</label>
+          <textarea class="form-textarea" id="quote-message" placeholder="Décrivez vos attentes, contraintes ou questions..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal('quote-modal')">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            📨 Envoyer la demande
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div data-include="partials/footer.html"></div>
+
+<script src="/js/mes_projets.js"></script>
+</body>
+</html>
