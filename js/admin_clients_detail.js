@@ -23,7 +23,7 @@
 
       if (!clientId) {
         alert('❌ ID client manquant');
-        window.location.href = '/admin-clients.html';
+        window.location.href = '/admin_clients.html';
         return;
       }
 
@@ -51,7 +51,7 @@
       } catch (error) {
         console.error('Erreur:', error);
         alert('❌ Erreur de chargement : ' + error.message);
-        window.location.href = '/admin-clients.html';
+        window.location.href = '/admin_clients.html';
       }
     }
 
@@ -383,7 +383,7 @@
     });
 
     function createQuoteForClient() {
-      window.location.href = `/admin-quotes.html?action=new&client=${clientId}`;
+      window.location.href = `/admin_quotes.html?action=new&client=${clientId}`;
     }
 
     function getInitials(name) {
