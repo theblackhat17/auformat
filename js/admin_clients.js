@@ -113,7 +113,7 @@
                     </td>
                     <td>
                       <div class="action-buttons">
-                        <a href="/admin_client-detail.html?id=${client.id}" class="btn btn-primary btn-small">
+                        <a href="/admin_client_detail.html?id=${client.id}" class="btn btn-primary btn-small">
                           👁️ Voir
                         </a>
                       </div>
