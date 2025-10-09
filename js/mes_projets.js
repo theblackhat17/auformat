@@ -1,37 +1,67 @@
-    let currentProjectId = null;
+// /js/mes_projets.js
+// =========================================
+// GESTION DES PROJETS CLIENT
+// =========================================
 
-    (async function() {
-      const isAuth = await AUTH.requireAuth();
-      if (!isAuth) return;
+let currentProjectId = null;
 
-      await loadProjects();
-    })();
+// Attendre que AUTH soit disponible
+(async function initProjects() {
+  console.log('🎯 Initialisation mes-projets...');
+  
+  // Attendre AUTH
+  let attempts = 0;
+  while (!window.AUTH && attempts < 50) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
 
-    async function loadProjects() {
-      try {
-        const user = await AUTH.getCurrentUser();
-        
-        const { data: projects, error } = await supabaseClient
-          .from('projects')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('updated_at', { ascending: false });
+  if (!window.AUTH) {
+    console.error('❌ AUTH non disponible après 5 secondes');
+    document.getElementById('projects-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">Erreur de chargement</div>
+        <div class="empty-desc">Impossible de charger le système d'authentification. Rechargez la page.</div>
+      </div>
+    `;
+    return;
+  }
 
-        if (error) throw error;
+  console.log('✅ AUTH disponible');
 
-        displayProjects(projects || []);
+  // Vérifier que l'utilisateur est connecté
+  const isAuth = await AUTH.requireAuth();
+  if (!isAuth) return;
 
-      } catch (error) {
-        console.error('Erreur chargement projets:', error);
-        document.getElementById('projects-container').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">❌</div>
-            <div class="empty-title">Erreur de chargement</div>
-            <div class="empty-desc">${error.message}</div>
-          </div>
-        `;
-      }
-    }
+  await loadProjects();
+})();
+
+async function loadProjects() {
+  try {
+    const user = await AUTH.getCurrentUser();
+    
+    const { data: projects, error } = await supabaseClient
+      .from('projects')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+
+    displayProjects(projects || []);
+
+  } catch (error) {
+    console.error('Erreur chargement projets:', error);
+    document.getElementById('projects-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">Erreur de chargement</div>
+        <div class="empty-desc">${error.message}</div>
+      </div>
+    `;
+  }
+}
 
     function displayProjects(projects) {
       const container = document.getElementById('projects-container');

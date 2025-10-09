@@ -11,12 +11,14 @@
   
   <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- ⚠️ ORDRE CRITIQUE -->
   <script defer src="/js/include.js"></script>
-  <script defer src="/js/config.js"></script>
+  <script defer src="/js/config.js"></script>       <!-- ✅ DOIT être AVANT auth.js -->
   <script defer src="/js/auth.js"></script>
   <script defer src="/js/header.js"></script>
   <script defer src="/js/header-auth.js"></script>
-
+  <script defer src="/js/mes_projets.js"></script>
  
 </head>
 
@@ -74,7 +76,5 @@
   </div>
 
   <div data-include="partials/footer.html"></div>
-
-<script src="/js/mes_projets.js"></script>
 </body>
 </html>

@@ -1,37 +1,67 @@
-    (async function() {
-      // Vérifier que l'utilisateur est connecté
-      const isAuth = await AUTH.requireAuth();
-      if (!isAuth) return;
+// /js/devis.js
+// =========================================
+// GESTION DES DEVIS CLIENT
+// =========================================
 
-      await loadQuotes();
-    })();
+// Attendre que AUTH soit disponible
+(async function initQuotes() {
+  console.log('🎯 Initialisation mes-devis...');
+  
+  // Attendre AUTH
+  let attempts = 0;
+  while (!window.AUTH && attempts < 50) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
 
-    async function loadQuotes() {
-      try {
-        const user = await AUTH.getCurrentUser();
-        
-        const { data: quotes, error } = await supabaseClient
-          .from('quotes')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+  if (!window.AUTH) {
+    console.error('❌ AUTH non disponible après 5 secondes');
+    document.getElementById('quotes-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">Erreur de chargement</div>
+        <div class="empty-desc">Impossible de charger le système d'authentification. Rechargez la page.</div>
+      </div>
+    `;
+    return;
+  }
 
-        if (error) throw error;
+  console.log('✅ AUTH disponible');
 
-        displayQuotes(quotes || []);
+  // Vérifier que l'utilisateur est connecté
+  const isAuth = await AUTH.requireAuth();
+  if (!isAuth) return;
 
-      } catch (error) {
-        console.error('Erreur chargement devis:', error);
-        document.getElementById('quotes-container').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">❌</div>
-            <div class="empty-title">Erreur de chargement</div>
-            <div class="empty-desc">${error.message}</div>
-          </div>
-        `;
-      }
-    }
+  await loadQuotes();
+})();
 
+async function loadQuotes() {
+  try {
+    const user = await AUTH.getCurrentUser();
+    
+    const { data: quotes, error } = await supabaseClient
+      .from('quotes')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    displayQuotes(quotes || []);
+
+  } catch (error) {
+    console.error('Erreur chargement devis:', error);
+    document.getElementById('quotes-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">Erreur de chargement</div>
+        <div class="empty-desc">${error.message}</div>
+      </div>
+    `;
+  }
+}
+
+// ... reste du fichier inchangé (displayQuotes, acceptQuote, etc.)
     function displayQuotes(quotes) {
       const container = document.getElementById('quotes-container');
 
