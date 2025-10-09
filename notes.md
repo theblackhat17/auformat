@@ -19,3 +19,6 @@ MACHINES
 
 
 - Faire un gros Faq trié par type de questions
+
+- Button header bloqué profil et togle responsive menu à checker
+

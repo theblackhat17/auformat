@@ -7,19 +7,26 @@
   
   <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
   
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <!-- Chart.js pour les graphiques -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <link rel="stylesheet" href="/sources/css/style_global.css">
   <link rel="stylesheet" href="/sources/css/style_admin.css">
   <link rel="stylesheet" href="/sources/css/style_header.css">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
-  <!-- Scripts auth -->
+  <!-- Scripts d'authentification dans l'ordre -->
   <script defer src="/js/config.js"></script>
   <script defer src="/js/auth.js"></script>
+  <script defer src="/js/header-auth.js"></script>
+  <script defer src="/js/header.js"></script>
+  
+  <!-- Script pour charger les partials -->
+  <script defer src="/js/include.js"></script>
+  
+
 
 
 </head>
