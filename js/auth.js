@@ -4,47 +4,51 @@
 
 const AuthSystem = {
   // ========== INSCRIPTION ==========
-  async register(email, password, fullName, companyName = '') {
-    try {
-      // 1. Créer le compte utilisateur
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth-callback.html`,
-          data: {
-            full_name: fullName,
-            company_name: companyName
-          }
+  // Dans /js/auth.js
+// Remplacez la fonction register() par celle-ci :
+
+async register(email, password, fullName, companyName = '', phone = '') {
+  try {
+    // 1. Créer le compte utilisateur
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth-callback.html`,
+        data: {
+          full_name: fullName,
+          company_name: companyName,
+          phone: phone  // ✅ AJOUT DU TÉLÉPHONE
         }
-      });
-
-      if (error) throw error;
-
-      // 2. Vérifier si confirmation email nécessaire
-      if (data.user && !data.session) {
-        return {
-          success: true,
-          requiresConfirmation: true,
-          message: '✅ Inscription réussie ! Vérifiez votre email pour confirmer votre compte.'
-        };
       }
+    });
 
+    if (error) throw error;
+
+    // 2. Vérifier si confirmation email nécessaire
+    if (data.user && !data.session) {
       return {
         success: true,
-        requiresConfirmation: false,
-        message: '✅ Inscription réussie ! Vous pouvez maintenant vous connecter.',
-        user: data.user
-      };
-
-    } catch (error) {
-      console.error('Erreur inscription:', error);
-      return {
-        success: false,
-        message: this.getErrorMessage(error)
+        requiresConfirmation: true,
+        message: '✅ Inscription réussie ! Vérifiez votre email pour confirmer votre compte.'
       };
     }
-  },
+
+    return {
+      success: true,
+      requiresConfirmation: false,
+      message: '✅ Inscription réussie ! Vous pouvez maintenant vous connecter.',
+      user: data.user
+    };
+
+  } catch (error) {
+    console.error('Erreur inscription:', error);
+    return {
+      success: false,
+      message: this.getErrorMessage(error)
+    };
+  }
+},
 
   // ========== CONNEXION ==========
   async login(email, password) {
