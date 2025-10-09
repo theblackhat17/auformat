@@ -108,13 +108,14 @@ async function loadUsers() {
 }
 
 // Charger les logs
+// Charger les logs
 async function loadLogs() {
   try {
     const { data: logs, error } = await supabaseClient
       .from('activity_logs')
       .select(`
         *,
-        profiles:user_id (
+        profiles!activity_logs_user_id_fkey (
           full_name,
           email,
           avatar_url
@@ -123,9 +124,15 @@ async function loadLogs() {
       .order('created_at', { ascending: false })
       .limit(1000);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erreur Supabase:', error);
+      throw error;
+    }
 
     allLogs = logs || [];
+    
+    console.log(`✅ ${allLogs.length} logs chargés`);
+    
     applyFilters();
 
   } catch (error) {
@@ -134,6 +141,7 @@ async function loadLogs() {
       <tr>
         <td colspan="7" style="text-align: center; padding: 40px; color: #ef4444;">
           ❌ Erreur de chargement des logs
+          <br><small>${error.message || 'Erreur inconnue'}</small>
         </td>
       </tr>
     `;
