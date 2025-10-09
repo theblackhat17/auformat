@@ -1,7 +1,7 @@
 <header class="site-header">
   <nav class="nav-container">
     <a class="logo" href="/">
-      <img src="/sources/img/logo_tmp.png" alt="AuFormat — menuiserie & agencement">
+      <img src="/sources/img/logo_tmp.png" alt="AuFormat – menuiserie & agencement">
     </a>
 
     <!-- Menu burger mobile -->
@@ -117,49 +117,3 @@
     </div>
   </nav>
 </header>
-
-<script>
-// Script inline pour garantir l'exécution après le chargement du header
-(function initHeaderDropdown() {
-  console.log('🎯 Init dropdown header (inline)');
-  
-  const menuButton = document.getElementById('user-menu-button');
-  const dropdown = document.getElementById('user-dropdown');
-  const mobileToggle = document.getElementById('mobile-menu-toggle');
-  const navLinks = document.getElementById('nav-links');
-
-  // Dropdown menu
-  if (menuButton && dropdown) {
-    console.log('✅ Dropdown trouvé');
-    
-    menuButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      console.log('🖱️ Click dropdown');
-      menuButton.classList.toggle('active');
-      dropdown.classList.toggle('active');
-    });
-
-    document.addEventListener('click', () => {
-      menuButton.classList.remove('active');
-      dropdown.classList.remove('active');
-    });
-
-    dropdown.addEventListener('click', (e) => {
-      e.stopPropagation();
-    });
-  } else {
-    console.warn('⚠️ Dropdown non trouvé');
-  }
-
-  // Menu mobile
-  if (mobileToggle && navLinks) {
-    console.log('✅ Menu mobile trouvé');
-    
-    mobileToggle.addEventListener('click', () => {
-      console.log('🖱️ Click mobile menu');
-      mobileToggle.classList.toggle('active');
-      navLinks.classList.toggle('active');
-    });
-  }
-})();
-</script>
