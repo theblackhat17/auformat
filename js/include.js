@@ -1,32 +1,72 @@
-// === Injection des partials (header, footer, etc.) ===
-(async function includePartials() {
-  const nodes = document.querySelectorAll('[data-include]');
-  await Promise.all(Array.from(nodes).map(async (el) => {
-    const url = el.getAttribute('data-include');
-    try {
-      const res = await fetch(url, { cache: 'no-cache' });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const html = await res.text();
-      el.insertAdjacentHTML('afterend', html);
-      el.remove();
-    } catch (e) {
-      console.error('Include error for', url, e);
-      el.replaceWith(`<!-- include failed: ${url} -->`);
-    }
-  }));
+// =========================================
+// SYSTÈME D'INCLUSION DE PARTIALS
+// =========================================
 
-  // ✅ Déclenche un événement quand tous les includes sont terminés
-  document.dispatchEvent(new Event('includes:ready'));
-})();
-
-
-// === Mise à jour automatique de l'année ===
-(function () {
-  function updateYear() {
-    const currentYear = new Date().getFullYear();
-    document.querySelectorAll('[data-year]').forEach(el => {
-      el.textContent = currentYear;
+async function includePartials() {
+  // Attendre que le DOM soit complètement chargé
+  if (document.readyState === 'loading') {
+    await new Promise(resolve => {
+      document.addEventListener('DOMContentLoaded', resolve);
     });
   }
-  document.addEventListener('includes:ready', updateYear);
-})();
+
+  const includes = document.querySelectorAll('[data-include]');
+  
+  if (includes.length === 0) {
+    console.warn('⚠️ Aucun élément [data-include] trouvé');
+    return;
+  }
+
+  console.log(`📦 Chargement de ${includes.length} partial(s)...`);
+
+  try {
+    await Promise.all(
+      Array.from(includes).map(async (element) => {
+        const file = element.getAttribute('data-include');
+        
+        try {
+          const response = await fetch(`/${file}`);
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          const content = await response.text();
+          
+          // Vérifier que l'élément a toujours un parent
+          if (!element.parentNode) {
+            console.warn(`⚠️ L'élément pour ${file} n'a plus de parent`);
+            return;
+          }
+          
+          // Remplacer l'élément par son contenu
+          element.outerHTML = content;
+          
+          console.log(`✅ Partial chargé: ${file}`);
+          
+        } catch (error) {
+          console.error(`❌ Erreur de chargement: ${file}`, error);
+          // Garder l'élément vide plutôt que de le supprimer
+          element.innerHTML = `<!-- Erreur: ${file} -->`;
+        }
+      })
+    );
+
+    console.log('✅ Tous les partials chargés');
+    
+    // Déclencher un événement personnalisé quand les partials sont chargés
+    document.dispatchEvent(new Event('partials-loaded'));
+    
+  } catch (error) {
+    console.error('❌ Erreur globale includePartials:', error);
+  }
+}
+
+// Lancer l'inclusion dès que possible
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', includePartials);
+} else {
+  includePartials();
+}
+
+console.log('✅ Système d\'inclusion chargé');

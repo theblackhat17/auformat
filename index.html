@@ -19,9 +19,17 @@
   <!-- Icons / PWA -->
   <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
   <link rel="apple-touch-icon" href="/sources/img/logo_tmp.png">
-
-  <!-- Include des partials -->
-  <script defer src="/sources/js/include.js"></script>
+ <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- IMPORTANT : include.js en PREMIER avec defer -->
+  <script defer src="/js/include.js"></script>
+  
+  <!-- Ensuite les scripts d'auth -->
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/header.js"></script>
+  <script defer src="/js/header-auth.js"></script>
   <style>
   /* -------- Reset + Variables -------- */
   *{box-sizing:border-box;margin:0;padding:0}
