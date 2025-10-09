@@ -5,7 +5,7 @@
 
 // Attendre que AUTH soit disponible
 (async function initQuotes() {
-  console.log('🎯 Initialisation mes-devis...');
+  console.log('🎯 Initialisation mes_devis...');
   
   // Attendre AUTH
   let attempts = 0;
@@ -71,7 +71,7 @@ async function loadQuotes() {
             <div class="empty-icon">📄</div>
             <div class="empty-title">Aucun devis</div>
             <div class="empty-desc">Vous n'avez pas encore de devis. Créez un projet et demandez un devis !</div>
-            <a href="/mes-projets.html" class="btn btn-primary">Mes projets</a>
+            <a href="/mes_projets.html" class="btn btn-primary">Mes projets</a>
           </div>
         `;
         return;

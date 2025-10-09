@@ -415,7 +415,7 @@ async function saveFurniture() {
         
         // Proposer de voir tous les projets
         if (confirm('Voulez-vous voir tous vos projets maintenant ?')) {
-            window.location.href = '/mes-projets.html';
+            window.location.href = '/mes_projets.html';
         }
 
     } catch (error) {

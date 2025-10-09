@@ -7,7 +7,7 @@ let currentProjectId = null;
 
 // Attendre que AUTH soit disponible
 (async function initProjects() {
-  console.log('🎯 Initialisation mes-projets...');
+  console.log('🎯 Initialisation mes_projets...');
   
   // Attendre AUTH
   let attempts = 0;
