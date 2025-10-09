@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestion Devis – Admin</title>
+  
+  <link rel="stylesheet" href="/sources/css/style_global.css">
+  <link rel="stylesheet" href="/sources/css/style_header.css">
+  <link rel="stylesheet" href="/sources/css/style_admin_quotes.css">
+  <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="/js/include.js"></script>
+  <script defer src="/js/config.js"></script>
+  <script defer src="/js/auth.js"></script>
+  <script defer src="/js/header.js"></script>
+  <script defer src="/js/header-auth.js"></script>
+
+  
+</head>
+
+<body>
+  <div data-include="partials/header.html"></div>
+
+  <div class="admin-container">
+    <div class="admin-header">
+      <div>
+        <h1 class="admin-title">📄 Gestion des Devis</h1>
+        <p class="admin-subtitle">Créer et gérer vos devis clients</p>
+      </div>
+      <div class="admin-actions">
+        <a href="/admin_web.html" class="btn btn-secondary">← Retour Dashboard</a>
+        <button class="btn btn-primary" onclick="openCreateQuoteModal()">
+          ➕ Nouveau devis
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('all')">Tous</button>
+      <button class="tab" onclick="switchTab('draft')">Brouillons</button>
+      <button class="tab" onclick="switchTab('sent')">Envoyés</button>
+      <button class="tab" onclick="switchTab('accepted')">Acceptés</button>
+      <button class="tab" onclick="switchTab('refused')">Refusés</button>
+    </div>
+
+    <!-- Liste des devis -->
+    <div id="quotes-container">
+      <div class="loading">
+        <div class="spinner"></div>
+        <p>Chargement des devis...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal création devis -->
+  <div class="modal" id="quote-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">💰 Créer un devis</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+
+      <form id="quote-form">
+        <div class="form-group">
+          <label class="form-label">Client *</label>
+          <select class="form-select" id="quote-client" required>
+            <option value="">Sélectionner un client...</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Titre du devis *</label>
+            <input type="text" class="form-input" id="quote-title" placeholder="Ex: Meuble sur mesure" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Valable jusqu'au</label>
+            <input type="date" class="form-input" id="quote-valid-until">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="quote-description" placeholder="Description du devis..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Articles / Lignes du devis *</label>
+          <div class="items-list" id="items-list">
+            <div class="item-row">
+              <input type="text" class="form-input" placeholder="Désignation" data-field="description" required>
+              <input type="number" class="form-input" placeholder="Qté" data-field="quantity" value="1" min="1" required>
+              <input type="number" class="form-input" placeholder="Prix HT" data-field="price" step="0.01" min="0" required>
+              <input type="text" class="form-input" value="0.00 €" readonly>
+              <button type="button" class="btn-remove-item" onclick="removeItem(this)" disabled>🗑️</button>
+            </div>
+          </div>
+          <button type="button" class="btn-add-item" onclick="addItem()">
+            ➕ Ajouter une ligne
+          </button>
+        </div>
+
+        <div class="price-summary">
+          <div class="price-row">
+            <span>Sous-total HT</span>
+            <strong id="subtotal-ht">0.00 €</strong>
+          </div>
+          <div class="price-row">
+            <span>TVA (20%)</span>
+            <strong id="tax-amount">0.00 €</strong>
+          </div>
+          <div class="price-row total">
+            <span>Total TTC</span>
+            <strong id="total-ttc">0.00 €</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes internes (non visibles par le client)</label>
+          <textarea class="form-textarea" id="admin-notes" placeholder="Notes pour vous..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" style="flex: 1;" onclick="closeModal()">
+            Annuler
+          </button>
+          <button type="submit" class="btn btn-primary" style="flex: 1;">
+            💾 Créer le devis
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/admin_quotes.js"></script>
+
+  <div data-include="partials/footer.html"></div>
+
+
+</body>
+</html>
