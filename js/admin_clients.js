@@ -20,29 +20,27 @@
     })();
 
     async function loadClients() {
-      try {
-        const { data: clients, error } = await supabaseClient
-          .from('admin_client_stats')
-          .select('*')
-          .order('created_at', { ascending: false });
+  try {
+    const { data: clients, error } = await supabaseClient
+      .from('admin_client_stats_with_sessions') // ✅ Utiliser la nouvelle vue
+      .select('*')
+      .order('created_at', { ascending: false });
 
-        if (error) throw error;
+    if (error) throw error;
 
-        allClients = clients || [];
-        displayClients(allClients);
-        updateStats(allClients);
+    displayClients(clients || []);
 
-      } catch (error) {
-        console.error('Erreur:', error);
-        document.getElementById('clients-container').innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">❌</div>
-            <div class="empty-title">Erreur</div>
-            <p>${error.message}</p>
-          </div>
-        `;
-      }
-    }
+  } catch (error) {
+    console.error('Erreur chargement clients:', error);
+    document.getElementById('clients-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">❌</div>
+        <div class="empty-title">Erreur</div>
+        <p>${error.message}</p>
+      </div>
+    `;
+  }
+}
 
     function displayClients(clients) {
       const container = document.getElementById('clients-container');

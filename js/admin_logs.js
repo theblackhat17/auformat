@@ -109,6 +109,7 @@ async function loadUsers() {
 
 // Charger les logs
 // Charger les logs
+// Charger les logs
 async function loadLogs() {
   try {
     const { data: logs, error } = await supabaseClient
@@ -117,8 +118,7 @@ async function loadLogs() {
         *,
         profiles!activity_logs_user_id_fkey (
           full_name,
-          email,
-          avatar_url
+          email
         )
       `)
       .order('created_at', { ascending: false })
@@ -230,7 +230,12 @@ function displayLogs() {
 
   tbody.innerHTML = logsToDisplay.map(log => {
     const user = log.profiles || {};
+    
+    // ✅ CORRECTION : Afficher le nom ou l'email
+    const userName = user.full_name || user.email || 'Utilisateur';
+    const userEmail = user.email || 'N/A';
     const initials = getInitials(user);
+    
     const actionType = getActionTypeCategory(log.action_type);
     const statusClass = log.success === false ? 'error' : 'success';
     const statusText = log.success === false ? '❌ Erreur' : '✅ Succès';
@@ -244,8 +249,8 @@ function displayLogs() {
           <div class="log-user">
             <div class="log-user-avatar">${initials}</div>
             <div class="log-user-info">
-              <div class="log-user-name">${user.full_name || 'Utilisateur'}</div>
-              <div class="log-user-email">${user.email || 'N/A'}</div>
+              <div class="log-user-name">${userName}</div>
+              <div class="log-user-email">${userEmail}</div>
             </div>
           </div>
         </td>
@@ -388,7 +393,12 @@ function exportLogs() {
 
 function getInitials(user) {
   if (!user) return '?';
+  
+  // Essayer d'abord avec full_name, sinon email
   const name = user.full_name || user.email || '?';
+  
+  if (name === '?') return '?';
+  
   return name
     .split(' ')
     .map(n => n[0])

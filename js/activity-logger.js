@@ -63,8 +63,9 @@ class ActivityLogger {
 
   // Méthodes de raccourci pour les actions courantes
   async logLogin() {
-    await this.log('login', 'auth', null, { description: 'Connexion réussie' });
-  }
+  await this.log('login', 'auth', null, { description: 'Connexion réussie' });
+  await this.logSession(); // ✅ AJOUTER CETTE LIGNE
+}
 
   async logLogout() {
     await this.log('logout', 'auth', null, { description: 'Déconnexion' });
@@ -123,7 +124,45 @@ class ActivityLogger {
       description: `Consultation de la page: ${pageName}`
     });
   }
+  /**
+ * Enregistrer une session de connexion
+ */
+async logSession() {
+  try {
+    const { data: { user } } = await this.supabase.auth.getUser();
+    
+    if (!user) return;
+
+    // Récupérer l'IP
+    let ipAddress = null;
+    try {
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      ipAddress = data.ip;
+    } catch (error) {
+      console.warn('⚠️ Impossible de récupérer l\'IP');
+    }
+
+    // Créer une entrée de session
+    const { error } = await this.supabase
+      .from('user_sessions')
+      .insert([{
+        user_id: user.id,
+        ip_address: ipAddress,
+        user_agent: navigator.userAgent,
+        logged_in_at: new Date().toISOString()
+      }]);
+
+    if (error) throw error;
+
+    console.log('✅ Session enregistrée');
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'enregistrement de session:', error);
+  }
 }
+}
+
 
 // Créer une instance globale
 window.ActivityLogger = new ActivityLogger();
