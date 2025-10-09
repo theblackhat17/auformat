@@ -25,7 +25,8 @@ async function includePartials() {
         const file = element.getAttribute('data-include');
         
         try {
-          const response = await fetch(`/${file}`);
+          // ✅ CORRECTION : Utiliser le chemin tel quel (relatif à la page courante)
+          const response = await fetch(file);
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -47,7 +48,9 @@ async function includePartials() {
         } catch (error) {
           console.error(`❌ Erreur de chargement: ${file}`, error);
           // Garder l'élément vide plutôt que de le supprimer
-          element.innerHTML = `<!-- Erreur: ${file} -->`;
+          if (element.parentNode) {
+            element.innerHTML = `<!-- Erreur: ${file} -->`;
+          }
         }
       })
     );
