@@ -4,51 +4,61 @@
 
 const AuthSystem = {
   // ========== INSCRIPTION ==========
-  // Dans /js/auth.js
-// Remplacez la fonction register() par celle-ci :
-
-async register(email, password, fullName, companyName = '', phone = '') {
-  try {
-    // 1. Créer le compte utilisateur
-    const { data, error } = await supabase.auth.signUp({
-      email: email,
-      password: password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth-callback.html`,
-        data: {
-          full_name: fullName,
-          company_name: companyName,
-          phone: phone  // ✅ AJOUT DU TÉLÉPHONE
+  async register(email, password, fullName, companyName = '', phone = '') {
+    try {
+      // 1. Créer le compte utilisateur
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth-callback.html`,
+          data: {
+            full_name: fullName,
+            company_name: companyName,
+            phone: phone
+          }
         }
+      });
+
+      if (error) throw error;
+
+      // ✅ LOGGER L'INSCRIPTION
+      if (window.ActivityLogger && data.user) {
+        await window.ActivityLogger.log('register', 'auth', data.user.id, {
+          description: `Nouvelle inscription: ${email}`
+        });
       }
-    });
 
-    if (error) throw error;
+      // 2. Vérifier si confirmation email nécessaire
+      if (data.user && !data.session) {
+        return {
+          success: true,
+          requiresConfirmation: true,
+          message: '✅ Inscription réussie ! Vérifiez votre email pour confirmer votre compte.'
+        };
+      }
 
-    // 2. Vérifier si confirmation email nécessaire
-    if (data.user && !data.session) {
       return {
         success: true,
-        requiresConfirmation: true,
-        message: '✅ Inscription réussie ! Vérifiez votre email pour confirmer votre compte.'
+        requiresConfirmation: false,
+        message: '✅ Inscription réussie ! Vous pouvez maintenant vous connecter.',
+        user: data.user
+      };
+
+    } catch (error) {
+      console.error('Erreur inscription:', error);
+      
+      // ✅ LOGGER L'ERREUR
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logError('register', error.message);
+      }
+      
+      return {
+        success: false,
+        message: this.getErrorMessage(error)
       };
     }
-
-    return {
-      success: true,
-      requiresConfirmation: false,
-      message: '✅ Inscription réussie ! Vous pouvez maintenant vous connecter.',
-      user: data.user
-    };
-
-  } catch (error) {
-    console.error('Erreur inscription:', error);
-    return {
-      success: false,
-      message: this.getErrorMessage(error)
-    };
-  }
-},
+  },
 
   // ========== CONNEXION ==========
   async login(email, password) {
@@ -67,6 +77,11 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
       console.log('✅ Connexion réussie, session créée:', data.session.user.id);
 
+      // ✅ LOGGER LA CONNEXION
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logLogin();
+      }
+
       return {
         success: true,
         message: '✅ Connexion réussie !',
@@ -76,6 +91,12 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
     } catch (error) {
       console.error('Erreur connexion:', error);
+      
+      // ✅ LOGGER L'ERREUR
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logError('login', error.message);
+      }
+      
       return {
         success: false,
         message: this.getErrorMessage(error)
@@ -86,6 +107,11 @@ async register(email, password, fullName, companyName = '', phone = '') {
   // ========== DÉCONNEXION ==========
   async logout() {
     try {
+      // ✅ LOGGER LA DÉCONNEXION (avant de se déconnecter)
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logLogout();
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
@@ -98,6 +124,12 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
     } catch (error) {
       console.error('Erreur déconnexion:', error);
+      
+      // ✅ LOGGER L'ERREUR
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logError('logout', error.message);
+      }
+      
       return {
         success: false,
         message: 'Erreur lors de la déconnexion'
@@ -114,6 +146,13 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
       if (error) throw error;
 
+      // ✅ LOGGER LA DEMANDE DE RESET
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.log('reset_password_request', 'auth', null, {
+          description: `Demande de réinitialisation pour: ${email}`
+        });
+      }
+
       return {
         success: true,
         message: '✅ Email de réinitialisation envoyé ! Vérifiez votre boîte mail.'
@@ -121,6 +160,12 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
     } catch (error) {
       console.error('Erreur reset password:', error);
+      
+      // ✅ LOGGER L'ERREUR
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logError('reset_password', error.message);
+      }
+      
       return {
         success: false,
         message: this.getErrorMessage(error)
@@ -143,6 +188,13 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
       if (error) throw error;
 
+      // ✅ LOGGER LA MISE À JOUR DU PROFIL
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.log('update_profile', 'user', userId, {
+          description: 'Modification du profil utilisateur'
+        });
+      }
+
       return {
         success: true,
         message: '✅ Profil mis à jour avec succès',
@@ -151,6 +203,12 @@ async register(email, password, fullName, companyName = '', phone = '') {
 
     } catch (error) {
       console.error('Erreur mise à jour profil:', error);
+      
+      // ✅ LOGGER L'ERREUR
+      if (window.ActivityLogger) {
+        await window.ActivityLogger.logError('update_profile', error.message);
+      }
+      
       return {
         success: false,
         message: 'Erreur lors de la mise à jour du profil'
