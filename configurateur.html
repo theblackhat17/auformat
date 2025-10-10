@@ -3,31 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Configurateur Meubles 3D - Au Format</title>
-  <meta name="description" content="Découvrez les avis vérifiés de nos clients sur nos réalisations en menuiserie et agencements sur mesure.">
-  <link rel="canonical" href="https://auformat.fr/avis.html">
-
-  <meta property="og:title" content="Avis Clients — Au Format">
-  <meta property="og:description" content="Ils nous font confiance.">
-  <meta property="og:url" content="https://auformat.fr/configurateur.html">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#2C5F2D">
-
+  <title>Configurateur Modulaire 3D - Au Format</title>
+  
   <link rel="stylesheet" href="/sources/css/style_global.css">
   <link rel="stylesheet" href="/sources/css/style_configurateur.css">
   <link rel="stylesheet" href="/sources/css/style_header.css">
   <link rel="stylesheet" href="/sources/css/style_logout_modal.css">
-
   <link rel="icon" href="/sources/img/logo_tmp.png" type="image/png">
-  <link rel="apple-touch-icon" href="/sources/img/logo_tmp.png">
-
- <!-- Supabase -->
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- IMPORTANT : include.js en PREMIER avec defer -->
   <script defer src="/js/include.js"></script>
-  
-  <!-- Ensuite les scripts d'auth -->
   <script defer src="/js/config.js"></script>
   <script defer src="/js/auth.js"></script>
   <script defer src="/js/activity-logger.js"></script>
@@ -36,142 +21,463 @@
   <script defer src="/js/header-auth.js"></script>
 </head>
 
-
 <body>
-    <div data-include="partials/header.html"></div>
-    <div class="container">
-        <div class="header">
-            <h1>🪑 Configurateur de Meubles Complets</h1>
-            <p>Créez vos caissons, portes et tiroirs en 3D</p>
-        </div>
-
-        <div class="main-grid">
-            <!-- Viewer 3D -->
-            <div>
-                <div class="card">
-                    <h2>Visualisation 3D - Votre Meuble</h2>
-                    <div id="viewer-container"></div>
-                    <div class="controls">
-                        <button class="btn" onclick="resetView()">🔄 Vue 3/4</button>
-                        <button class="btn" onclick="changeView('front')">⬜ Face</button>
-                        <button class="btn" onclick="changeView('side')">↔️ Côté</button>
-                        <button class="btn" onclick="changeView('top')">⬆️ Dessus</button>
-                        <button class="btn" onclick="toggleWireframe()">📐 Fil de fer</button>
-                        <button class="btn" onclick="explodeView()">💥 Éclaté</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Configuration -->
-            <div>
-                <!-- Templates -->
-                <div class="section">
-                    <div class="section-header">
-                        <span>1. Type de Meuble</span>
-                    </div>
-                    <div class="section-content">
-                        <div class="template-grid">
-                            <div class="template-card active" onclick="selectTemplate('custom')">
-                                <div class="template-icon">📦</div>
-                                <div class="template-name">Personnalisé</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('kitchen-base')">
-                                <div class="template-icon">🍳</div>
-                                <div class="template-name">Meuble Bas</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('kitchen-high')">
-                                <div class="template-icon">📚</div>
-                                <div class="template-name">Meuble Haut</div>
-                            </div>
-                            <div class="template-card" onclick="selectTemplate('wardrobe')">
-                                <div class="template-icon">👔</div>
-                                <div class="template-name">Dressing</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dimensions Caisson -->
-                <div class="section">
-                    <div class="section-header">
-                        <span>2. Caisson Principal</span>
-                    </div>
-                    <div class="section-content">
-                        <div class="form-group">
-                            <label class="form-label">Largeur (mm)</label>
-                            <input type="number" class="form-input" id="width" value="800" min="300" max="2000" onchange="updateCabinet()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Hauteur (mm)</label>
-                            <input type="number" class="form-input" id="height" value="720" min="300" max="2400" onchange="updateCabinet()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Profondeur (mm)</label>
-                            <input type="number" class="form-input" id="depth" value="580" min="300" max="800" onchange="updateCabinet()">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Épaisseur panneaux (mm)</label>
-                            <select class="form-select" id="thickness" onchange="updateCabinet()">
-                                <option value="18">18 mm</option>
-                                <option value="19">19 mm</option>
-                                <option value="22">22 mm</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Modules -->
-                <div class="section">
-                    <div class="section-header">
-                        <span>3. Portes & Tiroirs</span>
-                    </div>
-                    <div class="section-content">
-                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="addModule('door')">
-                            🚪 Ajouter une Porte
-                        </button>
-                        <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" onclick="addModule('drawer')">
-                            📦 Ajouter un Tiroir
-                        </button>
-                        <button class="btn btn-primary" style="width: 100%;" onclick="addModule('shelf')">
-                            📐 Ajouter une Étagère
-                        </button>
-
-                        <div class="module-list" id="module-list" style="margin-top: 15px;">
-                            <!-- Modules ajoutés dynamiquement -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Prix -->
-                <div class="price-section">
-                    <div class="price-row">
-                        <span>Caisson</span>
-                        <strong id="price-cabinet">245.00 €</strong>
-                    </div>
-                    <div class="price-row">
-                        <span>Modules (<span id="module-count">0</span>)</span>
-                        <strong id="price-modules">0.00 €</strong>
-                    </div>
-                    <div class="price-row">
-                        <span>Quincaillerie</span>
-                        <strong id="price-hardware">35.00 €</strong>
-                    </div>
-                    <div class="price-row total">
-                        <span>Total TTC</span>
-                        <strong id="total-price">280.00 €</strong>
-                    </div>
-                    <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="saveFurniture()">
-                        ✅ Valider et Sauvegarder
-                    </button>
-                </div>
-            </div>
-        </div>
+  <div data-include="partials/header.html"></div>
+  
+  <div class="container">
+    <!-- Header avec mode switcher -->
+    <div class="header">
+      <div>
+        <h1>🏗️ Configurateur Modulaire 3D</h1>
+        <p>Créez votre meuble sur mesure module par module</p>
+      </div>
+      
+      <!-- Switcher de mode -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" onclick="switchMode('custom')">
+          🔧 Personnalisé
+        </button>
+        <button class="mode-btn" onclick="switchMode('dressing')">
+          👔 Dressing Builder
+        </button>
+        <button class="mode-btn" onclick="switchMode('kitchen')">
+          🍳 Cuisine
+        </button>
+      </div>
     </div>
-    <div data-include="partials/footer.html"></div>
-    <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="/js/configurateur.js"></script>
-   
+
+    <div class="main-grid">
+      <!-- Vue 3D -->
+      <div>
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2>🎨 Visualisation 3D</h2>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-small" onclick="exportConfiguration()">💾 Export</button>
+              <button class="btn btn-small" onclick="takeScreenshot()">📸</button>
+              <button class="btn btn-small" onclick="shareProject()">🔗</button>
+            </div>
+          </div>
+          
+          <div id="viewer-container"></div>
+          
+          <!-- Panneau d'info module sélectionné -->
+          <div id="module-info-panel" style="
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border: 2px solid #2C5F2D;
+            z-index: 100;
+            min-width: 200px;
+          ">
+            <!-- Contenu généré dynamiquement -->
+          </div>
+          
+          <!-- Instructions drag & drop -->
+          <div style="
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(44,95,45,0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+          ">
+            <span>💡</span>
+            <span><strong>Astuce:</strong> Cliquez et glissez un module pour le déplacer</span>
+          </div>
+          
+          <!-- Contrôles de vue -->
+          <div class="controls">
+            <button class="btn" onclick="resetView()">🔄 Reset</button>
+            <button class="btn" onclick="changeView('front')">⬜ Face</button>
+            <button class="btn" onclick="changeView('side')">↔️ Côté</button>
+            <button class="btn" onclick="changeView('top')">⬆️ Dessus</button>
+            <button class="btn" onclick="toggleWireframe()">🔍 Fil de fer</button>
+            <button class="btn" onclick="explodeView()">💥 Éclaté</button>
+          </div>
+          
+          <!-- Stats -->
+          <div class="stats-bar">
+            <div class="stat-item">
+              <div class="stat-value" id="stat-cabinets">1</div>
+              <div class="stat-label">Caissons</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-modules">0</div>
+              <div class="stat-label">Modules</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-width">800</div>
+              <div class="stat-label">Largeur (mm)</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-volume">0</div>
+              <div class="stat-label">Volume (L)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Configuration -->
+      <div>
+        
+        <!-- ASSISTANT DRESSING (visible en mode dressing) -->
+        <div class="dressing-assistant" id="dressing-assistant" style="display: none;">
+          <h3>🧙 Assistant Dressing</h3>
+          <p style="font-size: 14px; opacity: 0.9;">Choisissez une configuration prédéfinie</p>
+          
+          <div class="dressing-presets">
+            <button class="preset-btn" onclick="applyDressingPreset('minimal')">
+              Minimal<br><small>2m × 2.4m</small>
+            </button>
+            <button class="preset-btn" onclick="applyDressingPreset('standard')">
+              Standard<br><small>3m × 2.4m</small>
+            </button>
+            <button class="preset-btn" onclick="applyDressingPreset('luxe')">
+              Luxe<br><small>4m × 2.4m</small>
+            </button>
+            <button class="preset-btn" onclick="applyDressingPreset('angle')">
+              Angle<br><small>L-Shape</small>
+            </button>
+          </div>
+        </div>
+        
+        <!-- 1. Matériaux -->
+        <div class="section">
+          <div class="section-header">
+            <span>1. Matériau & Finition</span>
+          </div>
+          <div class="section-content">
+            <div class="materials-grid">
+              <div class="material-swatch active" style="background: #D4A574;" onclick="selectMaterial('chene')">
+                <div class="material-name">Chêne</div>
+              </div>
+              <div class="material-swatch" style="background: #8B5A3C;" onclick="selectMaterial('noyer')">
+                <div class="material-name">Noyer</div>
+              </div>
+              <div class="material-swatch" style="background: #E8D4B0;" onclick="selectMaterial('pin')">
+                <div class="material-name">Pin</div>
+              </div>
+              <div class="material-swatch" style="background: #F5F5F5;" onclick="selectMaterial('blanc')">
+                <div class="material-name">Blanc</div>
+              </div>
+              <div class="material-swatch" style="background: #2D2D2D;" onclick="selectMaterial('noir')">
+                <div class="material-name">Noir</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Caissons -->
+        <div class="section">
+          <div class="section-header">
+            <span>2. Caissons (<span id="cabinets-count">1</span>)</span>
+            <button class="btn btn-small" onclick="addCabinet()" style="margin-left: auto;">
+              ➕ Ajouter
+            </button>
+          </div>
+          <div class="section-content">
+            <div class="cabinets-list" id="cabinets-list">
+              <!-- Généré dynamiquement -->
+            </div>
+            
+            <!-- Sélecteur caisson actif -->
+            <div class="form-group" style="margin-top: 15px;">
+              <label class="form-label">Caisson actif pour modules</label>
+              <select class="form-select" id="active-cabinet-select">
+                <option value="1">Caisson 1</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Modules -->
+        <div class="section">
+          <div class="section-header">
+            <span>3. Ajouter des Modules</span>
+          </div>
+          <div class="section-content">
+            <div class="modules-palette">
+              <button class="module-btn" onclick="addModuleToActiveCabinet('etagere')">
+                <div class="module-icon">📚</div>
+                <div>Étagère</div>
+              </button>
+              <button class="module-btn" onclick="addModuleToActiveCabinet('tiroir')">
+                <div class="module-icon">🗄️</div>
+                <div>Tiroir</div>
+              </button>
+              <button class="module-btn" onclick="addModuleToActiveCabinet('penderie')">
+                <div class="module-icon">👔</div>
+                <div>Penderie</div>
+              </button>
+              <button class="module-btn" onclick="addModuleToActiveCabinet('porte')">
+                <div class="module-icon">🚪</div>
+                <div>Porte</div>
+              </button>
+            </div>
+            
+            <!-- Liste des modules du caisson actif -->
+            <div class="module-list" id="module-list" style="margin-top: 15px;">
+              <p style="text-align: center; color: #999; padding: 20px;">
+                Aucun module<br>
+                <small>Cliquez sur un module ci-dessus pour l'ajouter</small>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Poignées -->
+        <div class="section">
+          <div class="section-header">
+            <span>4. Style de Poignées</span>
+          </div>
+          <div class="section-content">
+            <div class="handles-selector">
+              <div class="handle-option active" onclick="selectHandle('moderne')">
+                <div class="handle-icon">━</div>
+                <div class="handle-name">Moderne</div>
+              </div>
+              <div class="handle-option" onclick="selectHandle('bouton')">
+                <div class="handle-icon">◉</div>
+                <div class="handle-name">Bouton</div>
+              </div>
+              <div class="handle-option" onclick="selectHandle('coquille')">
+                <div class="handle-icon">⌒</div>
+                <div class="handle-name">Coquille</div>
+              </div>
+              <div class="handle-option" onclick="selectHandle('invisible')">
+                <div class="handle-icon">⬜</div>
+                <div class="handle-name">Push</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prix & Sauvegarde -->
+        <div class="price-section">
+          <div class="price-row">
+            <span>Matériau</span>
+            <strong id="price-material">0.00 €</strong>
+          </div>
+          <div class="price-row">
+            <span>Modules</span>
+            <strong id="price-modules">0.00 €</strong>
+          </div>
+          <div class="price-row">
+            <span>Quincaillerie</span>
+            <strong id="price-hardware">50.00 €</strong>
+          </div>
+          <div class="price-row total">
+            <span>Total TTC</span>
+            <strong id="total-price">0.00 €</strong>
+          </div>
+          
+          <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="saveFurniture()">
+            💾 Sauvegarder mon projet
+          </button>
+          
+          <button class="btn btn-secondary" style="width: 100%; margin-top: 10px;" onclick="requestQuote()">
+            📋 Demander un devis
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-include="partials/footer.html"></div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  
+  <!-- Configurateur -->
+  <script src="/js/configurateur.js"></script>
+  
+  <script>
+    // ============================================
+    // FONCTIONS UI ADDITIONNELLES
+    // ============================================
+    
+    let currentMode = 'custom';
+    
+    // Afficher le tutoriel drag & drop au premier chargement
+    window.addEventListener('load', () => {
+      const hasSeenTutorial = localStorage.getItem('drag-tutorial-seen');
+      if(!hasSeenTutorial) {
+        setTimeout(showDragTutorial, 2000);
+      }
+    });
+    
+    function showDragTutorial() {
+      const tutorial = document.createElement('div');
+      tutorial.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        animation: fadeIn 0.3s;
+      `;
+      
+      tutorial.innerHTML = `
+        <div style="
+          background: white;
+          border-radius: 20px;
+          padding: 40px;
+          max-width: 500px;
+          text-align: center;
+        ">
+          <div style="font-size: 60px; margin-bottom: 20px;">🎯</div>
+          <h2 style="margin-bottom: 15px;">Déplacez vos modules !</h2>
+          <p style="color: #64748b; margin-bottom: 25px; line-height: 1.6;">
+            Cliquez sur un module dans la vue 3D et <strong>glissez-le</strong> vers le haut ou le bas.<br>
+            Il se positionnera automatiquement aux bons emplacements !
+          </p>
+          <button class="btn btn-primary" onclick="closeDragTutorial()" style="width: 100%;">
+            ✅ J'ai compris !
+          </button>
+        </div>
+      `;
+      
+      document.body.appendChild(tutorial);
+      window.dragTutorialElement = tutorial;
+    }
+    
+    function closeDragTutorial() {
+      if(window.dragTutorialElement) {
+        window.dragTutorialElement.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => {
+          window.dragTutorialElement.remove();
+        }, 300);
+      }
+      localStorage.setItem('drag-tutorial-seen', 'true');
+    }
+    
+    function switchMode(mode) {
+      currentMode = mode;
+      
+      // Update buttons
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Show/hide dressing assistant
+      document.getElementById('dressing-assistant').style.display = 
+        mode === 'dressing' ? 'block' : 'none';
+      
+      // Apply template
+      if(mode === 'dressing') {
+        selectTemplate('wardrobe');
+      } else if(mode === 'kitchen') {
+        selectTemplate('kitchen-base');
+      }
+    }
+    
+    function selectMaterial(material) {
+      furniture.material = material;
+      
+      document.querySelectorAll('.material-swatch').forEach(el => {
+        el.classList.remove('active');
+      });
+      event.target.closest('.material-swatch').classList.add('active');
+      
+      rebuildAll();
+      updateUI();
+    }
+    
+    function selectHandle(handle) {
+      furniture.globalHandle = handle;
+      
+      document.querySelectorAll('.handle-option').forEach(el => {
+        el.classList.remove('active');
+      });
+      event.target.closest('.handle-option').classList.add('active');
+      
+      rebuildAll();
+    }
+    
+    function applyDressingPreset(preset) {
+      switch(preset) {
+        case 'minimal':
+          furniture.cabinets = [
+            { id: 1, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:0,y:0,z:0}, modules: [
+              {id: 1, type: 'penderie', position: 100, width: 964, height: 1200},
+              {id: 2, type: 'etagere', position: 1400, width: 964, height: 18},
+              {id: 3, type: 'tiroir', position: 1800, width: 964, height: 150}
+            ]},
+            { id: 2, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:1000,y:0,z:0}, modules: [
+              {id: 4, type: 'etagere', position: 100, width: 964, height: 18},
+              {id: 5, type: 'etagere', position: 500, width: 964, height: 18},
+              {id: 6, type: 'etagere', position: 900, width: 964, height: 18}
+            ]}
+          ];
+          break;
+          
+        case 'standard':
+          furniture.cabinets = [
+            { id: 1, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:0,y:0,z:0}, modules: []},
+            { id: 2, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:1000,y:0,z:0}, modules: []},
+            { id: 3, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:2000,y:0,z:0}, modules: []}
+          ];
+          break;
+          
+        case 'luxe':
+          furniture.cabinets = [
+            { id: 1, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:0,y:0,z:0}, modules: []},
+            { id: 2, width: 800, height: 2400, depth: 600, thickness: 18, position: {x:1000,y:0,z:0}, modules: []},
+            { id: 3, width: 1200, height: 2400, depth: 600, thickness: 18, position: {x:1800,y:0,z:0}, modules: []},
+            { id: 4, width: 1000, height: 2400, depth: 600, thickness: 18, position: {x:3000,y:0,z:0}, modules: []}
+          ];
+          break;
+      }
+      
+      rebuildAll();
+      updateUI();
+    }
+    
+    function takeScreenshot() {
+      alert('📸 Fonctionnalité en développement !');
+    }
+    
+    function shareProject() {
+      const url = window.location.href;
+      if(navigator.share) {
+        navigator.share({
+          title: 'Mon meuble Au Format',
+          text: 'Regarde mon meuble personnalisé !',
+          url: url
+        });
+      } else {
+        navigator.clipboard.writeText(url);
+        alert('🔗 Lien copié dans le presse-papier !');
+      }
+    }
+    
+    function requestQuote() {
+      if(confirm('📋 Voulez-vous sauvegarder ce projet et demander un devis personnalisé ?')) {
+        saveFurniture().then(() => {
+          window.location.href = '/contact.html?subject=devis';
+        });
+      }
+    }
+  </script>
 </body>
 </html>
