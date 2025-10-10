@@ -26,29 +26,61 @@ let currentTab = 'all';
 
 async function loadClients() {
   try {
+    console.log('🔍 Début chargement clients...');
+    
+    // ✅ Attendre que le DOM soit prêt
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const select = document.getElementById('quote-client');
+    if (!select) {
+      console.error('❌ Element #quote-client introuvable !');
+      return;
+    }
+    
+    console.log('✅ Select trouvé:', select);
+    
     const { data: clients, error } = await supabaseClient
       .from('profiles')
-      .select('id, email, full_name, company_name')
+      .select('id, email, full_name, company_name, role')
       .eq('role', 'client')
-      .order('full_name');
+      .order('full_name', { nullsFirst: false });
 
-    if (error) throw error;
+    console.log('📊 Clients récupérés:', clients);
+    
+    if (error) {
+      console.error('❌ Erreur Supabase:', error);
+      throw error;
+    }
 
-    const select = document.getElementById('quote-client');
+    if (!clients || clients.length === 0) {
+      console.warn('⚠️ Aucun client trouvé');
+      select.innerHTML = '<option value="">Aucun client disponible</option>';
+      return;
+    }
+
+    console.log(`✅ ${clients.length} client(s) trouvé(s)`);
+
     select.innerHTML = '<option value="">Sélectionner un client...</option>' +
-      clients.map(c => `
-        <option value="${c.id}" 
-          data-email="${c.email}" 
-          data-name="${c.full_name || ''}"
-          data-company="${c.company_name || ''}">
-          ${c.full_name || c.email} ${c.company_name ? `(${c.company_name})` : ''}
-        </option>
-      `).join('');
+      clients.map(c => {
+        const displayName = c.full_name || c.email;
+        const company = c.company_name ? ` (${c.company_name})` : '';
+        console.log(`  - ${displayName}${company}`);
+        
+        return `
+          <option value="${c.id}" 
+            data-email="${c.email || ''}" 
+            data-name="${c.full_name || ''}"
+            data-company="${c.company_name || ''}">
+            ${displayName}${company}
+          </option>
+        `;
+      }).join('');
+
+    console.log('✅ Select HTML mis à jour, nombre d\'options:', select.options.length);
 
   } catch (error) {
-    console.error('Erreur chargement clients:', error);
+    console.error('❌ Erreur loadClients:', error);
     
-    // ✅ LOGGER L'ERREUR
     if (window.ActivityLogger) {
       await window.ActivityLogger.logError('load_clients', error.message);
     }
