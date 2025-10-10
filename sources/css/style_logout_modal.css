@@ -1,0 +1,231 @@
+/* =========================================
+   MODALE DE DÉCONNEXION
+   ========================================= */
+
+.logout-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.logout-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.logout-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 40px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9) translateY(20px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-modal-overlay.active .logout-modal {
+  transform: scale(1) translateY(0);
+}
+
+/* Animation de l'icône */
+.logout-modal-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.logout-modal-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.logout-modal-message {
+  font-size: 16px;
+  color: #64748b;
+  margin-bottom: 32px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.logout-modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.logout-modal-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.logout-modal-btn-cancel {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.logout-modal-btn-cancel:hover {
+  background: #e2e8f0;
+  transform: translateY(-2px);
+}
+
+.logout-modal-btn-confirm {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-modal-btn-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.logout-modal-btn-confirm:active {
+  transform: scale(0.98);
+}
+
+/* État de chargement */
+.logout-modal-btn-confirm.loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.logout-modal-btn-confirm.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Animation de succès */
+.logout-success {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: white;
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  z-index: 100000;
+  text-align: center;
+  opacity: 0;
+  transition: all 0.5s ease;
+}
+
+.logout-success.active {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+
+.logout-success-icon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 24px;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 50px;
+  animation: successPop 0.5s ease-out;
+}
+
+@keyframes successPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.logout-success-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.logout-success-message {
+  font-size: 16px;
+  color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .logout-modal {
+    padding: 32px 24px;
+  }
+
+  .logout-modal-title {
+    font-size: 24px;
+  }
+
+  .logout-modal-message {
+    font-size: 14px;
+  }
+
+  .logout-modal-actions {
+    flex-direction: column;
+  }
+
+  .logout-modal-btn {
+    width: 100%;
+  }
+}

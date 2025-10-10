@@ -118,26 +118,32 @@
   }
 
   // Gérer la déconnexion
-  function setupLogout() {
-    const logoutBtn = document.getElementById('logout-btn');
-    
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        
+  // Gérer la déconnexion
+function setupLogout() {
+  const logoutBtn = document.getElementById('logout-btn');
+  
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      // ✅ OUVRIR LA BELLE MODALE
+      if (window.LogoutModal) {
+        window.LogoutModal.open();
+      } else {
+        // Fallback
         if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-          const result = await AuthSystem.logout();
-          
-          if (result.success) {
-            // Rediriger vers l'accueil
-            window.location.href = '/';
-          } else {
-            alert('❌ Erreur lors de la déconnexion');
-          }
+          AuthSystem.logout().then(result => {
+            if (result.success) {
+              window.location.href = '/';
+            } else {
+              alert('❌ Erreur lors de la déconnexion');
+            }
+          });
         }
-      });
-    }
+      }
+    });
   }
+}
 
   // Écouter les changements d'authentification
   if (window.AuthSystem) {

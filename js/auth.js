@@ -323,19 +323,28 @@ async function updateHeaderAuthState() {
 // =========================================
 // GESTION BOUTON DÉCONNEXION
 // =========================================
+// =========================================
+// GESTION BOUTON DÉCONNEXION
+// =========================================
 async function setupLogoutButton() {
   const logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', async (e) => {
+    logoutBtn.addEventListener('click', (e) => {
       e.preventDefault();
       
-      if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
-        const result = await AuthSystem.logout();
-        
-        if (result.success) {
-          window.location.href = '/index.html';
-        } else {
-          alert(result.message);
+      // ✅ OUVRIR LA BELLE MODALE AU LIEU DE confirm()
+      if (window.LogoutModal) {
+        window.LogoutModal.open();
+      } else {
+        // Fallback si la modale n'est pas chargée
+        if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+          AuthSystem.logout().then(result => {
+            if (result.success) {
+              window.location.href = '/index.html';
+            } else {
+              alert(result.message);
+            }
+          });
         }
       }
     });
