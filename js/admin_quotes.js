@@ -2,13 +2,6 @@ let allQuotes = [];
 let currentTab = 'all';
 
 (async function() {
-  // ✅ ATTENDRE QUE LE DOM SOIT CHARGÉ
-  if (document.readyState === 'loading') {
-    await new Promise(resolve => {
-      document.addEventListener('DOMContentLoaded', resolve);
-    });
-  }
-
   // Vérifier admin
   let attempts = 0;
   while (!window.AUTH && attempts < 50) {
@@ -24,28 +17,15 @@ let currentTab = 'all';
   const isAdmin = await AUTH.requireAdmin();
   if (!isAdmin) return;
 
-  // ✅ ATTENDRE UN PEU PLUS POUR ÊTRE SÛR QUE LE SELECT EXISTE
-  await new Promise(resolve => setTimeout(resolve, 200));
-
   await loadClients();
   await loadQuotes();
 
   // Calculer les prix en temps réel
-  const itemsList = document.getElementById('items-list');
-  if (itemsList) {
-    itemsList.addEventListener('input', calculateTotals);
-  }
+  document.getElementById('items-list').addEventListener('input', calculateTotals);
 })();
 
 async function loadClients() {
   try {
-    // ✅ VÉRIFIER QUE LE SELECT EXISTE
-    const select = document.getElementById('quote-client');
-    if (!select) {
-      console.error('❌ Element #quote-client not found');
-      return;
-    }
-
     const { data: clients, error } = await supabaseClient
       .from('profiles')
       .select('id, email, full_name, company_name')
@@ -54,10 +34,9 @@ async function loadClients() {
 
     if (error) throw error;
 
-    console.log('✅ Clients chargés:', clients); // Debug
-
+    const select = document.getElementById('quote-client');
     select.innerHTML = '<option value="">Sélectionner un client...</option>' +
-      (clients || []).map(c => `
+      clients.map(c => `
         <option value="${c.id}" 
           data-email="${c.email}" 
           data-name="${c.full_name || ''}"
@@ -66,11 +45,10 @@ async function loadClients() {
         </option>
       `).join('');
 
-    console.log('✅ Select rempli avec', clients.length, 'clients'); // Debug
-
   } catch (error) {
-    console.error('❌ Erreur chargement clients:', error);
+    console.error('Erreur chargement clients:', error);
     
+    // ✅ LOGGER L'ERREUR
     if (window.ActivityLogger) {
       await window.ActivityLogger.logError('load_clients', error.message);
     }
