@@ -1,0 +1,14 @@
+{
+  "companyName": "Au Format",
+  "slogan": "Franchissons ensemble, le pas vers le bois",
+  "address": "Votre adresse",
+  "zipcode": "59000",
+  "city": "Lille",
+  "phone": "03 XX XX XX XX",
+  "email": "contact@auformat.fr",
+  "hours": {
+    "weekdays": "8h - 18h",
+    "saturday": "9h - 12h",
+    "sunday": "Fermé"
+  }
+}
