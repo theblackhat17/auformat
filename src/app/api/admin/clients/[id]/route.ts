@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, query } from '@/lib/db';
+import { queryOne, query, rawQuery } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -71,6 +71,36 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ client, projects, quotes, sessions });
   } catch (err) {
     console.error('Admin client detail error:', err);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+
+  try {
+    const { role } = await request.json();
+
+    if (role !== 'admin' && role !== 'client') {
+      return NextResponse.json({ error: 'Role invalide' }, { status: 400 });
+    }
+
+    // Prevent demoting yourself
+    if (id === auth.userId && role !== 'admin') {
+      return NextResponse.json({ error: 'Vous ne pouvez pas retirer votre propre role admin' }, { status: 400 });
+    }
+
+    await rawQuery(
+      'UPDATE profiles SET role = $1, updated_at = NOW() WHERE id = $2',
+      [role, id]
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Admin role update error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

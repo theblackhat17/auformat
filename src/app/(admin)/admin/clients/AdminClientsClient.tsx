@@ -1,21 +1,50 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { ClientWithStats } from '@/lib/types';
 import { formatPrice, timeAgo, getInitials } from '@/lib/utils';
-import { Card } from '@/components/ui/Card';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Badge } from '@/components/ui/Badge';
 
+type ClientWithRole = ClientWithStats & { role: 'client' | 'admin' };
+
 export function AdminClientsClient() {
-  const [clients, setClients] = useState<ClientWithStats[]>([]);
+  const [clients, setClients] = useState<ClientWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchClients = useCallback(() => {
     fetch('/api/admin/clients').then((r) => r.json()).then(setClients).finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { fetchClients(); }, [fetchClients]);
+
+  const toggleRole = async (client: ClientWithRole) => {
+    const newRole = client.role === 'admin' ? 'client' : 'admin';
+    const label = newRole === 'admin' ? 'promouvoir admin' : 'retirer les droits admin de';
+    if (!confirm(`Voulez-vous ${label} ${client.fullName || client.email} ?`)) return;
+
+    setTogglingId(client.id);
+    try {
+      const res = await fetch(`/api/admin/clients/${client.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Erreur');
+        return;
+      }
+      setClients((prev) => prev.map((c) => c.id === client.id ? { ...c, role: newRole } : c));
+    } catch {
+      alert('Erreur reseau');
+    } finally {
+      setTogglingId(null);
+    }
+  };
 
   const filtered = useMemo(() => {
     if (!search) return clients;
@@ -35,21 +64,22 @@ export function AdminClientsClient() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-noir">Clients</h1>
-          <p className="text-sm text-noir/50 mt-1">{clients.length} clients &middot; {formatPrice(totalRevenue)} CA total</p>
+          <h1 className="text-2xl font-bold text-noir">Utilisateurs</h1>
+          <p className="text-sm text-noir/50 mt-1">{clients.length} utilisateurs &middot; {formatPrice(totalRevenue)} CA total</p>
         </div>
       </div>
 
       <div className="max-w-sm">
-        <SearchInput placeholder="Rechercher un client..." onSearch={setSearch} />
+        <SearchInput placeholder="Rechercher un utilisateur..." onSearch={setSearch} />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-noir/40 uppercase tracking-wider">
-              <th className="px-4 py-3">Client</th>
+              <th className="px-4 py-3">Utilisateur</th>
               <th className="px-4 py-3">Contact</th>
+              <th className="px-4 py-3 text-center">Role</th>
               <th className="px-4 py-3 text-center">Projets</th>
               <th className="px-4 py-3 text-center">Devis</th>
               <th className="px-4 py-3 text-right">CA</th>
@@ -62,7 +92,9 @@ export function AdminClientsClient() {
               <tr key={client.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-vert-foret/10 text-vert-foret flex items-center justify-center text-xs font-bold flex-shrink-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                      client.role === 'admin' ? 'bg-amber-100 text-amber-700' : 'bg-vert-foret/10 text-vert-foret'
+                    }`}>
                       {getInitials(client.fullName)}
                     </div>
                     <div className="min-w-0">
@@ -74,6 +106,18 @@ export function AdminClientsClient() {
                 <td className="px-4 py-3">
                   <p className="text-noir/70 truncate">{client.email}</p>
                   {client.phone && <p className="text-xs text-noir/40">{client.phone}</p>}
+                </td>
+                <td className="px-4 py-3 text-center">
+                  <button
+                    onClick={() => toggleRole(client)}
+                    disabled={togglingId === client.id}
+                    className="inline-flex items-center gap-1 disabled:opacity-50"
+                    title={client.role === 'admin' ? 'Retirer admin' : 'Promouvoir admin'}
+                  >
+                    <Badge variant={client.role === 'admin' ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-600'}>
+                      {client.role === 'admin' ? 'Admin' : 'Client'}
+                    </Badge>
+                  </button>
                 </td>
                 <td className="px-4 py-3 text-center">
                   <Badge variant="bg-blue-50 text-blue-700">{client.totalProjects}</Badge>
@@ -97,7 +141,7 @@ export function AdminClientsClient() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div className="text-center py-10 text-sm text-noir/40">Aucun client trouve</div>
+          <div className="text-center py-10 text-sm text-noir/40">Aucun utilisateur trouve</div>
         )}
       </div>
     </div>

@@ -196,6 +196,7 @@ export const ADMIN_NAV_CONTENT = [
   { href: '/admin/avis', label: 'Avis', icon: '⭐' },
   { href: '/admin/materiaux', label: 'Materiaux', icon: '🪵' },
   { href: '/admin/equipe', label: 'Equipe', icon: '👤' },
+  { href: '/admin/configurateur', label: 'Configurateur', icon: '🛠️' },
 ];
 
 // Legacy alias

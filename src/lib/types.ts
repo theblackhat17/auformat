@@ -485,6 +485,134 @@ export interface Upload {
   createdAt: string;
 }
 
+// =============================================
+// Configurateur 2D types
+// =============================================
+
+export type ConfigurateurProductSlug =
+  | 'meuble'
+  | 'meuble_tv'
+  | 'bibliotheque'
+  | 'dressing'
+  | 'bureau'
+  | 'plan_travail'
+  | 'etagere';
+
+export type DoorType = 'battante' | 'coulissante' | 'aucune';
+export type FeetType = 'sans' | 'rond' | 'carre' | 'oblique';
+export type EdgeType = 'droit' | 'arrondi' | 'chanfrein';
+export type WorktopShape = 'rectangle' | 'L' | 'U';
+export type MountingType = 'murale' | 'sol' | 'aucune';
+
+export interface ConfigurateurMaterial {
+  name: string;
+  colorHex: string;
+  prixM2: number;
+  sortOrder: number;
+}
+
+export interface ConfigurateurProductType {
+  slug: ConfigurateurProductSlug;
+  nom: string;
+  icon: string;
+  dimensionsMin: { largeur: number; hauteur: number; profondeur: number; epaisseur: number };
+  dimensionsMax: { largeur: number; hauteur: number; profondeur: number; epaisseur: number };
+  optionsCategorie: 'furniture' | 'worktop' | 'shelf';
+}
+
+export interface ConfigurateurOptionPrices {
+  tiroir: number;
+  porte: number;
+  pied: number;
+  coulissantes: number;
+  etagere: number;
+  dos: number;
+  decoupe_ronde: number;
+  decoupe_rectangulaire: number;
+  bord_arrondi: number;
+  bord_chanfrein: number;
+  bord_droit: number;
+  fixation_murale: number;
+  fixation_sol: number;
+  separateur: number;
+}
+
+export interface ConfigurateurLabels {
+  titre: string;
+  sousTitre: string;
+  boutonDevis: string;
+  prixEstimatif: string;
+  etape1: string;
+  etape2: string;
+  etape3: string;
+  etape4: string;
+  recapTitre: string;
+  modalTitre: string;
+  modalDescription: string;
+}
+
+export interface ConfigurateurSettings {
+  materials: ConfigurateurMaterial[];
+  product_types: ConfigurateurProductType[];
+  option_prices: ConfigurateurOptionPrices;
+  labels: ConfigurateurLabels;
+}
+
+export interface ConfigurateurSettingsRow {
+  key: string;
+  value: unknown;
+  updatedAt: string;
+}
+
+export interface Configurateur2DConfig {
+  productSlug: ConfigurateurProductSlug;
+  largeur: number;
+  hauteur: number;
+  profondeur: number;
+  epaisseur: number;
+  materialIndex: number;
+  // Furniture options
+  nbEtageres: number;
+  nbTiroirs: number;
+  porteType: DoorType;
+  nbPortes: number;
+  piedType: FeetType;
+  avecDos: boolean;
+  // Worktop options
+  worktopShape: WorktopShape;
+  edgeType: EdgeType;
+  nbDecoupesRondes: number;
+  nbDecoupesRect: number;
+  // Shelf options
+  nbNiveaux: number;
+  nbSeparateurs: number;
+  mountingType: MountingType;
+}
+
+export interface Configurateur2DLineItem {
+  label: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
+export interface Configurateur2DPriceBreakdown {
+  surfaceM2: number;
+  materialCost: number;
+  optionsCost: number;
+  subtotalHt: number;
+  tva: number;
+  totalTtc: number;
+  lineItems: Configurateur2DLineItem[];
+}
+
+export interface QuoteFormData {
+  nom: string;
+  email: string;
+  telephone: string;
+  message: string;
+}
+
 // Legacy compat aliases
 export interface GeneralSettings {
   companyName: string;

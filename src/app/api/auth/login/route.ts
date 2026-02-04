@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne } from '@/lib/db';
+import { rawQuery, toCamelCase } from '@/lib/db';
 import { verifyPassword, signToken, setAuthCookie } from '@/lib/auth';
-import { toCamelCase } from '@/lib/db';
 import { logActivity, logSession } from '@/lib/activity-logger';
 import { getClientIp, getUserAgent } from '@/lib/middleware-auth';
-import type { ProfileRow, Profile } from '@/lib/types';
+import type { Profile } from '@/lib/types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,11 +13,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 });
     }
 
-    // Query with password_hash included
-    const user = await queryOne<ProfileRow>(
+    // Use rawQuery to keep snake_case keys (avoid toCamelCase on password_hash)
+    const result = await rawQuery(
       'SELECT * FROM profiles WHERE email = $1',
       [email.toLowerCase().trim()]
     );
+    const user = result.rows[0];
 
     if (!user || !user.password_hash) {
       return NextResponse.json({ error: 'Email ou mot de passe incorrect' }, { status: 401 });
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     await logSession(user.id, ip, ua);
 
     // Return profile without password_hash
-    const { password_hash, ...safeUser } = user;
+    const { password_hash: _, ...safeUser } = user;
     const profile = toCamelCase<Profile>(safeUser);
 
     return NextResponse.json({ success: true, profile });

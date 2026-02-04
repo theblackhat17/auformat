@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const clients = await query(`
       SELECT
         p.id, p.email, p.full_name, p.company_name, p.phone, p.address,
-        p.avatar_url, p.discount_rate, p.created_at, p.updated_at,
+        p.role, p.avatar_url, p.discount_rate, p.created_at, p.updated_at,
         COALESCE(proj.total_projects, 0)::int as total_projects,
         COALESCE(q.total_quotes, 0)::int as total_quotes,
         COALESCE(q.accepted_quotes, 0)::int as accepted_quotes,
@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
           MAX(logged_in_at) as last_login
         FROM user_sessions GROUP BY user_id
       ) s ON s.user_id = p.id
-      WHERE p.role = 'client'
-      ORDER BY p.created_at DESC
+      ORDER BY p.role ASC, p.created_at DESC
     `);
 
     return NextResponse.json(clients);
