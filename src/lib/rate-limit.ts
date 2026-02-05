@@ -77,3 +77,13 @@ export function checkEmailRateLimit(email: string): { allowed: boolean; retryAft
 export function resetEmailRateLimit(email: string): void {
   store.delete(`email:${email.toLowerCase()}`);
 }
+
+const CONTACT_CONFIG: RateLimitConfig = {
+  maxAttempts: 3,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  blockDurationMs: 60 * 60 * 1000, // blocked 1 hour
+};
+
+export function checkContactRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+  return checkLimit(`contact:${ip}`, CONTACT_CONFIG);
+}

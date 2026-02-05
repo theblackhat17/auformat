@@ -9,11 +9,19 @@ export function ForgotPasswordForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [hp, setHp] = useState('');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    // Honeypot: if filled, silently show success
+    if (hp) {
+      setSuccess(true);
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/auth/request-password-reset', {
@@ -66,6 +74,10 @@ export function ForgotPasswordForm() {
         required
         placeholder="votre@email.fr"
       />
+      {/* Honeypot */}
+      <div className="absolute opacity-0 -z-10 overflow-hidden" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
+        <input type="text" value={hp} onChange={(e) => setHp(e.target.value)} tabIndex={-1} autoComplete="off" />
+      </div>
       <Button type="submit" size="lg" isLoading={isLoading} className="w-full">
         Envoyer le lien
       </Button>

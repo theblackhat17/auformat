@@ -11,6 +11,16 @@ const transporter = nodemailer.createTransport({
 });
 
 const FROM = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@auformat.fr';
+
+/** Escape user input for safe HTML embedding */
+function esc(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || 'contact@auformat.fr';
 
 const SIGNATURE = `
@@ -50,10 +60,10 @@ export async function notifyAdminsNewQuote(quoteNumber: string, clientName: stri
         <h2 style="margin: 0;">Nouvelle demande de devis</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p><strong>Devis n&deg;</strong> ${quoteNumber}</p>
-        <p><strong>Client :</strong> ${clientName}</p>
-        <p><strong>Email :</strong> ${clientEmail}</p>
-        <p><strong>Total TTC :</strong> ${totalTtc}</p>
+        <p><strong>Devis n&deg;</strong> ${esc(quoteNumber)}</p>
+        <p><strong>Client :</strong> ${esc(clientName)}</p>
+        <p><strong>Email :</strong> ${esc(clientEmail)}</p>
+        <p><strong>Total TTC :</strong> ${esc(totalTtc)}</p>
         <br/>
         <p>Connectez-vous à l'espace admin pour consulter et traiter ce devis.</p>
         ${SIGNATURE}
@@ -62,7 +72,7 @@ export async function notifyAdminsNewQuote(quoteNumber: string, clientName: stri
   `;
 
   for (const recipient of recipients) {
-    await sendMail(recipient, `Nouveau devis ${quoteNumber} - ${clientName}`, html);
+    await sendMail(recipient, `Nouveau devis ${esc(quoteNumber)} - ${esc(clientName)}`, html);
   }
 }
 
@@ -73,7 +83,7 @@ export async function sendWelcomeEmail(to: string, clientName: string): Promise<
         <h2 style="margin: 0;">Bienvenue chez Au Format !</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Bonjour ${clientName},</p>
+        <p>Bonjour ${esc(clientName)},</p>
         <p>Votre compte a bien été créé sur <strong>Au Format</strong>.</p>
         <p>Vous pouvez désormais :</p>
         <ul>
@@ -97,15 +107,15 @@ export async function notifyNewRegistration(clientName: string, clientEmail: str
         <h2 style="margin: 0;">Nouveau client inscrit</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p><strong>Nom :</strong> ${clientName}</p>
-        <p><strong>Email :</strong> ${clientEmail}</p>
+        <p><strong>Nom :</strong> ${esc(clientName)}</p>
+        <p><strong>Email :</strong> ${esc(clientEmail)}</p>
         <p style="color: #888; font-size: 13px;">Inscription le ${new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
         ${SIGNATURE}
       </div>
     </div>
   `;
 
-  await sendMail(NOTIFY_EMAIL, `Nouveau client inscrit - ${clientName}`, html);
+  await sendMail(NOTIFY_EMAIL, `Nouveau client inscrit - ${esc(clientName)}`, html);
 }
 
 export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<boolean> {
@@ -144,7 +154,7 @@ export async function sendQuoteToClient(
 
   const itemRows = items.map((item) =>
     `<tr>
-      <td style="padding: 8px; border-bottom: 1px solid #eee;">${item.description}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee;">${esc(item.description)}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatEur(item.unitPrice)}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatEur(item.total)}</td>
@@ -157,8 +167,8 @@ export async function sendQuoteToClient(
         <h2 style="margin: 0;">Au Format — Votre devis</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Bonjour ${clientName},</p>
-        <p>Voici votre devis <strong>${quoteNumber}</strong> :</p>
+        <p>Bonjour ${esc(clientName)},</p>
+        <p>Voici votre devis <strong>${esc(quoteNumber)}</strong> :</p>
         <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
           <thead>
             <tr style="background: #f9f9f9;">
@@ -182,7 +192,7 @@ export async function sendQuoteToClient(
     </div>
   `;
 
-  return sendMail(to, `Votre devis ${quoteNumber} — Au Format`, html);
+  return sendMail(to, `Votre devis ${esc(quoteNumber)} — Au Format`, html);
 }
 
 export interface ContactFormData {
@@ -205,21 +215,21 @@ export async function sendContactNotification(data: ContactFormData): Promise<bo
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 6px 0; color: #888; width: 120px;">Nom</td><td style="padding: 6px 0;"><strong>${data.prenom} ${data.nom}</strong></td></tr>
-          <tr><td style="padding: 6px 0; color: #888;">Email</td><td style="padding: 6px 0;"><a href="mailto:${data.email}">${data.email}</a></td></tr>
-          <tr><td style="padding: 6px 0; color: #888;">Téléphone</td><td style="padding: 6px 0;"><a href="tel:${data.telephone}">${data.telephone}</a></td></tr>
-          <tr><td style="padding: 6px 0; color: #888;">Ville</td><td style="padding: 6px 0;">${data.ville} (${data.codePostal})</td></tr>
-          <tr><td style="padding: 6px 0; color: #888;">Type de projet</td><td style="padding: 6px 0;">${typeProjetLabel}</td></tr>
+          <tr><td style="padding: 6px 0; color: #888; width: 120px;">Nom</td><td style="padding: 6px 0;"><strong>${esc(data.prenom)} ${esc(data.nom)}</strong></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Email</td><td style="padding: 6px 0;"><a href="mailto:${esc(data.email)}">${esc(data.email)}</a></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Téléphone</td><td style="padding: 6px 0;"><a href="tel:${esc(data.telephone)}">${esc(data.telephone)}</a></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Ville</td><td style="padding: 6px 0;">${esc(data.ville)} (${esc(data.codePostal)})</td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Type de projet</td><td style="padding: 6px 0;">${esc(typeProjetLabel)}</td></tr>
         </table>
         <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;" />
         <p style="margin: 0 0 8px; color: #888; font-size: 13px;">Message :</p>
-        <p style="margin: 0; white-space: pre-wrap;">${data.message}</p>
+        <p style="margin: 0; white-space: pre-wrap;">${esc(data.message)}</p>
         ${SIGNATURE}
       </div>
     </div>
   `;
 
-  return sendMail(NOTIFY_EMAIL, `Contact : ${data.prenom} ${data.nom} — ${typeProjetLabel}`, html);
+  return sendMail(NOTIFY_EMAIL, `Contact : ${esc(data.prenom)} ${esc(data.nom)} — ${esc(typeProjetLabel)}`, html);
 }
 
 export async function sendContactConfirmation(data: ContactFormData): Promise<boolean> {
@@ -229,11 +239,11 @@ export async function sendContactConfirmation(data: ContactFormData): Promise<bo
         <h2 style="margin: 0;">Votre demande a bien été reçue</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
-        <p>Bonjour ${data.prenom},</p>
+        <p>Bonjour ${esc(data.prenom)},</p>
         <p>Nous avons bien reçu votre demande de contact et nous vous répondrons dans les <strong>24 heures</strong>.</p>
         <p style="color: #888; font-size: 13px;">Voici un récapitulatif de votre message :</p>
         <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px; font-size: 14px; color: #555;">
-          ${data.message.replace(/\n/g, '<br/>')}
+          ${esc(data.message).replace(/\n/g, '<br/>')}
         </blockquote>
         <p>N'hésitez pas à nous appeler directement si votre demande est urgente.</p>
         ${SIGNATURE}

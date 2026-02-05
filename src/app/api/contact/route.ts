@@ -1,10 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendContactNotification, sendContactConfirmation } from '@/lib/mailer';
 import type { ContactFormData } from '@/lib/mailer';
+import { checkContactRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+      || request.headers.get('x-real-ip')
+      || 'unknown';
+
+    const rateCheck = checkContactRateLimit(ip);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { error: 'Trop de messages envoyés. Veuillez réessayer plus tard.' },
+        { status: 429, headers: { 'Retry-After': String(rateCheck.retryAfterSeconds) } }
+      );
+    }
+
     const body = await request.json();
+
+    // Honeypot: if the hidden field is filled, it's a bot
+    if (body._hp_website) {
+      // Silently accept to not tip off the bot
+      return NextResponse.json({ success: true });
+    }
+
     const { nom, prenom, email, telephone, ville, codePostal, typeProjet, message } = body as ContactFormData;
 
     if (!nom || !prenom || !email || !telephone || !ville || !codePostal || !message) {

@@ -6,7 +6,7 @@ import { notifyAdminsNewQuote, sendQuoteToClient } from '@/lib/mailer';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { nom, email, telephone, message, productType, dimensions, materiau, items, subtotalHt, tva, totalTtc } = body;
+    const { nom, email, telephone, message, productType, dimensions, materiau, items, subtotalHt, tva, totalTtc, configData } = body;
 
     if (!nom || !email || !items || !Array.isArray(items)) {
       return NextResponse.json({ error: 'Donnees incompletes' }, { status: 400 });
@@ -57,8 +57,8 @@ export async function POST(request: NextRequest) {
     const calcTotalTtc = totalTtc || Math.round((calcSubtotalHt + calcTva) * 100) / 100;
 
     const result = await rawQuery(
-      `INSERT INTO quotes (user_id, quote_number, title, description, client_name, client_email, client_phone, items, subtotal_ht, tax_rate, tax_amount, total_ttc, status, client_notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, 'draft', $13) RETURNING *`,
+      `INSERT INTO quotes (user_id, quote_number, title, description, client_name, client_email, client_phone, items, subtotal_ht, tax_rate, tax_amount, total_ttc, status, client_notes, config_data)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10, $11, $12, 'draft', $13, $14::jsonb) RETURNING *`,
       [
         profile.id,
         quoteNumber,
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         calcTva,
         calcTotalTtc,
         message || null,
+        configData ? JSON.stringify(configData) : null,
       ]
     );
 

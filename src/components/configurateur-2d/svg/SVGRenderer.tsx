@@ -25,11 +25,11 @@ export function SVGRenderer({ config, materials, productTypes }: Props) {
   const vb = computeViewBox(svgW, svgH);
 
   return (
-    <div className="w-full h-full flex items-center justify-center p-4">
+    <div className="w-full h-full flex items-center justify-center p-2">
       <svg
         viewBox={viewBoxString(vb)}
         className="max-w-full max-h-full"
-        style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))' }}
+        style={{ filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.08))', width: '100%', height: '100%' }}
         preserveAspectRatio="xMidYMid meet"
       >
         <defs>

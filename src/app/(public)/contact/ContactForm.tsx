@@ -24,6 +24,7 @@ export function ContactForm() {
       codePostal: formData.get('codePostal') as string,
       typeProjet: formData.get('typeProjet') as string,
       message: formData.get('message') as string,
+      _hp_website: formData.get('_hp_website') as string,
     };
 
     try {
@@ -103,6 +104,11 @@ export function ContactForm() {
           placeholder="Décrivez votre projet..."
           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/30 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none"
         />
+      </div>
+      {/* Honeypot - hidden from humans */}
+      <div className="absolute opacity-0 -z-10 overflow-hidden" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
+        <label htmlFor="_hp_website">Website</label>
+        <input type="text" id="_hp_website" name="_hp_website" tabIndex={-1} autoComplete="off" />
       </div>
       <label className="flex items-start gap-2 text-xs text-noir/50">
         <input type="checkbox" required className="mt-0.5 accent-vert-foret" />

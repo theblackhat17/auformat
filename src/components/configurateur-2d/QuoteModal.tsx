@@ -59,6 +59,36 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
           subtotalHt: price.subtotalHt,
           tva: price.tva,
           totalTtc: price.totalTtc,
+          configData: {
+            productType: productType?.nom || config.productSlug,
+            productSlug: config.productSlug,
+            dimensions: {
+              largeur: config.largeur,
+              hauteur: config.hauteur,
+              profondeur: config.profondeur,
+              epaisseur: config.epaisseur,
+            },
+            materiau: {
+              name: material?.name || '',
+              colorHex: material?.colorHex || '#D4A574',
+            },
+            options: {
+              nbEtageres: config.nbEtageres,
+              nbTiroirs: config.nbTiroirs,
+              porteType: config.porteType,
+              nbPortes: config.nbPortes,
+              piedType: config.piedType,
+              avecDos: config.avecDos,
+              worktopShape: config.worktopShape,
+              edgeType: config.edgeType,
+              nbDecoupesRondes: config.nbDecoupesRondes,
+              nbDecoupesRect: config.nbDecoupesRect,
+              nbNiveaux: config.nbNiveaux,
+              nbSeparateurs: config.nbSeparateurs,
+              mountingType: config.mountingType,
+              optionSelections: config.optionSelections,
+            },
+          },
         }),
       });
 

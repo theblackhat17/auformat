@@ -63,8 +63,20 @@ export interface Quote {
   adminNotes: string | null;
   clientNotes: string | null;
   pdfUrl: string | null;
+  configData: QuoteConfigData | null;
+  clientName: string | null;
+  clientEmail: string | null;
+  clientPhone: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface QuoteConfigData {
+  productType: string;
+  productSlug: string;
+  dimensions: { largeur: number; hauteur: number; profondeur: number; epaisseur: number };
+  materiau: { name: string; colorHex: string };
+  options: Record<string, unknown>;
 }
 
 export type QuoteStatus = 'draft' | 'sent' | 'viewed' | 'accepted' | 'refused' | 'expired';

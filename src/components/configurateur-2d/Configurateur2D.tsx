@@ -47,7 +47,7 @@ export function Configurateur2D({ settings }: Props) {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* SVG preview - 60% */}
           <div className="lg:w-[60%]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:sticky lg:top-4" style={{ minHeight: '400px' }}>
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:sticky lg:top-4 flex items-center justify-center" style={{ height: 'min(55vh, 500px)' }}>
               <SVGRenderer
                 config={config}
                 materials={materials}

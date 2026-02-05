@@ -19,7 +19,7 @@ function GoogleIcon() {
 }
 
 export function RegisterForm() {
-  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', fullName: '', companyName: '', phone: '' });
+  const [formData, setFormData] = useState({ email: '', password: '', confirmPassword: '', fullName: '', companyName: '', phone: '', _hp: '' });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -47,6 +47,12 @@ export function RegisterForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+
+    // Honeypot check
+    if (formData._hp) {
+      setEmailSent(true);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Les mots de passe ne correspondent pas');
@@ -144,6 +150,10 @@ export function RegisterForm() {
         <Input id="fullName" label="Nom complet" value={formData.fullName} onChange={(e) => updateField('fullName', e.target.value)} placeholder="Jean Dupont" />
         <Input id="companyName" label="Société (optionnel)" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} placeholder="Nom de votre société" />
         <Input id="phone" label="Téléphone (optionnel)" type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="06 12 34 56 78" />
+        {/* Honeypot */}
+        <div className="absolute opacity-0 -z-10 overflow-hidden" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>
+          <input type="text" value={formData._hp} onChange={(e) => updateField('_hp', e.target.value)} tabIndex={-1} autoComplete="off" />
+        </div>
         <label className="flex items-start gap-2 text-xs text-noir/50">
           <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-0.5 accent-vert-foret" />
           J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialité.
