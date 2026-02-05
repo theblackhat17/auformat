@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useCallback, type ReactNode } from 'react';
+import { authClient } from '@/lib/auth-client';
 import type { Profile } from '@/lib/types';
 
 interface AuthContextType {
@@ -15,82 +16,78 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+function mapUserToProfile(user: Record<string, unknown>): Profile {
+  return {
+    id: user.id as string,
+    email: user.email as string,
+    fullName: (user.fullName as string) || (user.name as string) || null,
+    companyName: (user.companyName as string) || null,
+    phone: (user.phone as string) || null,
+    address: (user.address as string) || null,
+    role: ((user.role as string) || 'client') as 'client' | 'admin',
+    avatarUrl: (user.avatarUrl as string) || (user.image as string) || null,
+    discountRate: (user.discountRate as number) || 0,
+    createdAt: String(user.createdAt || ''),
+    updatedAt: String(user.updatedAt || ''),
+  };
+}
 
-  const refreshProfile = useCallback(async () => {
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const { data: session, isPending } = authClient.useSession();
+
+  const profile: Profile | null = session?.user
+    ? mapUserToProfile(session.user as unknown as Record<string, unknown>)
+    : null;
+
+  const login = useCallback(async (email: string, password: string) => {
     try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        setProfile(data.profile);
-      } else {
-        setProfile(null);
+      const result = await authClient.signIn.email({ email, password });
+      if (result.error) {
+        return { success: false, error: result.error.message || 'Erreur de connexion' };
       }
+      return { success: true };
     } catch {
-      setProfile(null);
-    } finally {
-      setIsLoading(false);
+      return { success: false, error: 'Erreur de connexion au serveur' };
     }
   }, []);
 
-  useEffect(() => {
-    refreshProfile();
-  }, [refreshProfile]);
-
-  async function login(email: string, password: string) {
+  const register = useCallback(async (formData: { email: string; password: string; fullName?: string; companyName?: string; phone?: string }) => {
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setProfile(data.profile);
-        return { success: true };
+      const result = await authClient.signUp.email({
+        email: formData.email,
+        password: formData.password,
+        name: formData.fullName || formData.email.split('@')[0],
+        companyName: formData.companyName || undefined,
+        phone: formData.phone || undefined,
+      } as Parameters<typeof authClient.signUp.email>[0]);
+      if (result.error) {
+        return { success: false, error: result.error.message || "Erreur lors de l'inscription" };
       }
-      return { success: false, error: data.error || 'Erreur de connexion' };
+      return { success: true };
     } catch {
       return { success: false, error: 'Erreur de connexion au serveur' };
     }
-  }
+  }, []);
 
-  async function register(formData: { email: string; password: string; fullName?: string; companyName?: string; phone?: string }) {
+  const logout = useCallback(async () => {
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setProfile(data.profile);
-        return { success: true };
-      }
-      return { success: false, error: data.error || "Erreur lors de l'inscription" };
-    } catch {
-      return { success: false, error: 'Erreur de connexion au serveur' };
-    }
-  }
-
-  async function logout() {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await authClient.signOut();
     } catch {
       // ignore
     }
-    setProfile(null);
     window.location.href = '/';
-  }
+  }, []);
+
+  const refreshProfile = useCallback(async () => {
+    // Better Auth handles session refresh automatically via useSession
+  }, []);
 
   return (
     <AuthContext.Provider
       value={{
         isAuthenticated: !!profile,
         profile,
-        isLoading,
+        isLoading: isPending,
         login,
         register,
         logout,

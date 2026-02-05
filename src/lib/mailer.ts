@@ -101,6 +101,30 @@ export async function notifyNewRegistration(clientName: string, clientEmail: str
   await sendMail(NOTIFY_EMAIL, `Nouveau client inscrit - ${clientName}`, html);
 }
 
+export async function sendVerificationEmail(to: string, verificationUrl: string): Promise<boolean> {
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Verifiez votre adresse email</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Bonjour,</p>
+        <p>Merci de vous etre inscrit sur <strong>Au Format</strong>. Veuillez verifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Verifier mon email
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px;">Ce lien expire dans 24 heures. Si vous n'avez pas cree de compte, ignorez cet email.</p>
+        <br/>
+        <p style="color: #888; font-size: 13px;">Au Format - Menuiserie sur mesure</p>
+      </div>
+    </div>
+  `;
+
+  return sendMail(to, 'Verifiez votre email - Au Format', html);
+}
+
 export async function sendQuoteToClient(
   to: string,
   clientName: string,

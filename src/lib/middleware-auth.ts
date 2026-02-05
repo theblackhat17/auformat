@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken } from './auth';
-import { queryOne } from './db';
+import { auth } from './better-auth';
+import { headers } from 'next/headers';
 import type { Profile } from './types';
 
 export interface AuthenticatedRequest {
@@ -14,29 +14,35 @@ export interface AuthenticatedRequest {
  * Returns the authenticated user info, or a 401 JSON response.
  */
 export async function requireAuth(request: NextRequest): Promise<AuthenticatedRequest | NextResponse> {
-  const token = request.cookies.get('auformat-session')?.value;
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
 
-  if (!token) {
-    return NextResponse.json({ error: 'Non authentifie' }, { status: 401 });
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Non authentifie' }, { status: 401 });
+    }
+
+    const user = session.user;
+    const profile: Profile = {
+      id: user.id,
+      email: user.email,
+      fullName: (user as Record<string, unknown>).fullName as string || user.name || null,
+      companyName: (user as Record<string, unknown>).companyName as string || null,
+      phone: (user as Record<string, unknown>).phone as string || null,
+      address: (user as Record<string, unknown>).address as string || null,
+      role: ((user as Record<string, unknown>).role as string || 'client') as 'client' | 'admin',
+      avatarUrl: user.image || null,
+      discountRate: (user as Record<string, unknown>).discountRate as number || 0,
+      createdAt: user.createdAt?.toISOString?.() || String(user.createdAt),
+      updatedAt: user.updatedAt?.toISOString?.() || String(user.updatedAt),
+    };
+
+    return { userId: user.id, role: profile.role, profile };
+  } catch (error) {
+    console.error('Auth error:', error);
+    return NextResponse.json({ error: 'Erreur d\'authentification' }, { status: 500 });
   }
-
-  const payload = verifyToken(token);
-  if (!payload) {
-    return NextResponse.json({ error: 'Session expiree' }, { status: 401 });
-  }
-
-  const profile = await queryOne<Profile>(
-    `SELECT id, email, full_name, company_name, phone, address, role,
-            avatar_url, discount_rate, created_at, updated_at
-     FROM profiles WHERE id = $1`,
-    [payload.userId]
-  );
-
-  if (!profile) {
-    return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 401 });
-  }
-
-  return { userId: payload.userId, role: profile.role, profile };
 }
 
 /**
