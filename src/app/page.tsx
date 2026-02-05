@@ -3,6 +3,8 @@ import { getRealisations, getAvis, getPageContent } from '@/lib/content';
 import { formatDate, ratingStars } from '@/lib/utils';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
 
 export default async function HomePage() {
   const [realisations, avis, sections] = await Promise.all([
@@ -26,8 +28,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={localBusinessCysoingJsonLd()} />
+      <JsonLd data={localBusinessCalotterieJsonLd()} />
       <Header />
-      <main className="pt-16 lg:pt-20">
+      <main className="pt-18 lg:pt-22">
         {/* Hero Section */}
         <section className="relative min-h-[85vh] flex items-center bg-noir overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-noir via-noir/95 to-bois-fonce/30" />

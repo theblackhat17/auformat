@@ -1,7 +1,18 @@
 import type { Metadata } from 'next';
 import { getEquipe, getPageContent } from '@/lib/content';
 
-export const metadata: Metadata = { title: 'A propos' };
+export const metadata: Metadata = {
+  title: 'A propos - Notre histoire et nos valeurs',
+  description:
+    'Decouvrez Au Format, menuiserie artisanale dans le Nord et le Pas-de-Calais. Notre equipe passionnee cree du mobilier sur mesure a Cysoing pres de Lille et a La Calotterie pres du Touquet. Savoir-faire, qualite et proximite.',
+  keywords: ['menuiserie artisanale', 'ebeniste Nord', 'atelier menuiserie Cysoing', 'artisan bois Lille', 'equipe Au Format', 'menuiserie Le Touquet'],
+  alternates: { canonical: 'https://www.auformat.com/about' },
+  openGraph: {
+    title: 'A propos d\'Au Format - Menuiserie artisanale',
+    description: 'Notre equipe passionnee de menuisiers-ebenistes cree du mobilier sur mesure dans le Nord et le Pas-de-Calais.',
+    url: 'https://www.auformat.com/about',
+  },
+};
 
 export default async function AboutPage() {
   const [equipe, sections] = await Promise.all([

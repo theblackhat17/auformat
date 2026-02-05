@@ -1,7 +1,18 @@
 import type { Metadata } from 'next';
 import { getPageContent } from '@/lib/content';
 
-export const metadata: Metadata = { title: 'Savoir-faire' };
+export const metadata: Metadata = {
+  title: 'Savoir-faire - Expertise menuiserie et ebenisterie',
+  description:
+    'Decouvrez le savoir-faire d\'Au Format : menuiserie traditionnelle, ebenisterie, usinage numerique CNC. L\'alliance de l\'artisanat et des technologies modernes pour des meubles sur mesure d\'exception dans le Nord et le Pas-de-Calais.',
+  keywords: ['savoir-faire menuiserie', 'ebenisterie artisanale', 'menuiserie CNC', 'artisan menuisier Nord', 'fabrication meuble bois'],
+  alternates: { canonical: 'https://www.auformat.com/homemade' },
+  openGraph: {
+    title: 'Savoir-faire - Au Format',
+    description: 'L\'alliance du savoir-faire artisanal et des technologies modernes.',
+    url: 'https://www.auformat.com/homemade',
+  },
+};
 
 export default async function HomemadePage() {
   const sections = await getPageContent('homemade');

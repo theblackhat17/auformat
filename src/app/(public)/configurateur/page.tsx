@@ -1,61 +1,19 @@
-'use client';
+import type { Metadata } from 'next';
+import ConfigurateurPageClient from './ConfigurateurPageClient';
 
-import { Suspense, useState, useEffect } from 'react';
-import { Configurateur2D } from '@/components/configurateur-2d/Configurateur2D';
-import type { ConfigurateurSettings } from '@/lib/types';
+export const metadata: Metadata = {
+  title: 'Configurateur de meubles sur mesure en ligne',
+  description:
+    'Configurez votre meuble sur mesure en ligne : bibliotheque, dressing, meuble TV, bureau, plan de travail. Choisissez vos dimensions, materiaux et options. Devis instantane. Au Format, menuiserie a Cysoing et La Calotterie.',
+  keywords: ['configurateur meuble sur mesure', 'meuble sur mesure en ligne', 'configurateur dressing', 'configurateur bibliotheque', 'devis meuble en ligne'],
+  alternates: { canonical: 'https://www.auformat.com/configurateur' },
+  openGraph: {
+    title: 'Configurateur de meubles - Au Format',
+    description: 'Configurez votre meuble sur mesure en ligne et obtenez un devis instantane.',
+    url: 'https://www.auformat.com/configurateur',
+  },
+};
 
 export default function ConfigurateurPage() {
-  return (
-    <Suspense fallback={<Loading />}>
-      <ConfigurateurLoader />
-    </Suspense>
-  );
-}
-
-function Loading() {
-  return (
-    <div className="min-h-screen bg-[#F5F3EF] flex items-center justify-center">
-      <div className="text-center">
-        <div className="w-8 h-8 border-2 border-[#2C5F2D] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm text-gray-500">Chargement du configurateur...</p>
-      </div>
-    </div>
-  );
-}
-
-function ConfigurateurLoader() {
-  const [settings, setSettings] = useState<ConfigurateurSettings | null>(null);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    fetch('/api/content/configurateur')
-      .then((res) => {
-        if (!res.ok) throw new Error();
-        return res.json();
-      })
-      .then((data) => setSettings(data))
-      .catch(() => setError(true));
-  }, []);
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-[#F5F3EF] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600 mb-2">Impossible de charger le configurateur.</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="text-sm text-[#2C5F2D] hover:underline"
-          >
-            Reessayer
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!settings) {
-    return <Loading />;
-  }
-
-  return <Configurateur2D settings={settings} />;
+  return <ConfigurateurPageClient />;
 }

@@ -2,7 +2,18 @@ import type { Metadata } from 'next';
 import { getRealisations, getCategories } from '@/lib/content';
 import { RealisationsClient } from './RealisationsClient';
 
-export const metadata: Metadata = { title: 'Realisations' };
+export const metadata: Metadata = {
+  title: 'Nos realisations - Portfolio menuiserie sur mesure',
+  description:
+    'Parcourez nos realisations de menuiserie sur mesure : cuisines, dressings, bibliotheques, meubles TV, agencements commerciaux. Projets realises a Lille, Cysoing, Le Touquet et dans tout le Nord-Pas-de-Calais.',
+  keywords: ['realisations menuiserie', 'portfolio meuble sur mesure', 'cuisine sur mesure Lille', 'dressing sur mesure Nord', 'agencement commercial', 'menuiserie Cysoing'],
+  alternates: { canonical: 'https://www.auformat.com/realisations' },
+  openGraph: {
+    title: 'Nos realisations - Au Format',
+    description: 'Decouvrez nos creations sur mesure en bois massif pour particuliers et professionnels.',
+    url: 'https://www.auformat.com/realisations',
+  },
+};
 
 export default async function RealisationsPage() {
   const [realisations, categories] = await Promise.all([

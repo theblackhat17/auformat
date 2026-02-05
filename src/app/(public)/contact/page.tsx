@@ -1,8 +1,22 @@
 import type { Metadata } from 'next';
 import { ContactForm } from './ContactForm';
 import { getSettings } from '@/lib/content';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/seo';
 
-export const metadata: Metadata = { title: 'Contact' };
+export const metadata: Metadata = {
+  title: 'Contact - Devis gratuit menuiserie sur mesure',
+  description:
+    'Contactez Au Format pour un devis gratuit. Menuiserie sur mesure a Cysoing pres de Lille et a La Calotterie pres du Touquet-Paris-Plage. Tel : 07 88 91 60 68. Reponse sous 24h.',
+  keywords: ['devis menuiserie gratuit', 'contact menuisier Lille', 'devis meuble sur mesure', 'menuiserie Cysoing contact', 'menuiserie Le Touquet contact'],
+  alternates: { canonical: 'https://www.auformat.com/contact' },
+  openGraph: {
+    title: 'Contactez Au Format - Devis gratuit',
+    description: 'Devis gratuit et sans engagement. Menuiserie sur mesure Lille & Le Touquet.',
+    url: 'https://www.auformat.com/contact',
+  },
+};
 
 export default async function ContactPage() {
   const settings = await getSettings();
@@ -14,6 +28,13 @@ export default async function ContactPage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([
+        { name: 'Accueil', url: SITE_URL },
+        { name: 'Contact', url: `${SITE_URL}/contact` },
+      ])} />
+      <JsonLd data={localBusinessCysoingJsonLd()} />
+      <JsonLd data={localBusinessCalotterieJsonLd()} />
+
       {/* Hero */}
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -35,7 +56,8 @@ export default async function ContactPage() {
             {/* Contact info */}
             <div className="space-y-6">
               {[
-                { icon: '📍', title: 'Adresse', content: address, sub: 'Atelier sur rendez-vous' },
+                { icon: '📍', title: 'Atelier Cysoing', content: address, sub: 'Pres de Lille (Nord) · Sur rendez-vous' },
+                { icon: '📍', title: 'Atelier Cote d\'Opale', content: '1056 Rue de Montreuil, 62170 La Calotterie', sub: 'Pres du Touquet (Pas-de-Calais) · Sur rendez-vous' },
                 { icon: '📞', title: 'Telephone', content: phone, sub: hoursWeekdays },
                 { icon: '✉️', title: 'Email', content: email, sub: 'Reponse sous 24h' },
               ].map((info) => (

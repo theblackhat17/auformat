@@ -8,15 +8,15 @@ export function Header() {
   return (
     <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
       <nav className="max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 lg:h-20">
+        <div className="flex justify-between items-center h-18 lg:h-22">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             <Image
               src="/img/logo_tmp.png"
-              alt="Au Format"
-              width={140}
-              height={45}
-              className="h-10 lg:h-12 w-auto object-contain"
+              alt="Au Format - Menuiserie sur mesure Cysoing Lille Montreuil Le Touquet"
+              width={200}
+              height={65}
+              className="h-12 lg:h-16 w-auto object-contain"
               priority
             />
           </Link>

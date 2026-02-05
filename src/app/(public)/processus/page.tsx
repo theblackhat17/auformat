@@ -1,6 +1,20 @@
 import type { Metadata } from 'next';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, faqJsonLd } from '@/lib/jsonld';
+import { SITE_URL } from '@/lib/seo';
 
-export const metadata: Metadata = { title: 'Notre processus' };
+export const metadata: Metadata = {
+  title: 'Notre processus - De la conception a l\'installation',
+  description:
+    'Decouvrez les 6 etapes de votre projet de menuiserie sur mesure chez Au Format : premier contact, conception, devis gratuit, fabrication en atelier, installation et suivi. Accompagnement personnalise de A a Z a Cysoing et La Calotterie.',
+  keywords: ['processus menuiserie', 'etapes projet meuble sur mesure', 'fabrication meuble bois', 'installation menuiserie', 'devis gratuit menuiserie'],
+  alternates: { canonical: 'https://www.auformat.com/processus' },
+  openGraph: {
+    title: 'Notre processus - Au Format',
+    description: 'Un accompagnement sur mesure, de la premiere idee a l\'installation finale.',
+    url: 'https://www.auformat.com/processus',
+  },
+};
 
 const STEPS = [
   { num: '01', title: 'Premier contact', desc: 'Echangeons sur votre projet, vos envies et vos contraintes. Visite sur site gratuite.', delay: '1-2 jours' },
@@ -14,14 +28,20 @@ const STEPS = [
 const FAQ = [
   { q: 'Le devis est-il gratuit ?', a: 'Oui, le devis est entierement gratuit et sans engagement. Nous nous deplacons sur site pour prendre les mesures et comprendre vos besoins.' },
   { q: 'Quel est le delai de reponse ?', a: 'Nous repondons a toutes les demandes sous 24h maximum en jour ouvre.' },
-  { q: "Quelle est votre zone d'intervention ?", a: 'Nous intervenons principalement dans la metropole lilloise et dans un rayon de 50 km autour de Lille.' },
-  { q: 'Peut-on visiter votre atelier ?', a: 'Absolument ! Nous recevons nos clients sur rendez-vous pour vous montrer nos realisations en cours et nos materiaux.' },
+  { q: "Quelle est votre zone d'intervention ?", a: 'Nous intervenons dans le Nord et le Pas-de-Calais grace a nos deux ateliers : a Cysoing pres de Lille (metropole lilloise, 50 km autour) et a La Calotterie pres de Montreuil-sur-Mer et du Touquet-Paris-Plage (Cote d\'Opale, 50 km autour).' },
+  { q: 'Peut-on visiter votre atelier ?', a: 'Absolument ! Nous recevons nos clients sur rendez-vous dans nos ateliers de Cysoing ou de La Calotterie pour vous montrer nos realisations en cours et nos materiaux.' },
   { q: 'Quels sont les modes de paiement acceptes ?', a: "Nous acceptons les virements bancaires, cheques et especes. Un echeancier en 3 fois est possible pour les projets importants." },
 ];
 
 export default function ProcessusPage() {
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([
+        { name: 'Accueil', url: SITE_URL },
+        { name: 'Notre processus', url: `${SITE_URL}/processus` },
+      ])} />
+      <JsonLd data={faqJsonLd(FAQ.map((f) => ({ question: f.q, answer: f.a })))} />
+
       {/* Hero */}
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
