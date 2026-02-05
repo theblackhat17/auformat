@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { getRealisations, getAvis, getPageContent } from '@/lib/content';
 import { ratingStars } from '@/lib/utils';
@@ -127,8 +128,8 @@ export default async function HomePage() {
               <div className="grid md:grid-cols-3 gap-6">
                 {topRealisations.map((r) => (
                   <div key={r.id} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="aspect-[4/3] bg-beige overflow-hidden">
-                      {r.image && <img src={r.image} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />}
+                    <div className="aspect-[4/3] bg-beige overflow-hidden relative">
+                      {r.image && <Image src={r.image} alt={r.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />}
                     </div>
                     <div className="p-5">
                       <span className="text-xs font-medium text-bois-fonce uppercase tracking-wider">{r.categoryLabel || r.category}</span>

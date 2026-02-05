@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { getMateriauxGrouped, getCategories } from '@/lib/content';
 import { buildPageMetadata } from '@/lib/seo';
 
@@ -65,7 +66,7 @@ export default async function MateriauxPage() {
                 {grouped[cat].map((m) => (
                   <div key={m.id} className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
                     <div className="aspect-[3/2] bg-beige overflow-hidden relative">
-                      {m.image && <img src={m.image} alt={m.name} className="w-full h-full object-cover" loading="lazy" />}
+                      {m.image && <Image src={m.image} alt={m.name} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover" />}
                       {m.tag && <span className="absolute top-3 left-3 text-xs font-medium bg-white/90 text-bois-fonce px-2.5 py-1 rounded-full">{m.tag}</span>}
                     </div>
                     <div className="p-5">

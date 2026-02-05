@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import Image from 'next/image';
 import type { Realisation } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 
@@ -49,8 +50,8 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
             onClick={() => setSelectedItem(r)}
             className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
           >
-            <div className="aspect-[4/3] bg-beige overflow-hidden">
-              {r.image && <img src={r.image} alt={r.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />}
+            <div className="aspect-[4/3] bg-beige overflow-hidden relative">
+              {r.image && <Image src={r.image} alt={r.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />}
             </div>
             <div className="p-5">
               <span className="text-xs font-medium text-bois-fonce uppercase tracking-wider">{categoryLabels[r.category] || r.category}</span>
@@ -78,8 +79,8 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
         {selectedItem && (
           <div className="space-y-4">
             {selectedItem.image && (
-              <div className="aspect-video bg-beige rounded-lg overflow-hidden">
-                <img src={selectedItem.image} alt={selectedItem.title} className="w-full h-full object-cover" />
+              <div className="aspect-video bg-beige rounded-lg overflow-hidden relative">
+                <Image src={selectedItem.image} alt={selectedItem.title} fill sizes="(max-width: 768px) 100vw, 800px" className="object-cover" />
               </div>
             )}
             <div className="flex flex-wrap gap-3">
@@ -108,7 +109,9 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
                 <h4 className="text-sm font-semibold text-noir mb-2">Galerie</h4>
                 <div className="grid grid-cols-3 gap-2">
                   {selectedItem.gallery.map((g, i) => (
-                    <img key={i} src={g.image} alt={`${selectedItem.title} ${i + 1}`} className="w-full aspect-square object-cover rounded-lg" />
+                    <div key={i} className="aspect-square relative rounded-lg overflow-hidden">
+                      <Image src={g.image} alt={`${selectedItem.title} ${i + 1}`} fill sizes="250px" className="object-cover" />
+                    </div>
                   ))}
                 </div>
               </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { ImageUpload } from '@/components/admin/ImageUpload';
@@ -156,7 +157,7 @@ export function AdminRealisationsClient() {
             {items.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3">
-                  {item.image ? <img src={item.image} alt="" className="w-12 h-9 object-cover rounded" /> : <div className="w-12 h-9 bg-gray-100 rounded" />}
+                  {item.image ? <Image src={item.image} alt="" width={48} height={36} className="w-12 h-9 object-cover rounded" /> : <div className="w-12 h-9 bg-gray-100 rounded" />}
                 </td>
                 <td className="px-4 py-3 font-medium text-noir">{item.title}</td>
                 <td className="px-4 py-3 text-gray-500">{item.categoryLabel || '-'}</td>

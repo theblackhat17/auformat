@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { getEquipe, getPageContent } from '@/lib/content';
 import { buildPageMetadata } from '@/lib/seo';
 
@@ -77,9 +78,9 @@ export default async function AboutPage() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {equipe.map((member) => (
                 <div key={member.id} className="text-center">
-                  <div className="w-32 h-32 mx-auto rounded-full bg-beige overflow-hidden mb-4">
+                  <div className="w-32 h-32 mx-auto rounded-full bg-beige overflow-hidden mb-4 relative">
                     {member.photo ? (
-                      <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                      <Image src={member.photo} alt={member.name} fill sizes="128px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl text-bois-fonce">
                         {member.name.charAt(0)}

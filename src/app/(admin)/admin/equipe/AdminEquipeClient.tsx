@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { ImageUpload } from '@/components/admin/ImageUpload';
@@ -97,9 +98,9 @@ export function AdminEquipeClient() {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((member) => (
           <div key={member.id} className="bg-white rounded-xl border border-gray-200 p-6 text-center relative">
-            <div className="w-24 h-24 mx-auto rounded-full bg-beige overflow-hidden mb-4">
+            <div className="w-24 h-24 mx-auto rounded-full bg-beige overflow-hidden mb-4 relative">
               {member.photo ? (
-                <img src={member.photo} alt={member.name} className="w-full h-full object-cover" />
+                <Image src={member.photo} alt={member.name} fill sizes="96px" className="object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-2xl text-bois-fonce">{member.name.charAt(0)}</div>
               )}

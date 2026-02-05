@@ -104,8 +104,9 @@ export async function Footer() {
         <div className="mt-6 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
           <p>&copy; {new Date().getFullYear()} {companyName}. Tous droits réservés.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-white/60 transition-colors">Mentions légales</Link>
-            <Link href="#" className="hover:text-white/60 transition-colors">Politique de confidentialité</Link>
+            <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
+            <Link href="/politique-confidentialite" className="hover:text-white/60 transition-colors">Confidentialité</Link>
+            <Link href="/cgv" className="hover:text-white/60 transition-colors">CGV</Link>
           </div>
         </div>
       </div>

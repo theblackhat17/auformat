@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getInitials, getDisplayName } from '@/lib/utils';
@@ -53,7 +54,7 @@ export function UserDropdown() {
         className="flex items-center gap-2 p-1 rounded-lg hover:bg-beige/50 transition-colors"
       >
         {profile.avatarUrl ? (
-          <img src={profile.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+          <Image src={profile.avatarUrl} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
         ) : (
           <div className="w-9 h-9 rounded-full bg-vert-foret text-white flex items-center justify-center text-sm font-semibold">
             {initials}

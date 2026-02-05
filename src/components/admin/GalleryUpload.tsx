@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 
 interface GalleryUploadProps {
   value: { image: string }[];
@@ -64,7 +65,7 @@ export function GalleryUpload({ value, onChange, label = 'Galerie photos' }: Gal
         <div className="flex flex-wrap gap-2 mb-2">
           {value.map((item, i) => (
             <div key={i} className="relative">
-              <img src={item.image} alt={`Gallery ${i + 1}`} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+              <Image src={item.image} alt={`Gallery ${i + 1}`} width={80} height={80} className="w-20 h-20 object-cover rounded-lg border border-gray-200" />
               <button
                 type="button"
                 onClick={() => removeImage(i)}

@@ -13,5 +13,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/processus`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/materiaux`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/mentions-legales`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/politique-confidentialite`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
+    { url: `${SITE_URL}/cgv`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 }
