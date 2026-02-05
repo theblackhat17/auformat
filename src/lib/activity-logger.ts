@@ -1,4 +1,6 @@
+import { NextRequest } from 'next/server';
 import { rawQuery } from './db';
+import type { AuthenticatedRequest } from './middleware-auth';
 
 /**
  * Log an activity to the activity_logs table (server-side)
@@ -22,6 +24,23 @@ export async function logActivity(
   } catch (err) {
     console.error('Failed to log activity:', err);
   }
+}
+
+/**
+ * Simplified logging for admin API routes.
+ * Extracts IP/UserAgent from request and userId from auth result.
+ */
+export function logAdminAction(
+  request: NextRequest,
+  auth: AuthenticatedRequest,
+  actionType: string,
+  targetType: string,
+  targetId: string | null,
+  description: string,
+): void {
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+  const ua = request.headers.get('user-agent') || 'unknown';
+  void logActivity(auth.userId, actionType, targetType, targetId, { description }, ip, ua);
 }
 
 /**

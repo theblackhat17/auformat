@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, rawQuery } from '@/lib/db';
 import type { ConfigurateurSettingsRow } from '@/lib/types';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -48,6 +49,8 @@ export async function PUT(request: NextRequest) {
        ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()`,
       [key, JSON.stringify(value)]
     );
+
+    logAdminAction(request, auth, 'update_configurateur', 'configurateur', null, `Configuration configurateur modifiée`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queryOne, query, rawQuery } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
@@ -106,6 +107,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     // Delete the profile
     await rawQuery('DELETE FROM profiles WHERE id = $1', [id]);
 
+    logAdminAction(request, auth, 'delete_client', 'client', id, `Client supprimé`);
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Admin delete client error:', err);
@@ -135,6 +138,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       'UPDATE profiles SET role = $1, updated_at = NOW() WHERE id = $2',
       [role, id]
     );
+
+    logAdminAction(request, auth, 'update_client_role', 'client', id, `Rôle client modifié en "${role}"`);
 
     return NextResponse.json({ success: true });
   } catch (err) {

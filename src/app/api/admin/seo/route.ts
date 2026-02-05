@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query, rawQuery } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
+import { logAdminAction } from '@/lib/activity-logger';
 import { revalidatePath } from 'next/cache';
 
 export async function GET(request: NextRequest) {
@@ -42,6 +43,8 @@ export async function PUT(request: NextRequest) {
         [p.pagePath, p.metaTitle || '', p.metaDescription || '', p.metaKeywords || '']
       );
     }
+
+    logAdminAction(request, auth, 'update_seo', 'seo', null, `SEO modifié`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });

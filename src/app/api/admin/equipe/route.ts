@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -36,6 +37,8 @@ export async function POST(request: NextRequest) {
       sortOrder: sortOrder ?? 0,
       published: published ?? false,
     });
+
+    logAdminAction(request, auth, 'create_member', 'team_member', (member as { id: string }).id, `Membre "${name}" ajouté`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json(member, { status: 201 });

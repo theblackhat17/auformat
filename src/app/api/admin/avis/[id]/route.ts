@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
@@ -28,6 +29,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Avis introuvable' }, { status: 404 });
     }
 
+    logAdminAction(request, auth, 'update_avis', 'avis', id, `Avis modifié`);
+
     revalidatePath('/', 'layout');
     return NextResponse.json(avis);
   } catch (err) {
@@ -47,6 +50,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!deleted) {
       return NextResponse.json({ error: 'Avis introuvable' }, { status: 404 });
     }
+
+    logAdminAction(request, auth, 'delete_avis', 'avis', id, `Avis supprimé`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });

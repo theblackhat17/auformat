@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
@@ -33,6 +34,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Materiau introuvable' }, { status: 404 });
     }
 
+    logAdminAction(request, auth, 'update_materiau', 'materiau', id, `Matériau "${name}" modifié`);
+
     revalidatePath('/', 'layout');
     return NextResponse.json(materiau);
   } catch (err) {
@@ -52,6 +55,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     if (!deleted) {
       return NextResponse.json({ error: 'Materiau introuvable' }, { status: 404 });
     }
+
+    logAdminAction(request, auth, 'delete_materiau', 'materiau', id, `Matériau supprimé`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });

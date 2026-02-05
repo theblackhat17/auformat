@@ -63,7 +63,7 @@ export function AdminLogsClient() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-noir">Logs d&apos;activite</h1>
+        <h1 className="text-2xl font-bold text-noir">Logs d&apos;activité</h1>
         <Button variant="outline" onClick={handleExport}>Exporter CSV</Button>
       </div>
 
@@ -72,7 +72,7 @@ export function AdminLogsClient() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card padding="sm"><p className="text-xs text-noir/40">Actions aujourd&apos;hui</p><p className="text-2xl font-bold text-noir">{stats.logsToday}</p></Card>
           <Card padding="sm"><p className="text-xs text-noir/40">Utilisateurs actifs</p><p className="text-2xl font-bold text-noir">{stats.activeUsers}</p></Card>
-          <Card padding="sm"><p className="text-xs text-noir/40">Taux de succes</p><p className="text-2xl font-bold text-green-600">{stats.successRate}%</p></Card>
+          <Card padding="sm"><p className="text-xs text-noir/40">Taux de succès</p><p className="text-2xl font-bold text-green-600">{stats.successRate}%</p></Card>
           <Card padding="sm"><p className="text-xs text-noir/40">Erreurs</p><p className="text-2xl font-bold text-red-600">{stats.errorCount}</p></Card>
         </div>
       )}
@@ -83,10 +83,12 @@ export function AdminLogsClient() {
         <select value={actionFilter} onChange={(e) => { setActionFilter(e.target.value); setPage(1); }} className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:border-vert-foret">
           <option value="all">Toutes les actions</option>
           <option value="login">Connexion</option>
-          <option value="logout">Deconnexion</option>
-          <option value="create">Creations</option>
+          <option value="logout">Déconnexion</option>
+          <option value="register">Inscription</option>
+          <option value="create">Créations</option>
           <option value="update">Modifications</option>
           <option value="delete">Suppressions</option>
+          <option value="send">Envois</option>
           <option value="error">Erreurs</option>
         </select>
       </div>

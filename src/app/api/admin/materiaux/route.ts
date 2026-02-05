@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
       published: published ?? false,
       sortOrder: sortOrder ?? 0,
     });
+
+    logAdminAction(request, auth, 'create_materiau', 'materiau', (materiau as { id: string }).id, `Matériau "${name}" créé`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json(materiau, { status: 201 });

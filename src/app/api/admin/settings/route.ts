@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { queryOne, rawQuery } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -40,6 +41,7 @@ export async function PUT(request: NextRequest) {
          WHERE id = $13 RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, existing.id]
       );
+      logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');
       return NextResponse.json(result.rows[0]);
     } else {
@@ -48,6 +50,7 @@ export async function PUT(request: NextRequest) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook]
       );
+      logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');
       return NextResponse.json(result.rows[0]);
     }

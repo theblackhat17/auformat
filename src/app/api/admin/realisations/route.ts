@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -50,6 +51,8 @@ export async function POST(request: NextRequest) {
       date: date || new Date().toISOString(),
       sortOrder: sortOrder ?? 0,
     });
+
+    logAdminAction(request, auth, 'create_realisation', 'realisation', (realisation as { id: string }).id, `Réalisation "${title}" créée`);
 
     revalidatePath('/', 'layout');
     return NextResponse.json(realisation, { status: 201 });

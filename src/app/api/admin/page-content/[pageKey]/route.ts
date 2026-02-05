@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, rawQuery } from '@/lib/db';
+import { logAdminAction } from '@/lib/activity-logger';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ pageKey: string }> }) {
   const auth = await requireAdmin(request);
@@ -39,6 +40,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         [pageKey, section.sectionKey, JSON.stringify(section.content), section.sortOrder ?? 0]
       );
     }
+
+    logAdminAction(request, auth, 'update_content', 'page_content', null, `Contenu page "${pageKey}" modifié`);
 
     revalidatePath('/', 'layout');
 

@@ -4,6 +4,7 @@ import { pool } from './db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration } from './mailer';
+import { logActivity } from './activity-logger';
 
 export const auth = betterAuth({
   database: pool,
@@ -97,6 +98,18 @@ export const auth = betterAuth({
           const name = String(u.full_name || u.name || u.email || '').split('@')[0];
           void sendWelcomeEmail(String(u.email), name);
           void notifyNewRegistration(name, String(u.email));
+          void logActivity(String(u.id), 'register', 'auth', null, { description: `Inscription : ${String(u.email)}` }, 'unknown', 'unknown');
+        },
+      },
+    },
+    session: {
+      create: {
+        after: async (session) => {
+          const s = session as Record<string, unknown>;
+          const userId = String(s.userId || s.user_id || '');
+          const ip = String(s.ipAddress || s.ip_address || 'unknown');
+          const ua = String(s.userAgent || s.user_agent || 'unknown');
+          void logActivity(userId, 'login', 'auth', null, { description: 'Connexion réussie' }, ip, ua);
         },
       },
     },
