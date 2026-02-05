@@ -7,28 +7,67 @@ import { Input } from '@/components/ui/Input';
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
-    // Simulate form submission
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      nom: formData.get('nom') as string,
+      prenom: formData.get('prenom') as string,
+      email: formData.get('email') as string,
+      telephone: formData.get('telephone') as string,
+      ville: formData.get('ville') as string,
+      codePostal: formData.get('codePostal') as string,
+      typeProjet: formData.get('typeProjet') as string,
+      message: formData.get('message') as string,
+    };
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        setError(result.error || 'Une erreur est survenue');
+        return;
+      }
+
+      setSuccess(true);
+    } catch {
+      setError('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (success) {
     return (
       <div className="text-center py-16 bg-vert-foret/5 rounded-2xl">
-        <span className="text-5xl mb-4 block">✅</span>
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg viewBox="0 0 24 24" className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" strokeWidth={2.5}>
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
         <h3 className="text-xl font-semibold text-noir mb-2">Message envoyé !</h3>
-        <p className="text-sm text-noir/50">Nous vous répondrons dans les 24 heures.</p>
+        <p className="text-sm text-noir/50">Un email de confirmation vous a été envoyé.<br />Nous vous répondrons dans les 24 heures.</p>
       </div>
     );
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {error && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          {error}
+        </div>
+      )}
       <div className="grid sm:grid-cols-2 gap-4">
         <Input id="nom" label="Nom *" name="nom" required placeholder="Votre nom" />
         <Input id="prenom" label="Prénom *" name="prenom" required placeholder="Votre prénom" />
@@ -45,13 +84,13 @@ export function ContactForm() {
         <label htmlFor="typeProjet" className="block text-sm font-medium text-noir/70 mb-1.5">Type de projet</label>
         <select id="typeProjet" name="typeProjet" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10">
           <option value="">Sélectionnez...</option>
-          <option value="dressing">Dressing</option>
-          <option value="cuisine">Cuisine</option>
-          <option value="bibliotheque">Bibliothèque</option>
-          <option value="placard">Placard / Rangement</option>
-          <option value="commerce">Agencement commerce</option>
-          <option value="exterieur">Menuiserie extérieure</option>
-          <option value="autre">Autre</option>
+          <option value="Dressing">Dressing</option>
+          <option value="Cuisine">Cuisine</option>
+          <option value="Bibliothèque">Bibliothèque</option>
+          <option value="Placard / Rangement">Placard / Rangement</option>
+          <option value="Agencement commerce">Agencement commerce</option>
+          <option value="Menuiserie extérieure">Menuiserie extérieure</option>
+          <option value="Autre">Autre</option>
         </select>
       </div>
       <div>

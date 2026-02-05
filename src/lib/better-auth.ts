@@ -3,7 +3,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { pool } from './db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration } from './mailer';
+import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration, sendPasswordResetEmail } from './mailer';
 import { logActivity } from './activity-logger';
 
 export const auth = betterAuth({
@@ -22,12 +22,14 @@ export const auth = betterAuth({
     requireEmailVerification: false,
     password: {
       hash: async (password) => {
-        // Use bcrypt for now to maintain consistency with existing passwords
         return bcrypt.hash(password, 12);
       },
       verify: async (data) => {
         return bcrypt.compare(data.password, data.hash);
       },
+    },
+    sendResetPassword: async ({ user, url }) => {
+      void sendPasswordResetEmail(user.email, url);
     },
   },
 

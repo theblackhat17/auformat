@@ -184,3 +184,86 @@ export async function sendQuoteToClient(
 
   return sendMail(to, `Votre devis ${quoteNumber} — Au Format`, html);
 }
+
+export interface ContactFormData {
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string;
+  ville: string;
+  codePostal: string;
+  typeProjet: string;
+  message: string;
+}
+
+export async function sendContactNotification(data: ContactFormData): Promise<boolean> {
+  const typeProjetLabel = data.typeProjet || 'Non précisé';
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Nouvelle demande de contact</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <tr><td style="padding: 6px 0; color: #888; width: 120px;">Nom</td><td style="padding: 6px 0;"><strong>${data.prenom} ${data.nom}</strong></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Email</td><td style="padding: 6px 0;"><a href="mailto:${data.email}">${data.email}</a></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Téléphone</td><td style="padding: 6px 0;"><a href="tel:${data.telephone}">${data.telephone}</a></td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Ville</td><td style="padding: 6px 0;">${data.ville} (${data.codePostal})</td></tr>
+          <tr><td style="padding: 6px 0; color: #888;">Type de projet</td><td style="padding: 6px 0;">${typeProjetLabel}</td></tr>
+        </table>
+        <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;" />
+        <p style="margin: 0 0 8px; color: #888; font-size: 13px;">Message :</p>
+        <p style="margin: 0; white-space: pre-wrap;">${data.message}</p>
+        ${SIGNATURE}
+      </div>
+    </div>
+  `;
+
+  return sendMail(NOTIFY_EMAIL, `Contact : ${data.prenom} ${data.nom} — ${typeProjetLabel}`, html);
+}
+
+export async function sendContactConfirmation(data: ContactFormData): Promise<boolean> {
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Votre demande a bien été reçue</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Bonjour ${data.prenom},</p>
+        <p>Nous avons bien reçu votre demande de contact et nous vous répondrons dans les <strong>24 heures</strong>.</p>
+        <p style="color: #888; font-size: 13px;">Voici un récapitulatif de votre message :</p>
+        <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px; font-size: 14px; color: #555;">
+          ${data.message.replace(/\n/g, '<br/>')}
+        </blockquote>
+        <p>N'hésitez pas à nous appeler directement si votre demande est urgente.</p>
+        ${SIGNATURE}
+      </div>
+    </div>
+  `;
+
+  return sendMail(data.email, 'Votre demande de contact — Au Format', html);
+}
+
+export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Réinitialisation de votre mot de passe</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Bonjour,</p>
+        <p>Vous avez demandé à réinitialiser votre mot de passe sur <strong>Au Format</strong>.</p>
+        <p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe :</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Réinitialiser mon mot de passe
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px;">Ce lien expire dans 1 heure. Si vous n'avez pas fait cette demande, ignorez simplement cet email.</p>
+        ${SIGNATURE}
+      </div>
+    </div>
+  `;
+
+  return sendMail(to, 'Réinitialisation de mot de passe — Au Format', html);
+}
