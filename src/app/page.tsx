@@ -1,10 +1,20 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getRealisations, getAvis, getPageContent } from '@/lib/content';
-import { formatDate, ratingStars } from '@/lib/utils';
+import { ratingStars } from '@/lib/utils';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
+import { buildPageMetadata } from '@/lib/seo';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata('/', {
+    title: 'Au Format - Menuiserie sur mesure a Cysoing et La Calotterie',
+    description: 'Au Format, menuiserie et ebenisterie sur mesure dans le Nord et le Pas-de-Calais. Meubles, dressings, cuisines, agencements. Ateliers a Cysoing (Lille) et La Calotterie (Le Touquet).',
+    keywords: ['menuiserie sur mesure', 'Au Format', 'menuiserie Lille', 'menuiserie Cysoing', 'menuiserie Le Touquet', 'ebenisterie Nord', 'meuble sur mesure'],
+  });
+}
 
 export default async function HomePage() {
   const [realisations, avis, sections] = await Promise.all([

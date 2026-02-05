@@ -113,8 +113,8 @@ export function AdminDevisClient() {
       </div>
 
       {/* Quotes table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead><tr className="bg-gray-50 text-left text-xs text-noir/40 uppercase tracking-wider">
             <th className="px-4 py-3">Devis</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">Statut</th><th className="px-4 py-3 text-right">Montant TTC</th><th className="px-4 py-3">Date</th><th className="px-4 py-3"></th>
           </tr></thead>

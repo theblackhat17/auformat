@@ -1,20 +1,15 @@
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, faqJsonLd } from '@/lib/jsonld';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL, buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Notre processus - De la conception a l\'installation',
-  description:
-    'Decouvrez les 6 etapes de votre projet de menuiserie sur mesure chez Au Format : premier contact, conception, devis gratuit, fabrication en atelier, installation et suivi. Accompagnement personnalise de A a Z a Cysoing et La Calotterie.',
-  keywords: ['processus menuiserie', 'etapes projet meuble sur mesure', 'fabrication meuble bois', 'installation menuiserie', 'devis gratuit menuiserie'],
-  alternates: { canonical: 'https://www.auformat.com/processus' },
-  openGraph: {
-    title: 'Notre processus - Au Format',
-    description: 'Un accompagnement sur mesure, de la premiere idee a l\'installation finale.',
-    url: 'https://www.auformat.com/processus',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata('/processus', {
+    title: 'Notre processus - De la conception a l\'installation',
+    description: 'Decouvrez les 6 etapes de votre projet de menuiserie sur mesure chez Au Format : premier contact, conception, devis gratuit, fabrication, installation et suivi.',
+    keywords: ['processus menuiserie', 'etapes projet meuble sur mesure', 'fabrication meuble bois', 'devis gratuit menuiserie'],
+  });
+}
 
 const STEPS = [
   { num: '01', title: 'Premier contact', desc: 'Echangeons sur votre projet, vos envies et vos contraintes. Visite sur site gratuite.', delay: '1-2 jours' },

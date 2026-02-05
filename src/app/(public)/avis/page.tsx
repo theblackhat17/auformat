@@ -1,19 +1,15 @@
 import type { Metadata } from 'next';
 import { getAvis } from '@/lib/content';
 import { AvisClient } from './AvisClient';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Avis clients - Temoignages menuiserie sur mesure',
-  description:
-    'Lisez les avis de nos clients sur nos realisations de menuiserie sur mesure. Satisfaction client et travail de qualite a Cysoing, Lille, Le Touquet et Montreuil-sur-Mer.',
-  keywords: ['avis menuiserie Lille', 'temoignages clients meuble sur mesure', 'avis Au Format', 'satisfaction client menuiserie Nord'],
-  alternates: { canonical: 'https://www.auformat.com/avis' },
-  openGraph: {
-    title: 'Avis clients - Au Format',
-    description: 'La satisfaction de nos clients est notre meilleure carte de visite.',
-    url: 'https://www.auformat.com/avis',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata('/avis', {
+    title: 'Avis clients - Temoignages menuiserie sur mesure',
+    description: 'Lisez les avis de nos clients sur nos realisations de menuiserie sur mesure. Satisfaction client et travail de qualite a Cysoing, Lille, Le Touquet.',
+    keywords: ['avis menuiserie Lille', 'temoignages clients meuble sur mesure', 'avis Au Format'],
+  });
+}
 
 export default async function AvisPage() {
   const avis = await getAvis();

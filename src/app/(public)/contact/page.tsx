@@ -3,20 +3,15 @@ import { ContactForm } from './ContactForm';
 import { getSettings } from '@/lib/content';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
-import { SITE_URL } from '@/lib/seo';
+import { SITE_URL, buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Contact - Devis gratuit menuiserie sur mesure',
-  description:
-    'Contactez Au Format pour un devis gratuit. Menuiserie sur mesure a Cysoing pres de Lille et a La Calotterie pres du Touquet-Paris-Plage. Tel : 07 88 91 60 68. Reponse sous 24h.',
-  keywords: ['devis menuiserie gratuit', 'contact menuisier Lille', 'devis meuble sur mesure', 'menuiserie Cysoing contact', 'menuiserie Le Touquet contact'],
-  alternates: { canonical: 'https://www.auformat.com/contact' },
-  openGraph: {
-    title: 'Contactez Au Format - Devis gratuit',
-    description: 'Devis gratuit et sans engagement. Menuiserie sur mesure Lille & Le Touquet.',
-    url: 'https://www.auformat.com/contact',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata('/contact', {
+    title: 'Contact - Devis gratuit menuiserie sur mesure',
+    description: 'Contactez Au Format pour un devis gratuit. Menuiserie sur mesure a Cysoing pres de Lille et a La Calotterie pres du Touquet-Paris-Plage. Tel : 07 88 91 60 68.',
+    keywords: ['devis menuiserie gratuit', 'contact menuisier Lille', 'devis meuble sur mesure', 'menuiserie Cysoing contact'],
+  });
+}
 
 export default async function ContactPage() {
   const settings = await getSettings();

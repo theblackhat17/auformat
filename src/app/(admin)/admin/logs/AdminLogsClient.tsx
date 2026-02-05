@@ -92,8 +92,8 @@ export function AdminLogsClient() {
       </div>
 
       {/* Logs table */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead><tr className="bg-gray-50 text-left text-xs text-noir/40 uppercase tracking-wider">
             <th className="px-4 py-3">Date</th><th className="px-4 py-3">Utilisateur</th><th className="px-4 py-3">Action</th><th className="px-4 py-3">Details</th><th className="px-4 py-3">IP</th><th className="px-4 py-3">Statut</th>
           </tr></thead>

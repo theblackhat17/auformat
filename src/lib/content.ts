@@ -72,6 +72,20 @@ export async function getPageContent(pageKey: string): Promise<PageContent[]> {
   );
 }
 
+export interface SeoMetadata {
+  pagePath: string;
+  metaTitle: string;
+  metaDescription: string;
+  metaKeywords: string;
+}
+
+export async function getSeoMetadata(pagePath: string): Promise<SeoMetadata | null> {
+  return queryOne<SeoMetadata>(
+    'SELECT page_path, meta_title, meta_description, meta_keywords FROM seo_metadata WHERE page_path = $1',
+    [pagePath]
+  );
+}
+
 // Legacy compat: convert SiteSettings to GeneralSettings shape
 export async function getGeneralSettings(): Promise<GeneralSettings | null> {
   const s = await getSettings();

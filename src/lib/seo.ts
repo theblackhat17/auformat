@@ -44,6 +44,34 @@ export const HOURS = {
   sunday: 'Ferme',
 };
 
+import type { Metadata } from 'next';
+import { getSeoMetadata } from './content';
+
+export async function buildPageMetadata(
+  pagePath: string,
+  fallback: { title: string; description: string; keywords: string[]; ogTitle?: string; ogDescription?: string },
+): Promise<Metadata> {
+  const seo = await getSeoMetadata(pagePath).catch(() => null);
+
+  const title = seo?.metaTitle || fallback.title;
+  const description = seo?.metaDescription || fallback.description;
+  const keywords = seo?.metaKeywords
+    ? seo.metaKeywords.split(',').map((k) => k.trim()).filter(Boolean)
+    : fallback.keywords;
+
+  return {
+    title,
+    description,
+    keywords,
+    alternates: { canonical: `${SITE_URL}${pagePath === '/' ? '' : pagePath}` },
+    openGraph: {
+      title: fallback.ogTitle || title,
+      description: fallback.ogDescription || description,
+      url: `${SITE_URL}${pagePath === '/' ? '' : pagePath}`,
+    },
+  };
+}
+
 export const SEO_KEYWORDS = [
   // Marque
   'Au Format', 'au format menuiserie',

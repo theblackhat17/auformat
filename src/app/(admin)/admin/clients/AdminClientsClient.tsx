@@ -94,8 +94,8 @@ export function AdminClientsClient() {
         <SearchInput placeholder="Rechercher un utilisateur..." onSearch={setSearch} />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+        <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="bg-gray-50 text-left text-xs text-noir/40 uppercase tracking-wider">
               <th className="px-4 py-3">Utilisateur</th>

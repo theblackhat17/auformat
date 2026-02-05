@@ -1,18 +1,14 @@
 import type { Metadata } from 'next';
 import { getMateriauxGrouped, getCategories } from '@/lib/content';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: 'Nos materiaux - Essences de bois et panneaux',
-  description:
-    'Decouvrez notre selection d\'essences de bois nobles, locaux et exotiques : chene, noyer, hetre, frene. Materiaux de qualite pour vos meubles sur mesure et agencements dans le Nord et le Pas-de-Calais.',
-  keywords: ['essences de bois', 'bois massif meuble', 'chene massif', 'noyer', 'hetre', 'materiaux menuiserie', 'bois local Nord'],
-  alternates: { canonical: 'https://www.auformat.com/materiaux' },
-  openGraph: {
-    title: 'Nos materiaux - Au Format',
-    description: 'Des essences nobles et durables, selectionnees pour leur qualite et leur beaute.',
-    url: 'https://www.auformat.com/materiaux',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata('/materiaux', {
+    title: 'Nos materiaux - Essences de bois et panneaux',
+    description: 'Decouvrez notre selection d\'essences de bois nobles, locaux et exotiques : chene, noyer, hetre, frene. Materiaux de qualite pour vos meubles sur mesure.',
+    keywords: ['essences de bois', 'bois massif meuble', 'chene massif', 'noyer', 'hetre', 'materiaux menuiserie'],
+  });
+}
 
 function HardnessBar({ value }: { value: number }) {
   return (
