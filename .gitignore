@@ -33,6 +33,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# pm2 config (reads secrets from .env.local)
+ecosystem.config.js
+
 # vercel
 .vercel
 
