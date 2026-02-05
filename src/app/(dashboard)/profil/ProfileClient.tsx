@@ -38,7 +38,7 @@ export function ProfileClient() {
       if (res.ok) {
         await refreshProfile();
         setEditing(false);
-        setSuccess('Profil mis a jour avec succes');
+        setSuccess('Profil mis à jour avec succès');
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch {}
@@ -77,16 +77,16 @@ export function ProfileClient() {
         {editing ? (
           <div className="space-y-4">
             <Input id="edit-fullName" label="Nom complet" value={formData.fullName} onChange={(e) => updateField('fullName', e.target.value)} />
-            <Input id="edit-companyName" label="Societe" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} />
-            <Input id="edit-phone" label="Telephone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} />
+            <Input id="edit-companyName" label="Société" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} />
+            <Input id="edit-phone" label="Téléphone" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} />
             <Input id="edit-address" label="Adresse" value={formData.address} onChange={(e) => updateField('address', e.target.value)} />
             <Button onClick={handleSave} isLoading={saving}>Enregistrer</Button>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 gap-4 text-sm">
             <div><span className="text-noir/40 block text-xs mb-0.5">Nom complet</span><span className="text-noir">{profile.fullName || '—'}</span></div>
-            <div><span className="text-noir/40 block text-xs mb-0.5">Societe</span><span className="text-noir">{profile.companyName || '—'}</span></div>
-            <div><span className="text-noir/40 block text-xs mb-0.5">Telephone</span><span className="text-noir">{profile.phone || '—'}</span></div>
+            <div><span className="text-noir/40 block text-xs mb-0.5">Société</span><span className="text-noir">{profile.companyName || '—'}</span></div>
+            <div><span className="text-noir/40 block text-xs mb-0.5">Téléphone</span><span className="text-noir">{profile.phone || '—'}</span></div>
             <div><span className="text-noir/40 block text-xs mb-0.5">Adresse</span><span className="text-noir">{profile.address || '—'}</span></div>
           </div>
         )}

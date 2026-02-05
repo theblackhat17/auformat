@@ -13,6 +13,12 @@ const transporter = nodemailer.createTransport({
 const FROM = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@auformat.fr';
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || 'contact@auformat.fr';
 
+const SIGNATURE = `
+  <br/>
+  <p style="margin: 0; color: #555;">À bientôt, chez <strong>Au Format</strong></p>
+  <p style="color: #888; font-size: 13px;">Au Format — Menuiserie sur mesure</p>
+`;
+
 function isConfigured(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
@@ -49,7 +55,8 @@ export async function notifyAdminsNewQuote(quoteNumber: string, clientName: stri
         <p><strong>Email :</strong> ${clientEmail}</p>
         <p><strong>Total TTC :</strong> ${totalTtc}</p>
         <br/>
-        <p>Connectez-vous a l'espace admin pour consulter et traiter ce devis.</p>
+        <p>Connectez-vous à l'espace admin pour consulter et traiter ce devis.</p>
+        ${SIGNATURE}
       </div>
     </div>
   `;
@@ -67,16 +74,15 @@ export async function sendWelcomeEmail(to: string, clientName: string): Promise<
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Bonjour ${clientName},</p>
-        <p>Votre compte a bien ete cree sur <strong>Au Format</strong>.</p>
-        <p>Vous pouvez desormais :</p>
+        <p>Votre compte a bien été créé sur <strong>Au Format</strong>.</p>
+        <p>Vous pouvez désormais :</p>
         <ul>
           <li>Configurer vos meubles sur mesure avec notre configurateur</li>
           <li>Demander des devis en ligne</li>
           <li>Suivre l'avancement de vos commandes</li>
         </ul>
-        <p>N'hesitez pas a nous contacter pour toute question.</p>
-        <br/>
-        <p style="color: #888; font-size: 13px;">Au Format - Menuiserie sur mesure</p>
+        <p>N'hésitez pas à nous contacter pour toute question.</p>
+        ${SIGNATURE}
       </div>
     </div>
   `;
@@ -94,6 +100,7 @@ export async function notifyNewRegistration(clientName: string, clientEmail: str
         <p><strong>Nom :</strong> ${clientName}</p>
         <p><strong>Email :</strong> ${clientEmail}</p>
         <p style="color: #888; font-size: 13px;">Inscription le ${new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+        ${SIGNATURE}
       </div>
     </div>
   `;
@@ -105,24 +112,23 @@ export async function sendVerificationEmail(to: string, verificationUrl: string)
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">Verifiez votre adresse email</h2>
+        <h2 style="margin: 0;">Vérifiez votre adresse email</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Bonjour,</p>
-        <p>Merci de vous etre inscrit sur <strong>Au Format</strong>. Veuillez verifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
+        <p>Merci de vous être inscrit sur <strong>Au Format</strong>. Veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
         <div style="text-align: center; margin: 24px 0;">
           <a href="${verificationUrl}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
-            Verifier mon email
+            Vérifier mon email
           </a>
         </div>
-        <p style="color: #888; font-size: 13px;">Ce lien expire dans 24 heures. Si vous n'avez pas cree de compte, ignorez cet email.</p>
-        <br/>
-        <p style="color: #888; font-size: 13px;">Au Format - Menuiserie sur mesure</p>
+        <p style="color: #888; font-size: 13px;">Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez cet email.</p>
+        ${SIGNATURE}
       </div>
     </div>
   `;
 
-  return sendMail(to, 'Verifiez votre email - Au Format', html);
+  return sendMail(to, 'Vérifiez votre email — Au Format', html);
 }
 
 export async function sendQuoteToClient(
@@ -148,7 +154,7 @@ export async function sendQuoteToClient(
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-        <h2 style="margin: 0;">Au Format - Votre devis</h2>
+        <h2 style="margin: 0;">Au Format — Votre devis</h2>
       </div>
       <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Bonjour ${clientName},</p>
@@ -157,7 +163,7 @@ export async function sendQuoteToClient(
           <thead>
             <tr style="background: #f9f9f9;">
               <th style="padding: 8px; text-align: left;">Description</th>
-              <th style="padding: 8px; text-align: center;">Qte</th>
+              <th style="padding: 8px; text-align: center;">Qté</th>
               <th style="padding: 8px; text-align: right;">P.U.</th>
               <th style="padding: 8px; text-align: right;">Total</th>
             </tr>
@@ -170,11 +176,11 @@ export async function sendQuoteToClient(
           <p style="margin: 4px 0; font-size: 18px; font-weight: bold; color: #2C5F2D;">Total TTC : ${formatEur(totalTtc)}</p>
         </div>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
-        <p style="color: #888; font-size: 13px;">Ce devis est estimatif. Notre equipe vous recontactera pour confirmer les details et le prix final.</p>
-        <p style="color: #888; font-size: 13px;">Au Format - Menuiserie sur mesure</p>
+        <p style="color: #888; font-size: 13px;">Ce devis est estimatif. Notre équipe vous recontactera pour confirmer les détails et le prix final.</p>
+        ${SIGNATURE}
       </div>
     </div>
   `;
 
-  return sendMail(to, `Votre devis ${quoteNumber} - Au Format`, html);
+  return sendMail(to, `Votre devis ${quoteNumber} — Au Format`, html);
 }

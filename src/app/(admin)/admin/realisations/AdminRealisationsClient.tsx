@@ -96,7 +96,7 @@ export function AdminRealisationsClient() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error); return; }
-      toast.success(editing ? 'Realisation modifiee' : 'Realisation creee');
+      toast.success(editing ? 'Réalisation modifiée' : 'Réalisation créée');
       setModalOpen(false);
       load();
     } catch {
@@ -107,10 +107,10 @@ export function AdminRealisationsClient() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Supprimer cette realisation ?')) return;
+    if (!confirm('Supprimer cette réalisation ?')) return;
     try {
       await fetch(`/api/admin/realisations/${id}`, { method: 'DELETE' });
-      toast.success('Realisation supprimee');
+      toast.success('Réalisation supprimée');
       load();
     } catch {
       toast.error('Erreur suppression');
@@ -131,11 +131,11 @@ export function AdminRealisationsClient() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-noir">Realisations</h1>
-          <p className="text-sm text-noir/50 mt-1">{items.length} realisations</p>
+          <h1 className="text-2xl font-bold text-noir">Réalisations</h1>
+          <p className="text-sm text-noir/50 mt-1">{items.length} réalisations</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-vert-foret text-white font-medium rounded-lg hover:bg-vert-foret-dark transition-colors">
-          + Nouvelle realisation
+          + Nouvelle réalisation
         </button>
       </div>
 
@@ -146,8 +146,8 @@ export function AdminRealisationsClient() {
             <tr>
               <th className="px-4 py-3 font-medium text-gray-600">Image</th>
               <th className="px-4 py-3 font-medium text-gray-600">Titre</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Categorie</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Publie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Catégorie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Publié</th>
               <th className="px-4 py-3 font-medium text-gray-600">Date</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -170,11 +170,11 @@ export function AdminRealisationsClient() {
             ))}
           </tbody>
         </table>
-        {items.length === 0 && <div className="text-center py-8 text-gray-400">Aucune realisation</div>}
+        {items.length === 0 && <div className="text-center py-8 text-gray-400">Aucune réalisation</div>}
       </div>
 
       {/* Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier la realisation' : 'Nouvelle realisation'} size="xl" footer={
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier la réalisation' : 'Nouvelle réalisation'} size="xl" footer={
         <>
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Annuler</button>
           <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-vert-foret text-white text-sm font-medium rounded-lg hover:bg-vert-foret-dark disabled:opacity-50">{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
@@ -193,7 +193,7 @@ export function AdminRealisationsClient() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
             <select value={form.categoryId || ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value || null })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret">
               <option value="">-- Aucune --</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -206,14 +206,14 @@ export function AdminRealisationsClient() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Contenu detaille</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contenu détaillé</label>
             <textarea value={form.body || ''} onChange={(e) => setForm({ ...form, body: e.target.value })} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Duree</label><input type="text" value={form.duration || ''} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 3 semaines" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Durée</label><input type="text" value={form.duration || ''} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 3 semaines" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Surface</label><input type="text" value={form.surface || ''} onChange={(e) => setForm({ ...form, surface: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 25m2" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Materiau</label><input type="text" value={form.material || ''} onChange={(e) => setForm({ ...form, material: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Chene massif" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Matériau</label><input type="text" value={form.material || ''} onChange={(e) => setForm({ ...form, material: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Chêne massif" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label><input type="text" value={form.location || ''} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Lille" /></div>
           </div>
 
@@ -223,10 +223,10 @@ export function AdminRealisationsClient() {
 
           {/* Features */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Caracteristiques</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Caractéristiques</label>
             {form.features.map((f, i) => (
               <div key={i} className="flex gap-2 mb-2">
-                <input type="text" value={f.feature} onChange={(e) => updateFeature(i, e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm" placeholder="Caracteristique" />
+                <input type="text" value={f.feature} onChange={(e) => updateFeature(i, e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm" placeholder="Caractéristique" />
                 <button type="button" onClick={() => removeFeature(i)} className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm">x</button>
               </div>
             ))}
@@ -240,7 +240,7 @@ export function AdminRealisationsClient() {
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" />
-            Publie
+            Publié
           </label>
         </div>
       </Modal>

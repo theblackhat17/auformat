@@ -32,7 +32,7 @@ export function AvisClient({ avis }: { avis: Avis[] }) {
         </div>
         <div className="bg-beige/50 rounded-xl p-6 text-center">
           <p className="text-3xl font-bold text-vert-foret">{stats.verified}</p>
-          <p className="text-sm text-noir/50 mt-1">Avis verifies</p>
+          <p className="text-sm text-noir/50 mt-1">Avis vérifiés</p>
         </div>
       </div>
 
@@ -54,7 +54,7 @@ export function AvisClient({ avis }: { avis: Avis[] }) {
           <div key={i} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <span className="text-bois-clair">{ratingStars(a.rating)}</span>
-              {a.verified && <span className="text-xs text-vert-foret font-medium bg-vert-foret/10 px-2 py-0.5 rounded-full">Verifie</span>}
+              {a.verified && <span className="text-xs text-vert-foret font-medium bg-vert-foret/10 px-2 py-0.5 rounded-full">Vérifié</span>}
             </div>
             <p className="text-sm text-noir/70 leading-relaxed mb-4 italic">&ldquo;{a.testimonial}&rdquo;</p>
             <div className="flex items-center gap-3 pt-3 border-t border-gray-50">

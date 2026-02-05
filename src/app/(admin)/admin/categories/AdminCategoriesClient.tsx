@@ -52,7 +52,7 @@ export function AdminCategoriesClient() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error); return; }
-      toast.success(editing ? 'Categorie modifiee' : 'Categorie creee');
+      toast.success(editing ? 'Catégorie modifiée' : 'Catégorie créée');
       setModalOpen(false);
       load();
     } catch {
@@ -63,11 +63,11 @@ export function AdminCategoriesClient() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Supprimer cette categorie ?')) return;
+    if (!confirm('Supprimer cette catégorie ?')) return;
     try {
       const res = await fetch(`/api/admin/categories/${id}`, { method: 'DELETE' });
       if (!res.ok) { toast.error('Erreur suppression'); return; }
-      toast.success('Categorie supprimee');
+      toast.success('Catégorie supprimée');
       load();
     } catch {
       toast.error('Erreur suppression');
@@ -82,11 +82,11 @@ export function AdminCategoriesClient() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-noir">Categories</h1>
-          <p className="text-sm text-noir/50 mt-1">{categories.length} categories</p>
+          <h1 className="text-2xl font-bold text-noir">Catégories</h1>
+          <p className="text-sm text-noir/50 mt-1">{categories.length} catégories</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-vert-foret text-white font-medium rounded-lg hover:bg-vert-foret-dark transition-colors">
-          + Nouvelle categorie
+          + Nouvelle catégorie
         </button>
       </div>
 
@@ -94,7 +94,7 @@ export function AdminCategoriesClient() {
       <div className="flex gap-2 mb-6">
         {['all', 'realisation', 'material'].map((t) => (
           <button key={t} onClick={() => setFilterType(t)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filterType === t ? 'bg-vert-foret text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
-            {t === 'all' ? 'Toutes' : t === 'realisation' ? 'Realisations' : 'Materiaux'}
+            {t === 'all' ? 'Toutes' : t === 'realisation' ? 'Réalisations' : 'Matériaux'}
           </button>
         ))}
       </div>
@@ -107,9 +107,9 @@ export function AdminCategoriesClient() {
               <th className="px-4 py-3 font-medium text-gray-600">Label</th>
               <th className="px-4 py-3 font-medium text-gray-600">Slug</th>
               <th className="px-4 py-3 font-medium text-gray-600">Type</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Icone</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Icône</th>
               <th className="px-4 py-3 font-medium text-gray-600">Ordre</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Publie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Publié</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -130,11 +130,11 @@ export function AdminCategoriesClient() {
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && <div className="text-center py-8 text-gray-400">Aucune categorie</div>}
+        {filtered.length === 0 && <div className="text-center py-8 text-gray-400">Aucune catégorie</div>}
       </div>
 
       {/* Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier la categorie' : 'Nouvelle categorie'} footer={
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier la catégorie' : 'Nouvelle catégorie'} footer={
         <>
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Annuler</button>
           <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-vert-foret text-white text-sm font-medium rounded-lg hover:bg-vert-foret-dark disabled:opacity-50">{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
@@ -152,12 +152,12 @@ export function AdminCategoriesClient() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
             <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret">
-              <option value="realisation">Realisation</option>
-              <option value="material">Materiau</option>
+              <option value="realisation">Réalisation</option>
+              <option value="material">Matériau</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Icone (emoji)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Icône (emoji)</label>
             <input type="text" value={form.icon || ''} onChange={(e) => setForm({ ...form, icon: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" />
           </div>
           <div>
@@ -166,7 +166,7 @@ export function AdminCategoriesClient() {
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" />
-            Publie
+            Publié
           </label>
         </div>
       </Modal>

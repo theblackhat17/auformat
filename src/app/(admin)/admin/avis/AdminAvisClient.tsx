@@ -67,7 +67,7 @@ export function AdminAvisClient() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error); return; }
-      toast.success(editing ? 'Avis modifie' : 'Avis cree');
+      toast.success(editing ? 'Avis modifié' : 'Avis créé');
       setModalOpen(false);
       load();
     } catch {
@@ -81,7 +81,7 @@ export function AdminAvisClient() {
     if (!confirm('Supprimer cet avis ?')) return;
     try {
       await fetch(`/api/admin/avis/${id}`, { method: 'DELETE' });
-      toast.success('Avis supprime');
+      toast.success('Avis supprimé');
       load();
     } catch {
       toast.error('Erreur suppression');
@@ -109,8 +109,8 @@ export function AdminAvisClient() {
               <th className="px-4 py-3 font-medium text-gray-600">Nom</th>
               <th className="px-4 py-3 font-medium text-gray-600">Note</th>
               <th className="px-4 py-3 font-medium text-gray-600">Type projet</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Verifie</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Publie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Vérifié</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Publié</th>
               <th className="px-4 py-3 font-medium text-gray-600">Date</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -161,10 +161,10 @@ export function AdminAvisClient() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Type de projet</label>
-            <input type="text" value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Cuisine, Dressing, Bibliotheque..." />
+            <input type="text" value={form.projectType} onChange={(e) => setForm({ ...form, projectType: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Cuisine, Dressing, Bibliothèque..." />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Temoignage</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Témoignage</label>
             <textarea value={form.testimonial} onChange={(e) => setForm({ ...form, testimonial: e.target.value })} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm" />
           </div>
           <div>
@@ -172,8 +172,8 @@ export function AdminAvisClient() {
             <input type="date" value={form.date ? form.date.split('T')[0] : ''} onChange={(e) => setForm({ ...form, date: new Date(e.target.value).toISOString() })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" />
           </div>
           <div className="flex gap-6">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.verified} onChange={(e) => setForm({ ...form, verified: e.target.checked })} className="rounded" /> Verifie</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" /> Publie</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.verified} onChange={(e) => setForm({ ...form, verified: e.target.checked })} className="rounded" /> Vérifié</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" /> Publié</label>
           </div>
         </div>
       </Modal>

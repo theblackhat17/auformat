@@ -5,9 +5,9 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/realisations', {
-    title: 'Nos realisations - Portfolio menuiserie sur mesure',
-    description: 'Parcourez nos realisations de menuiserie sur mesure : cuisines, dressings, bibliotheques, meubles TV, agencements commerciaux. Projets realises a Lille, Cysoing, Le Touquet.',
-    keywords: ['realisations menuiserie', 'portfolio meuble sur mesure', 'cuisine sur mesure Lille', 'dressing sur mesure Nord'],
+    title: 'Nos réalisations — Portfolio menuiserie sur mesure',
+    description: 'Parcourez nos réalisations de menuiserie sur mesure : cuisines, dressings, bibliothèques, meubles TV, agencements commerciaux. Projets réalisés à Lille, Cysoing, Le Touquet.',
+    keywords: ['réalisations menuiserie', 'portfolio meuble sur mesure', 'cuisine sur mesure Lille', 'dressing sur mesure Nord'],
   });
 }
 
@@ -27,8 +27,8 @@ export default async function RealisationsPage() {
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Notre portfolio</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Nos realisations</h1>
-          <p className="text-white/60 text-lg max-w-2xl">Decouvrez nos creations sur mesure pour particuliers et professionnels.</p>
+          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Nos réalisations</h1>
+          <p className="text-white/60 text-lg max-w-2xl">Découvrez nos créations sur mesure pour particuliers et professionnels.</p>
         </div>
       </section>
       <section className="py-16">

@@ -16,7 +16,7 @@ export const LOCATIONS = {
     areaServed: ['Lille', 'Cysoing', 'Villeneuve-d\'Ascq', 'Roubaix', 'Tourcoing', 'Metropole lilloise', 'Nord'],
   },
   calotterie: {
-    name: 'Au Format - Atelier Cote d\'Opale',
+    name: 'Au Format - Atelier Côte d\'Opale',
     streetAddress: '1056 Rue de Montreuil',
     city: 'La Calotterie',
     postalCode: '62170',
@@ -25,7 +25,7 @@ export const LOCATIONS = {
     nearCity: 'Le Touquet-Paris-Plage',
     lat: 50.4628,
     lng: 1.7614,
-    areaServed: ['Montreuil-sur-Mer', 'Le Touquet-Paris-Plage', 'Boulogne-sur-Mer', 'Berck', 'Etaples', 'Cote d\'Opale', 'Pas-de-Calais'],
+    areaServed: ['Montreuil-sur-Mer', 'Le Touquet-Paris-Plage', 'Boulogne-sur-Mer', 'Berck', 'Etaples', 'Côte d\'Opale', 'Pas-de-Calais'],
   },
 } as const;
 
@@ -40,8 +40,8 @@ export const SOCIALS = {
 
 export const HOURS = {
   weekdays: '08:00-18:00',
-  saturday: 'Ferme',
-  sunday: 'Ferme',
+  saturday: 'Fermé',
+  sunday: 'Fermé',
 };
 
 import type { Metadata } from 'next';
@@ -83,19 +83,19 @@ export const SEO_KEYWORDS = [
   'menuiserie sur mesure Lille', 'menuiserie sur mesure Nord',
   // Agencement + villes
   'agencement sur mesure', 'agencement Cysoing', 'agencement Lille',
-  'agencement interieur Nord', 'agencement sur mesure Pas-de-Calais',
+  'agencement intérieur Nord', 'agencement sur mesure Pas-de-Calais',
   // Bois & metier
-  'ebenisterie', 'ebeniste Nord', 'artisan menuisier',
+  'ébénisterie', 'ébéniste Nord', 'artisan menuisier',
   'bois massif', 'bois sur mesure', 'travail du bois',
   'menuiserie artisanale', 'menuiserie traditionnelle',
   // Produits
   'meuble sur mesure', 'meuble sur mesure Lille',
   'dressing sur mesure', 'dressing sur mesure Nord',
   'cuisine bois', 'cuisine sur mesure',
-  'bibliotheque sur mesure', 'meuble TV sur mesure',
-  'bureau sur mesure', 'etagere sur mesure',
+  'bibliothèque sur mesure', 'meuble TV sur mesure',
+  'bureau sur mesure', 'étagère sur mesure',
   'plan de travail bois', 'escalier bois',
   'agencement commercial',
   // Essences
-  'chene massif', 'noyer', 'hetre', 'frene', 'bois local Nord',
+  'chêne massif', 'noyer', 'hêtre', 'frêne', 'bois local Nord',
 ];

@@ -78,9 +78,9 @@ export function AdminDevisClient() {
       setQuotes((prev) => [newQuote, ...prev]);
       setCreateModal(false);
       setForm({ userId: '', title: '', description: '', validUntil: new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10), adminNotes: '', items: [{ description: '', quantity: 1, unitPrice: 0, total: 0 }] });
-      toast.success('Devis cree avec succes');
+      toast.success('Devis créé avec succès');
     } else {
-      toast.error('Erreur lors de la creation');
+      toast.error('Erreur lors de la création');
     }
     setCreating(false);
   }
@@ -90,7 +90,7 @@ export function AdminDevisClient() {
     if (res.ok) {
       const updated = await res.json();
       setQuotes((prev) => prev.map((q) => q.id === id ? { ...q, ...updated } : q));
-      toast.success('Devis envoye');
+      toast.success('Devis envoyé');
     }
   }
 
@@ -105,7 +105,7 @@ export function AdminDevisClient() {
 
       {/* Status tabs */}
       <div className="flex gap-2 flex-wrap">
-        {[{ key: 'all', label: 'Tous' }, { key: 'draft', label: 'Brouillons' }, { key: 'sent', label: 'Envoyes' }, { key: 'accepted', label: 'Acceptes' }, { key: 'refused', label: 'Refuses' }].map((tab) => (
+        {[{ key: 'all', label: 'Tous' }, { key: 'draft', label: 'Brouillons' }, { key: 'sent', label: 'Envoyés' }, { key: 'accepted', label: 'Acceptés' }, { key: 'refused', label: 'Refusés' }].map((tab) => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.key ? 'bg-vert-foret text-white' : 'bg-gray-100 text-noir/60 hover:bg-gray-200'}`}>
             {tab.label} ({tab.key === 'all' ? quotes.length : quotes.filter((q) => q.status === tab.key).length})
           </button>
@@ -139,14 +139,14 @@ export function AdminDevisClient() {
         <>
           <div className="flex-1 text-left"><p className="text-sm text-noir/50">Total TTC: <strong className="text-noir text-lg">{formatPrice(total)}</strong></p></div>
           <Button variant="ghost" onClick={() => setCreateModal(false)}>Annuler</Button>
-          <Button onClick={handleCreate} isLoading={creating}>Creer le devis</Button>
+          <Button onClick={handleCreate} isLoading={creating}>Créer le devis</Button>
         </>
       }>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-noir/70 mb-1.5">Client *</label>
             <select value={form.userId} onChange={(e) => setForm((p) => ({ ...p, userId: e.target.value }))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret">
-              <option value="">Selectionnez un client</option>
+              <option value="">Sélectionnez un client</option>
               {clients.map((c) => <option key={c.id} value={c.id}>{c.fullName || c.email}{c.companyName ? ` (${c.companyName})` : ''}</option>)}
             </select>
           </div>

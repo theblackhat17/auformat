@@ -50,7 +50,7 @@ export function MesDevisClient() {
       </div>
 
       {quotes.length === 0 ? (
-        <EmptyState icon="📄" title="Aucun devis" description="Vos devis apparaitront ici une fois que notre equipe les aura prepares." />
+        <EmptyState icon="📄" title="Aucun devis" description="Vos devis apparaîtront ici une fois que notre équipe les aura préparés." />
       ) : (
         <div className="space-y-4">
           {quotes.map((quote) => (
@@ -63,7 +63,7 @@ export function MesDevisClient() {
                 <h3 className="text-lg font-semibold text-noir truncate">{quote.title}</h3>
                 {quote.description && <p className="text-sm text-noir/50 mt-1 line-clamp-1">{quote.description}</p>}
                 <div className="flex gap-4 mt-2 text-xs text-noir/40">
-                  <span>Cree le {formatDate(quote.createdAt)}</span>
+                  <span>Créé le {formatDate(quote.createdAt)}</span>
                   {quote.validUntil && <span>Valable jusqu&apos;au {formatDate(quote.validUntil)}</span>}
                 </div>
               </div>

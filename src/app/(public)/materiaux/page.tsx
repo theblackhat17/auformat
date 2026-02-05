@@ -4,9 +4,9 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/materiaux', {
-    title: 'Nos materiaux - Essences de bois et panneaux',
-    description: 'Decouvrez notre selection d\'essences de bois nobles, locaux et exotiques : chene, noyer, hetre, frene. Materiaux de qualite pour vos meubles sur mesure.',
-    keywords: ['essences de bois', 'bois massif meuble', 'chene massif', 'noyer', 'hetre', 'materiaux menuiserie'],
+    title: 'Nos matériaux — Essences de bois et panneaux',
+    description: 'Découvrez notre sélection d\'essences de bois nobles, locaux et exotiques : chêne, noyer, hêtre, frêne. Matériaux de qualité pour vos meubles sur mesure.',
+    keywords: ['essences de bois', 'bois massif meuble', 'chêne massif', 'noyer', 'hêtre', 'matériaux menuiserie'],
   });
 }
 
@@ -38,8 +38,8 @@ export default async function MateriauxPage() {
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Nos essences</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Materiaux</h1>
-          <p className="text-white/60 text-lg max-w-2xl">Des essences nobles et durables, selectionnees pour leur qualite et leur beaute.</p>
+          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Matériaux</h1>
+          <p className="text-white/60 text-lg max-w-2xl">Des essences nobles et durables, sélectionnées pour leur qualité et leur beauté.</p>
         </div>
       </section>
 
@@ -74,11 +74,11 @@ export default async function MateriauxPage() {
                       <p className="text-sm text-noir/60 mt-2 mb-4 line-clamp-2">{m.description}</p>
                       <div className="space-y-2 text-xs text-noir/60">
                         <div className="flex justify-between items-center">
-                          <span>Durete</span>
+                          <span>Dureté</span>
                           <HardnessBar value={m.hardness} />
                         </div>
                         <div className="flex justify-between items-center">
-                          <span>Stabilite</span>
+                          <span>Stabilité</span>
                           <HardnessBar value={m.stability} />
                         </div>
                         {m.origin && <div className="flex justify-between"><span>Origine</span><span className="font-medium text-noir/70">{m.origin}</span></div>}

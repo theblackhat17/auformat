@@ -4,9 +4,9 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/about', {
-    title: 'A propos - Notre histoire et nos valeurs',
-    description: 'Decouvrez Au Format, menuiserie artisanale dans le Nord et le Pas-de-Calais. Notre equipe passionnee cree du mobilier sur mesure a Cysoing pres de Lille et a La Calotterie pres du Touquet.',
-    keywords: ['menuiserie artisanale', 'ebeniste Nord', 'atelier menuiserie Cysoing', 'artisan bois Lille', 'equipe Au Format'],
+    title: 'À propos — Notre histoire et nos valeurs',
+    description: 'Découvrez Au Format, menuiserie artisanale dans le Nord et le Pas-de-Calais. Notre équipe passionnée crée du mobilier sur mesure à Cysoing près de Lille et à La Calotterie près du Touquet.',
+    keywords: ['menuiserie artisanale', 'ébéniste Nord', 'atelier menuiserie Cysoing', 'artisan bois Lille', 'équipe Au Format'],
   });
 }
 
@@ -28,8 +28,8 @@ export default async function AboutPage() {
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">{hero.subtitle_top || 'Notre histoire'}</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero.title || "A propos d'Au Format"}</h1>
-          <p className="text-white/60 text-lg max-w-2xl">{hero.description || 'Une passion pour le bois et le sur-mesure, transmise de generation en generation.'}</p>
+          <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero.title || "À propos d'Au Format"}</h1>
+          <p className="text-white/60 text-lg max-w-2xl">{hero.description || 'Une passion pour le bois et le sur-mesure, transmise de génération en génération.'}</p>
         </div>
       </section>
 
@@ -42,9 +42,9 @@ export default async function AboutPage() {
               history.paragraphs.map((p, i) => <p key={i}>{p}</p>)
             ) : (
               <>
-                <p>Au Format est ne d&apos;une passion familiale pour le travail du bois. Depuis plus de 15 ans, nous concevons et fabriquons du mobilier sur mesure pour les particuliers et les professionnels de la region lilloise.</p>
-                <p>Notre atelier est equipe de machines traditionnelles et numeriques, nous permettant de combiner savoir-faire artisanal et precision moderne. Chaque projet est unique et merite une attention particuliere.</p>
-                <p>Nous accompagnons nos clients de la conception a l&apos;installation, en passant par le choix des materiaux et la fabrication en atelier. Notre engagement : un travail de qualite, dans les delais convenus.</p>
+                <p>Au Format est né d&apos;une passion familiale pour le travail du bois. Depuis plus de 15 ans, nous concevons et fabriquons du mobilier sur mesure pour les particuliers et les professionnels de la région lilloise.</p>
+                <p>Notre atelier est équipé de machines traditionnelles et numériques, nous permettant de combiner savoir-faire artisanal et précision moderne. Chaque projet est unique et mérite une attention particulière.</p>
+                <p>Nous accompagnons nos clients de la conception à l&apos;installation, en passant par le choix des matériaux et la fabrication en atelier. Notre engagement : un travail de qualité, dans les délais convenus.</p>
               </>
             )}
           </div>
@@ -73,7 +73,7 @@ export default async function AboutPage() {
       {equipe.length > 0 && (
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-noir text-center mb-12">Notre equipe</h2>
+            <h2 className="text-2xl font-bold text-noir text-center mb-12">Notre équipe</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {equipe.map((member) => (
                 <div key={member.id} className="text-center">

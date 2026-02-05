@@ -34,14 +34,14 @@ const EMPTY: Settings = {
 
 const SEO_PAGE_LABELS: Record<string, string> = {
   '/': 'Accueil',
-  '/about': 'A propos',
-  '/realisations': 'Realisations',
+  '/about': 'À propos',
+  '/realisations': 'Réalisations',
   '/processus': 'Processus',
   '/contact': 'Contact',
   '/avis': 'Avis clients',
   '/configurateur': 'Configurateur',
   '/homemade': 'Savoir-faire',
-  '/materiaux': 'Materiaux',
+  '/materiaux': 'Matériaux',
 };
 
 export function AdminSettingsClient() {
@@ -74,7 +74,7 @@ export function AdminSettingsClient() {
         body: JSON.stringify(settings),
       });
       if (!res.ok) throw new Error();
-      toast.success('Parametres enregistres');
+      toast.success('Paramètres enregistrés');
     } catch {
       toast.error('Erreur sauvegarde');
     } finally {
@@ -91,7 +91,7 @@ export function AdminSettingsClient() {
         body: JSON.stringify({ pages: seoPages }),
       });
       if (!res.ok) throw new Error();
-      toast.success('SEO enregistre');
+      toast.success('SEO enregistré');
     } catch {
       toast.error('Erreur sauvegarde');
     } finally {
@@ -113,8 +113,8 @@ export function AdminSettingsClient() {
     <div>
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-noir">Parametres du site</h1>
-          <p className="text-sm text-noir/50 mt-1">Informations generales, contact et SEO</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-noir">Paramètres du site</h1>
+          <p className="text-sm text-noir/50 mt-1">Informations générales, contact et SEO</p>
         </div>
         <button
           onClick={tab === 'settings' ? handleSaveSettings : handleSaveSeo}
@@ -133,7 +133,7 @@ export function AdminSettingsClient() {
             tab === 'settings' ? 'bg-white border border-b-white border-gray-200 -mb-px text-vert-foret' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          Parametres
+          Paramètres
         </button>
         <button
           onClick={() => setTab('seo')}
@@ -141,7 +141,7 @@ export function AdminSettingsClient() {
             tab === 'seo' ? 'bg-white border border-b-white border-gray-200 -mb-px text-vert-foret' : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          SEO / Referencement
+          SEO / Référencement
         </button>
       </div>
 
@@ -149,9 +149,9 @@ export function AdminSettingsClient() {
         <div className="space-y-6">
           {/* General */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-noir mb-4">Informations generales</h2>
+            <h2 className="text-lg font-semibold text-noir mb-4">Informations générales</h2>
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Nom de la societe" value={settings.companyName} onChange={(v) => update('companyName', v)} />
+              <Field label="Nom de la société" value={settings.companyName} onChange={(v) => update('companyName', v)} />
               <Field label="Slogan" value={settings.slogan} onChange={(v) => update('slogan', v)} />
             </div>
           </div>
@@ -165,7 +165,7 @@ export function AdminSettingsClient() {
               </div>
               <Field label="Code postal" value={settings.zipcode} onChange={(v) => update('zipcode', v)} />
               <Field label="Ville" value={settings.city} onChange={(v) => update('city', v)} />
-              <Field label="Telephone" value={settings.phone} onChange={(v) => update('phone', v)} />
+              <Field label="Téléphone" value={settings.phone} onChange={(v) => update('phone', v)} />
               <div className="sm:col-span-3">
                 <Field label="Email" value={settings.email} onChange={(v) => update('email', v)} type="email" />
               </div>
@@ -184,7 +184,7 @@ export function AdminSettingsClient() {
 
           {/* Social */}
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
-            <h2 className="text-lg font-semibold text-noir mb-4">Reseaux sociaux</h2>
+            <h2 className="text-lg font-semibold text-noir mb-4">Réseaux sociaux</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Instagram (URL)" value={settings.instagram || ''} onChange={(v) => update('instagram', v)} type="url" placeholder="https://instagram.com/..." />
               <Field label="Facebook (URL)" value={settings.facebook || ''} onChange={(v) => update('facebook', v)} type="url" placeholder="https://facebook.com/..." />
@@ -193,7 +193,7 @@ export function AdminSettingsClient() {
         </div>
       ) : (
         <div className="space-y-4">
-          <p className="text-sm text-noir/50">Modifiez le titre, la description et les mots-cles qui apparaissent dans les moteurs de recherche pour chaque page.</p>
+          <p className="text-sm text-noir/50">Modifiez le titre, la description et les mots-clés qui apparaissent dans les moteurs de recherche pour chaque page.</p>
           {seoPages.map((page) => (
             <div key={page.pagePath} className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -205,7 +205,7 @@ export function AdminSettingsClient() {
                   label="Titre (meta title)"
                   value={page.metaTitle}
                   onChange={(v) => updateSeo(page.pagePath, 'metaTitle', v)}
-                  hint={`${page.metaTitle.length}/70 caracteres`}
+                  hint={`${page.metaTitle.length}/70 caractères`}
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description (meta description)</label>
@@ -215,10 +215,10 @@ export function AdminSettingsClient() {
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm"
                   />
-                  <p className="text-xs text-gray-400 mt-1">{page.metaDescription.length}/160 caracteres recommandes</p>
+                  <p className="text-xs text-gray-400 mt-1">{page.metaDescription.length}/160 caractères recommandés</p>
                 </div>
                 <Field
-                  label="Mots-cles (separes par des virgules)"
+                  label="Mots-clés (séparés par des virgules)"
                   value={page.metaKeywords}
                   onChange={(v) => updateSeo(page.pagePath, 'metaKeywords', v)}
                 />

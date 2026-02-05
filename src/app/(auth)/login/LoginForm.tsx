@@ -55,12 +55,32 @@ export function LoginForm() {
 
   return (
     <div className="space-y-6">
+      {error && (
+        <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg animate-slide-down">
+          {error}
+        </div>
+      )}
+
+      {/* Google Sign In */}
+      <button
+        onClick={handleGoogleSignIn}
+        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-noir/70 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+      >
+        <GoogleIcon />
+        Continuer avec Google
+      </button>
+
+      {/* Separator */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-noir/40">Ou avec votre email</span>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg animate-slide-down">
-            {error}
-          </div>
-        )}
         <Input
           id="email"
           label="Email"
@@ -96,25 +116,6 @@ export function LoginForm() {
           Se connecter
         </Button>
       </form>
-
-      {/* Separator */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-noir/40">Ou continuer avec</span>
-        </div>
-      </div>
-
-      {/* Google Sign In */}
-      <button
-        onClick={handleGoogleSignIn}
-        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-noir/70 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-      >
-        <GoogleIcon />
-        Google
-      </button>
     </div>
   );
 }

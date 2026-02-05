@@ -84,7 +84,7 @@ export function AdminMateriauxClient() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error); return; }
-      toast.success(editing ? 'Materiau modifie' : 'Materiau cree');
+      toast.success(editing ? 'Matériau modifié' : 'Matériau créé');
       setModalOpen(false);
       load();
     } catch {
@@ -95,10 +95,10 @@ export function AdminMateriauxClient() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Supprimer ce materiau ?')) return;
+    if (!confirm('Supprimer ce matériau ?')) return;
     try {
       await fetch(`/api/admin/materiaux/${id}`, { method: 'DELETE' });
-      toast.success('Materiau supprime');
+      toast.success('Matériau supprimé');
       load();
     } catch {
       toast.error('Erreur suppression');
@@ -119,11 +119,11 @@ export function AdminMateriauxClient() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-noir">Materiaux</h1>
-          <p className="text-sm text-noir/50 mt-1">{items.length} materiaux</p>
+          <h1 className="text-2xl font-bold text-noir">Matériaux</h1>
+          <p className="text-sm text-noir/50 mt-1">{items.length} matériaux</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-vert-foret text-white font-medium rounded-lg hover:bg-vert-foret-dark transition-colors">
-          + Nouveau materiau
+          + Nouveau matériau
         </button>
       </div>
 
@@ -133,10 +133,10 @@ export function AdminMateriauxClient() {
             <tr>
               <th className="px-4 py-3 font-medium text-gray-600">Image</th>
               <th className="px-4 py-3 font-medium text-gray-600">Nom</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Categorie</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Durete</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Catégorie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Dureté</th>
               <th className="px-4 py-3 font-medium text-gray-600">Tag</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Publie</th>
+              <th className="px-4 py-3 font-medium text-gray-600">Publié</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -157,10 +157,10 @@ export function AdminMateriauxClient() {
             ))}
           </tbody>
         </table>
-        {items.length === 0 && <div className="text-center py-8 text-gray-400">Aucun materiau</div>}
+        {items.length === 0 && <div className="text-center py-8 text-gray-400">Aucun matériau</div>}
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier le materiau' : 'Nouveau materiau'} size="xl" footer={
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier le matériau' : 'Nouveau matériau'} size="xl" footer={
         <>
           <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">Annuler</button>
           <button onClick={handleSave} disabled={saving} className="px-5 py-2 bg-vert-foret text-white text-sm font-medium rounded-lg hover:bg-vert-foret-dark disabled:opacity-50">{saving ? 'Enregistrement...' : 'Enregistrer'}</button>
@@ -174,7 +174,7 @@ export function AdminMateriauxClient() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Catégorie</label>
               <select value={form.categoryId || ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value || null })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret">
                 <option value="">-- Aucune --</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -189,8 +189,8 @@ export function AdminMateriauxClient() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Durete (0-5)</label><input type="number" min={0} max={5} value={form.hardness} onChange={(e) => setForm({ ...form, hardness: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Stabilite (0-5)</label><input type="number" min={0} max={5} value={form.stability} onChange={(e) => setForm({ ...form, stability: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Dureté (0-5)</label><input type="number" min={0} max={5} value={form.hardness} onChange={(e) => setForm({ ...form, hardness: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1">Stabilité (0-5)</label><input type="number" min={0} max={5} value={form.stability} onChange={(e) => setForm({ ...form, stability: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Origine</label><input type="text" value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Couleur</label><input type="text" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
           </div>
@@ -198,10 +198,10 @@ export function AdminMateriauxClient() {
           <ImageUpload value={form.image || ''} onChange={(path) => setForm({ ...form, image: path || null })} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Caracteristiques</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Caractéristiques</label>
             {form.features.map((f, i) => (
               <div key={i} className="flex gap-2 mb-2">
-                <input type="text" value={f.feature} onChange={(e) => updateFeature(i, e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Caracteristique" />
+                <input type="text" value={f.feature} onChange={(e) => updateFeature(i, e.target.value)} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Caractéristique" />
                 <button type="button" onClick={() => removeFeature(i)} className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg text-sm">x</button>
               </div>
             ))}
@@ -225,7 +225,7 @@ export function AdminMateriauxClient() {
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" />
-            Publie
+            Publié
           </label>
         </div>
       </Modal>

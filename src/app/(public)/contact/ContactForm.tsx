@@ -21,8 +21,8 @@ export function ContactForm() {
     return (
       <div className="text-center py-16 bg-vert-foret/5 rounded-2xl">
         <span className="text-5xl mb-4 block">✅</span>
-        <h3 className="text-xl font-semibold text-noir mb-2">Message envoye !</h3>
-        <p className="text-sm text-noir/50">Nous vous repondrons dans les 24 heures.</p>
+        <h3 className="text-xl font-semibold text-noir mb-2">Message envoyé !</h3>
+        <p className="text-sm text-noir/50">Nous vous répondrons dans les 24 heures.</p>
       </div>
     );
   }
@@ -31,11 +31,11 @@ export function ContactForm() {
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid sm:grid-cols-2 gap-4">
         <Input id="nom" label="Nom *" name="nom" required placeholder="Votre nom" />
-        <Input id="prenom" label="Prenom *" name="prenom" required placeholder="Votre prenom" />
+        <Input id="prenom" label="Prénom *" name="prenom" required placeholder="Votre prénom" />
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         <Input id="email" label="Email *" name="email" type="email" required placeholder="votre@email.fr" />
-        <Input id="telephone" label="Telephone *" name="telephone" type="tel" required placeholder="06 12 34 56 78" />
+        <Input id="telephone" label="Téléphone *" name="telephone" type="tel" required placeholder="06 12 34 56 78" />
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         <Input id="ville" label="Ville *" name="ville" required placeholder="Votre ville" />
@@ -44,13 +44,13 @@ export function ContactForm() {
       <div>
         <label htmlFor="typeProjet" className="block text-sm font-medium text-noir/70 mb-1.5">Type de projet</label>
         <select id="typeProjet" name="typeProjet" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10">
-          <option value="">Selectionnez...</option>
+          <option value="">Sélectionnez...</option>
           <option value="dressing">Dressing</option>
           <option value="cuisine">Cuisine</option>
-          <option value="bibliotheque">Bibliotheque</option>
+          <option value="bibliotheque">Bibliothèque</option>
           <option value="placard">Placard / Rangement</option>
           <option value="commerce">Agencement commerce</option>
-          <option value="exterieur">Menuiserie exterieure</option>
+          <option value="exterieur">Menuiserie extérieure</option>
           <option value="autre">Autre</option>
         </select>
       </div>
@@ -61,13 +61,13 @@ export function ContactForm() {
           name="message"
           required
           rows={5}
-          placeholder="Decrivez votre projet..."
+          placeholder="Décrivez votre projet..."
           className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/30 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none"
         />
       </div>
       <label className="flex items-start gap-2 text-xs text-noir/50">
         <input type="checkbox" required className="mt-0.5 accent-vert-foret" />
-        J&apos;accepte que mes donnees soient traitees dans le cadre de ma demande de contact, conformement a la politique de confidentialite.
+        J&apos;accepte que mes données soient traitées dans le cadre de ma demande de contact, conformément à la politique de confidentialité.
       </label>
       <Button type="submit" size="lg" isLoading={isSubmitting} className="w-full sm:w-auto">
         Envoyer ma demande

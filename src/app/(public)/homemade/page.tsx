@@ -4,9 +4,9 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/homemade', {
-    title: 'Savoir-faire - Expertise menuiserie et ebenisterie',
-    description: 'Decouvrez le savoir-faire d\'Au Format : menuiserie traditionnelle, ebenisterie, usinage numerique CNC. L\'alliance de l\'artisanat et des technologies modernes.',
-    keywords: ['savoir-faire menuiserie', 'ebenisterie artisanale', 'menuiserie CNC', 'artisan menuisier Nord'],
+    title: 'Savoir-faire - Expertise menuiserie et ébénisterie',
+    description: 'Découvrez le savoir-faire d\'Au Format : menuiserie traditionnelle, ébénisterie, usinage numérique CNC. L\'alliance de l\'artisanat et des technologies modernes.',
+    keywords: ['savoir-faire menuiserie', 'ébénisterie artisanale', 'menuiserie CNC', 'artisan menuisier Nord'],
   });
 }
 
@@ -50,7 +50,7 @@ export default async function HomemadePage() {
       {metiers.items && (
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-noir text-center mb-12">{metiers.title || 'Nos metiers'}</h2>
+            <h2 className="text-2xl font-bold text-noir text-center mb-12">{metiers.title || 'Nos métiers'}</h2>
             <div className="grid md:grid-cols-2 gap-6">
               {metiers.items.map((m) => (
                 <div key={m.title} className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
@@ -68,7 +68,7 @@ export default async function HomemadePage() {
       {competences.items && (
         <section className="py-20 bg-beige/50">
           <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-noir text-center mb-12">{competences.title || 'Nos competences techniques'}</h2>
+            <h2 className="text-2xl font-bold text-noir text-center mb-12">{competences.title || 'Nos compétences techniques'}</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {competences.items.map((e) => (
                 <div key={e.title} className="bg-white rounded-lg p-5 border border-gray-100">

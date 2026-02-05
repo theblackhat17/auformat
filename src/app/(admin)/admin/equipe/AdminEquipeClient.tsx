@@ -58,7 +58,7 @@ export function AdminEquipeClient() {
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error); return; }
-      toast.success(editing ? 'Membre modifie' : 'Membre ajoute');
+      toast.success(editing ? 'Membre modifié' : 'Membre ajouté');
       setModalOpen(false);
       load();
     } catch {
@@ -72,7 +72,7 @@ export function AdminEquipeClient() {
     if (!confirm('Supprimer ce membre ?')) return;
     try {
       await fetch(`/api/admin/equipe/${id}`, { method: 'DELETE' });
-      toast.success('Membre supprime');
+      toast.success('Membre supprimé');
       load();
     } catch {
       toast.error('Erreur suppression');
@@ -85,7 +85,7 @@ export function AdminEquipeClient() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-noir">Equipe</h1>
+          <h1 className="text-2xl font-bold text-noir">Équipe</h1>
           <p className="text-sm text-noir/50 mt-1">{items.length} membres</p>
         </div>
         <button onClick={openCreate} className="px-5 py-2.5 bg-vert-foret text-white font-medium rounded-lg hover:bg-vert-foret-dark transition-colors">
@@ -119,7 +119,7 @@ export function AdminEquipeClient() {
       </div>
 
       {items.length === 0 && (
-        <div className="text-center py-16 text-gray-400">Aucun membre dans l&apos;equipe</div>
+        <div className="text-center py-16 text-gray-400">Aucun membre dans l&apos;équipe</div>
       )}
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Modifier le membre' : 'Nouveau membre'} footer={
@@ -130,7 +130,7 @@ export function AdminEquipeClient() {
       }>
         <div className="space-y-4">
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Nom</label><input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1">Role / Poste</label><input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Menuisier, Gerant..." /></div>
+          <div><label className="block text-sm font-medium text-gray-700 mb-1">Rôle / Poste</label><input type="text" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Menuisier, Gérant..." /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1">Description</label><textarea value={form.description || ''} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm" /></div>
 
           <ImageUpload value={form.photo || ''} onChange={(path) => setForm({ ...form, photo: path || null })} label="Photo" />
@@ -139,7 +139,7 @@ export function AdminEquipeClient() {
 
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.published} onChange={(e) => setForm({ ...form, published: e.target.checked })} className="rounded" />
-            Publie
+            Publié
           </label>
         </div>
       </Modal>

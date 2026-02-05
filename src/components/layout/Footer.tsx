@@ -9,8 +9,8 @@ export async function Footer() {
   const phone = settings?.phone || '07 88 91 60 68';
   const email = settings?.email || 'contact@auformat.fr';
   const hoursWeekdays = settings?.hoursWeekdays || '8h - 18h';
-  const hoursSaturday = settings?.hoursSaturday || 'Ferme';
-  const hoursSunday = settings?.hoursSunday || 'Ferme';
+  const hoursSaturday = settings?.hoursSaturday || 'Fermé';
+  const hoursSunday = settings?.hoursSunday || 'Fermé';
   const instagram = settings?.instagram || 'https://www.instagram.com/auformat/';
 
   return (
@@ -40,7 +40,7 @@ export async function Footer() {
             <address className="not-italic space-y-2 text-sm text-white/60">
               <p>88 Imp. de la Briqueterie</p>
               <p>59830 Cysoing</p>
-              <p className="text-white/40 text-xs">Pres de Lille, Nord (59)</p>
+              <p className="text-white/40 text-xs">Près de Lille, Nord (59)</p>
               <a href={`tel:${phone.replace(/\s/g, '')}`} className="block hover:text-bois-clair transition-colors">{phone}</a>
               <a href={`mailto:${email}`} className="block hover:text-bois-clair transition-colors">{email}</a>
             </address>
@@ -48,11 +48,11 @@ export async function Footer() {
 
           {/* Atelier Cote d'Opale */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Atelier Cote d&apos;Opale</h4>
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Atelier Côte d&apos;Opale</h4>
             <address className="not-italic space-y-2 text-sm text-white/60">
               <p>1056 Rue de Montreuil</p>
               <p>62170 La Calotterie</p>
-              <p className="text-white/40 text-xs">Pres du Touquet, Pas-de-Calais (62)</p>
+              <p className="text-white/40 text-xs">Près du Touquet, Pas-de-Calais (62)</p>
               <a href={`tel:${phone.replace(/\s/g, '')}`} className="block hover:text-bois-clair transition-colors">{phone}</a>
               <a href={`mailto:${email}`} className="block hover:text-bois-clair transition-colors">{email}</a>
             </address>
@@ -82,13 +82,13 @@ export async function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Liens rapides</h4>
             <ul className="space-y-2 text-sm">
               <li><Link href="/configurateur" className="hover:text-bois-clair transition-colors">Configurateur en ligne</Link></li>
-              <li><Link href="/realisations" className="hover:text-bois-clair transition-colors">Nos realisations</Link></li>
+              <li><Link href="/realisations" className="hover:text-bois-clair transition-colors">Nos réalisations</Link></li>
               <li><Link href="/materiaux" className="hover:text-bois-clair transition-colors">Essences de bois</Link></li>
               <li><Link href="/processus" className="hover:text-bois-clair transition-colors">Notre processus</Link></li>
               <li><Link href="/homemade" className="hover:text-bois-clair transition-colors">Savoir-faire</Link></li>
               <li><Link href="/avis" className="hover:text-bois-clair transition-colors">Avis clients</Link></li>
               <li><Link href="/contact" className="hover:text-bois-clair transition-colors">Demander un devis</Link></li>
-              <li><Link href="/about" className="hover:text-bois-clair transition-colors">A propos</Link></li>
+              <li><Link href="/about" className="hover:text-bois-clair transition-colors">À propos</Link></li>
             </ul>
           </div>
         </div>
@@ -96,16 +96,16 @@ export async function Footer() {
         {/* SEO text block */}
         <div className="mt-10 pt-8 border-t border-white/10">
           <p className="text-xs text-white/20 leading-relaxed max-w-5xl">
-            Au Format, menuiserie et agencement sur mesure dans le Nord et le Pas-de-Calais. Fabrication artisanale de meubles, dressings, bibliotheques, cuisines, bureaux, plans de travail, etageres et escaliers en bois massif. Nos ateliers a Cysoing pres de Lille et a La Calotterie pres de Montreuil-sur-Mer et du Touquet-Paris-Plage realisent vos projets sur mesure pour particuliers et professionnels. Ebenisterie, agencement interieur, menuiserie traditionnelle et numerique. Essences de bois nobles : chene, noyer, hetre, frene. Devis gratuit dans la metropole lilloise, la Cote d&apos;Opale et les Hauts-de-France.
+            Au Format, menuiserie et agencement sur mesure dans le Nord et le Pas-de-Calais. Fabrication artisanale de meubles, dressings, bibliothèques, cuisines, bureaux, plans de travail, étagères et escaliers en bois massif. Nos ateliers à Cysoing près de Lille et à La Calotterie près de Montreuil-sur-Mer et du Touquet-Paris-Plage réalisent vos projets sur mesure pour particuliers et professionnels. Ébénisterie, agencement intérieur, menuiserie traditionnelle et numérique. Essences de bois nobles : chêne, noyer, hêtre, frêne. Devis gratuit dans la métropole lilloise, la Côte d&apos;Opale et les Hauts-de-France.
           </p>
         </div>
 
         {/* Bottom bar */}
         <div className="mt-6 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
-          <p>&copy; {new Date().getFullYear()} {companyName}. Tous droits reserves.</p>
+          <p>&copy; {new Date().getFullYear()} {companyName}. Tous droits réservés.</p>
           <div className="flex gap-6">
-            <Link href="#" className="hover:text-white/60 transition-colors">Mentions legales</Link>
-            <Link href="#" className="hover:text-white/60 transition-colors">Politique de confidentialite</Link>
+            <Link href="#" className="hover:text-white/60 transition-colors">Mentions légales</Link>
+            <Link href="#" className="hover:text-white/60 transition-colors">Politique de confidentialité</Link>
           </div>
         </div>
       </div>

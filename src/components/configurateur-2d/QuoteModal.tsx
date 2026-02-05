@@ -72,7 +72,7 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
       setSent(true);
       setQuoteNumber(data.quoteNumber);
     } catch {
-      setError('Erreur de connexion. Veuillez reessayer.');
+      setError('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setSending(false);
     }
@@ -103,13 +103,13 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
                 <path d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Demande envoyee !</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Demande envoyée !</h2>
             <p className="text-sm text-gray-500 mb-1">
-              Votre devis <strong>{quoteNumber}</strong> a bien ete enregistre.
+              Votre devis <strong>{quoteNumber}</strong> a bien été enregistré.
             </p>
             <p className="text-sm text-gray-500 mb-6">
-              Une copie a ete envoyee a <strong>{form.email}</strong>.
-              Notre equipe vous recontactera dans les plus brefs delais.
+              Une copie a été envoyée à <strong>{form.email}</strong>.
+              Notre équipe vous recontactera dans les plus brefs délais.
             </p>
             <button
               onClick={handleClose}
@@ -145,7 +145,7 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
                   <span>{config.largeur} x {config.hauteur} x {config.profondeur} mm</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Materiau</span>
+                  <span className="text-gray-500">Matériau</span>
                   <span className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-full border border-gray-200 inline-block" style={{ backgroundColor: material?.colorHex }} />
                     {material?.name}
@@ -192,7 +192,7 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Telephone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
                 <input
                   type="tel"
                   value={form.telephone}
@@ -209,7 +209,7 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
                   value={form.message}
                   onChange={(e) => setForm({ ...form, message: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#2C5F2D] resize-none"
-                  placeholder="Details complementaires..."
+                  placeholder="Détails complémentaires..."
                   disabled={sending}
                 />
               </div>

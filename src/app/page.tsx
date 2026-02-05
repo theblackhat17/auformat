@@ -10,9 +10,9 @@ import { buildPageMetadata } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/', {
-    title: 'Au Format - Menuiserie sur mesure a Cysoing et La Calotterie',
-    description: 'Au Format, menuiserie et ebenisterie sur mesure dans le Nord et le Pas-de-Calais. Meubles, dressings, cuisines, agencements. Ateliers a Cysoing (Lille) et La Calotterie (Le Touquet).',
-    keywords: ['menuiserie sur mesure', 'Au Format', 'menuiserie Lille', 'menuiserie Cysoing', 'menuiserie Le Touquet', 'ebenisterie Nord', 'meuble sur mesure'],
+    title: 'Au Format - Menuiserie sur mesure à Cysoing et La Calotterie',
+    description: 'Au Format, menuiserie et ébénisterie sur mesure dans le Nord et le Pas-de-Calais. Meubles, dressings, cuisines, agencements. Ateliers à Cysoing (Lille) et La Calotterie (Le Touquet).',
+    keywords: ['menuiserie sur mesure', 'Au Format', 'menuiserie Lille', 'menuiserie Cysoing', 'menuiserie Le Touquet', 'ébénisterie Nord', 'meuble sur mesure'],
   });
 }
 
@@ -53,7 +53,7 @@ export default async function HomePage() {
                 <span className="text-bois-clair">{hero.title_line2 || 'le pas vers le bois'}</span>
               </h1>
               <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-xl">
-                {hero.description || 'Conception et fabrication de meubles sur mesure, dressings, cuisines et agencements pour particuliers et professionnels dans la region lilloise.'}
+                {hero.description || 'Conception et fabrication de meubles sur mesure, dressings, cuisines et agencements pour particuliers et professionnels dans la région lilloise.'}
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link
@@ -117,8 +117,8 @@ export default async function HomePage() {
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
               <div className="flex items-end justify-between mb-10">
                 <div>
-                  <h2 className="text-3xl font-bold text-noir mb-2">{realisationsPreview.title || 'Nos dernieres realisations'}</h2>
-                  <p className="text-noir/50">{realisationsPreview.subtitle || 'Decouvrez nos creations recentes'}</p>
+                  <h2 className="text-3xl font-bold text-noir mb-2">{realisationsPreview.title || 'Nos dernières réalisations'}</h2>
+                  <p className="text-noir/50">{realisationsPreview.subtitle || 'Découvrez nos créations récentes'}</p>
                 </div>
                 <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline hidden md:block">
                   {realisationsPreview.link_text || 'Voir tout'} &rarr;
@@ -139,7 +139,7 @@ export default async function HomePage() {
                 ))}
               </div>
               <div className="text-center mt-8 md:hidden">
-                <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline">Voir toutes nos realisations &rarr;</Link>
+                <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline">Voir toutes nos réalisations &rarr;</Link>
               </div>
             </div>
           </section>
@@ -151,7 +151,7 @@ export default async function HomePage() {
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-noir mb-3">{testimonials.title || 'Ce que disent nos clients'}</h2>
-                <p className="text-noir/50">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure recompense'}</p>
+                <p className="text-noir/50">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure récompense'}</p>
               </div>
               <div className="grid md:grid-cols-3 gap-6">
                 {topAvis.map((a) => (
@@ -166,7 +166,7 @@ export default async function HomePage() {
                         <p className="text-sm font-medium text-noir">{a.name}</p>
                         <p className="text-xs text-noir/40">{a.location} &middot; {a.clientType}</p>
                       </div>
-                      {a.verified && <span className="ml-auto text-xs text-vert-foret font-medium bg-vert-foret/10 px-2 py-0.5 rounded-full">Verifie</span>}
+                      {a.verified && <span className="ml-auto text-xs text-vert-foret font-medium bg-vert-foret/10 px-2 py-0.5 rounded-full">Vérifié</span>}
                     </div>
                   </div>
                 ))}
@@ -185,7 +185,7 @@ export default async function HomePage() {
                 {cta.cta_primary || 'Demander un devis gratuit'}
               </Link>
               <Link href={cta.cta_secondary_link || '/processus'} className="inline-flex items-center px-8 py-3.5 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors">
-                {cta.cta_secondary || 'Decouvrir notre processus'}
+                {cta.cta_secondary || 'Découvrir notre processus'}
               </Link>
             </div>
           </div>

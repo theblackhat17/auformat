@@ -59,7 +59,7 @@ export function MesProjetsClient() {
       </div>
 
       {projects.length === 0 ? (
-        <EmptyState icon="📁" title="Aucun projet" description="Utilisez le configurateur 3D pour creer votre premier projet." action={<Link href="/configurateur"><Button>Ouvrir le configurateur</Button></Link>} />
+        <EmptyState icon="📁" title="Aucun projet" description="Utilisez le configurateur 3D pour créer votre premier projet." action={<Link href="/configurateur"><Button>Ouvrir le configurateur</Button></Link>} />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
@@ -98,7 +98,7 @@ export function MesProjetsClient() {
           <p className="text-sm text-noir/60">Projet : <strong>{quoteModal?.name}</strong></p>
           <div>
             <label className="block text-sm font-medium text-noir/70 mb-1.5">Message (optionnel)</label>
-            <textarea value={quoteMessage} onChange={(e) => setQuoteMessage(e.target.value)} rows={4} placeholder="Precisions sur votre projet..." className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none" />
+            <textarea value={quoteMessage} onChange={(e) => setQuoteMessage(e.target.value)} rows={4} placeholder="Précisions sur votre projet..." className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none" />
           </div>
         </div>
       </Modal>

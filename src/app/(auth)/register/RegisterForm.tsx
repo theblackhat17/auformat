@@ -90,15 +90,15 @@ export function RegisterForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-noir">Verifiez votre email</h3>
+        <h3 className="text-lg font-semibold text-noir">Vérifiez votre email</h3>
         <p className="text-sm text-noir/60 max-w-xs mx-auto">
-          Un email de verification a ete envoye a <strong>{formData.email}</strong>. Cliquez sur le lien pour activer votre compte.
+          Un email de vérification a été envoyé à <strong>{formData.email}</strong>. Cliquez sur le lien pour activer votre compte.
         </p>
         <button
           onClick={() => router.push('/login')}
           className="text-sm text-vert-foret hover:underline font-medium"
         >
-          Retour a la connexion
+          Retour à la connexion
         </button>
       </div>
     );
@@ -106,12 +106,32 @@ export function RegisterForm() {
 
   return (
     <div className="space-y-6">
+      {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg animate-slide-down">{error}</div>}
+
+      {/* Google Sign Up */}
+      <button
+        onClick={handleGoogleSignUp}
+        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-noir/70 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+      >
+        <GoogleIcon />
+        S&apos;inscrire avec Google
+      </button>
+
+      {/* Separator */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200" />
+        </div>
+        <div className="relative flex justify-center text-xs">
+          <span className="bg-white px-3 text-noir/40">Ou avec votre email</span>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg animate-slide-down">{error}</div>}
         <Input id="email" label="Email *" type="email" value={formData.email} onChange={(e) => updateField('email', e.target.value)} required placeholder="votre@email.fr" />
         <div className="space-y-1.5">
           <label htmlFor="reg-password" className="block text-sm font-medium text-noir/70">Mot de passe *</label>
-          <input id="reg-password" type="password" value={formData.password} onChange={(e) => updateField('password', e.target.value)} required minLength={6} placeholder="Minimum 6 caracteres" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/30 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 focus:bg-white" />
+          <input id="reg-password" type="password" value={formData.password} onChange={(e) => updateField('password', e.target.value)} required minLength={6} placeholder="Minimum 6 caractères" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/30 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 focus:bg-white" />
           {formData.password && (
             <div className="flex gap-1 mt-1.5">
               {Array.from({ length: 4 }, (_, i) => (
@@ -122,35 +142,16 @@ export function RegisterForm() {
         </div>
         <Input id="confirmPassword" label="Confirmer le mot de passe *" type="password" value={formData.confirmPassword} onChange={(e) => updateField('confirmPassword', e.target.value)} required minLength={6} placeholder="Retapez votre mot de passe" />
         <Input id="fullName" label="Nom complet" value={formData.fullName} onChange={(e) => updateField('fullName', e.target.value)} placeholder="Jean Dupont" />
-        <Input id="companyName" label="Societe (optionnel)" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} placeholder="Nom de votre societe" />
-        <Input id="phone" label="Telephone (optionnel)" type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="06 12 34 56 78" />
+        <Input id="companyName" label="Société (optionnel)" value={formData.companyName} onChange={(e) => updateField('companyName', e.target.value)} placeholder="Nom de votre société" />
+        <Input id="phone" label="Téléphone (optionnel)" type="tel" value={formData.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="06 12 34 56 78" />
         <label className="flex items-start gap-2 text-xs text-noir/50">
           <input type="checkbox" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-0.5 accent-vert-foret" />
-          J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialite.
+          J&apos;accepte les conditions d&apos;utilisation et la politique de confidentialité.
         </label>
         <Button type="submit" size="lg" isLoading={isLoading} className="w-full">
-          Creer mon compte
+          Créer mon compte
         </Button>
       </form>
-
-      {/* Separator */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-white px-3 text-noir/40">Ou continuer avec</span>
-        </div>
-      </div>
-
-      {/* Google Sign Up */}
-      <button
-        onClick={handleGoogleSignUp}
-        className="w-full flex items-center justify-center gap-3 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-noir/70 hover:bg-gray-50 hover:border-gray-300 transition-colors"
-      >
-        <GoogleIcon />
-        Google
-      </button>
     </div>
   );
 }
