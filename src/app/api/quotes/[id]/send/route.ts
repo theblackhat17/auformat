@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { rawQuery } from '@/lib/db';
+import { rawQuery, queryOne } from '@/lib/db';
 import { requireAdmin, getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { toCamelCase } from '@/lib/db';
+import { sendQuoteToClient } from '@/lib/mailer';
 import type { Quote } from '@/lib/types';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +23,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const quote = toCamelCase<Quote>(result.rows[0]);
+
+    // Send email to client
+    const client = await queryOne<{ email: string; fullName: string }>(
+      'SELECT email, full_name FROM profiles WHERE id = $1',
+      [quote.userId]
+    );
+
+    if (client?.email) {
+      await sendQuoteToClient(
+        client.email,
+        client.fullName || 'Client',
+        quote.quoteNumber,
+        quote.items,
+        quote.subtotalHt,
+        quote.taxAmount,
+        quote.totalTtc,
+      );
+    }
+
     const ip = getClientIp(request);
     const ua = getUserAgent(request);
     await logActivity(auth.userId, 'send_quote', 'quote', id, { description: `Devis ${quote.quoteNumber} envoye` }, ip, ua);

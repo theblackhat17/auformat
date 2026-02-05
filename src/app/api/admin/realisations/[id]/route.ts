@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
 
@@ -33,6 +34,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Realisation introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(realisation);
   } catch (err: unknown) {
     if (err instanceof Error && err.message?.includes('unique')) {
@@ -55,6 +57,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Realisation introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Realisations DELETE error:', err);

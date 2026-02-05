@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
 
@@ -27,6 +28,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Avis introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(avis);
   } catch (err) {
     console.error('Avis PUT error:', err);
@@ -46,6 +48,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Avis introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Avis DELETE error:', err);

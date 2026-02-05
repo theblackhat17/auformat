@@ -8,13 +8,12 @@ import type {
   ConfigurateurLabels,
   Configurateur2DPriceBreakdown,
   ConfigurateurProductSlug,
+  ConfigurateurOption,
 } from '@/lib/types';
 import { ProductTypeSelector } from './ProductTypeSelector';
 import { DimensionInputs } from './DimensionInputs';
 import { MaterialSelector } from './MaterialSelector';
-import { FurnitureOptions } from './FurnitureOptions';
-import { WorktopOptions } from './WorktopOptions';
-import { ShelfOptions } from './ShelfOptions';
+import { DynamicOptions } from './DynamicOptions';
 import { PriceDisplay } from './PriceDisplay';
 
 interface Props {
@@ -22,12 +21,14 @@ interface Props {
   materials: ConfigurateurMaterial[];
   productTypes: ConfigurateurProductType[];
   optionPrices: ConfigurateurOptionPrices;
+  options: ConfigurateurOption[];
   labels: ConfigurateurLabels;
   price: Configurateur2DPriceBreakdown;
   onChangeProduct: (slug: ConfigurateurProductSlug) => void;
   onChangeDimension: (field: 'largeur' | 'hauteur' | 'profondeur' | 'epaisseur', value: number) => void;
   onChangeMaterial: (index: number) => void;
   onChangeOption: (field: keyof Configurateur2DConfig, value: unknown) => void;
+  onChangeOptionSelection: (slug: string, value: number) => void;
   onRequestQuote: () => void;
 }
 
@@ -35,16 +36,20 @@ export function ConfigPanel({
   config,
   materials,
   productTypes,
+  options,
   labels,
   price,
   onChangeProduct,
   onChangeDimension,
   onChangeMaterial,
-  onChangeOption,
+  onChangeOptionSelection,
   onRequestQuote,
 }: Props) {
   const productType = productTypes.find((t) => t.slug === config.productSlug);
   const optCat = productType?.optionsCategorie;
+
+  // Filter options by current product category
+  const categoryOptions = options.filter((o) => o.categorie === optCat);
 
   return (
     <div className="h-full overflow-y-auto p-4 space-y-5">
@@ -82,15 +87,11 @@ export function ConfigPanel({
 
       {/* Step 4: Options */}
       <Section title={labels.etape4} number={4}>
-        {optCat === 'furniture' && (
-          <FurnitureOptions config={config} onChange={onChangeOption} />
-        )}
-        {optCat === 'worktop' && (
-          <WorktopOptions config={config} onChange={onChangeOption} />
-        )}
-        {optCat === 'shelf' && (
-          <ShelfOptions config={config} onChange={onChangeOption} />
-        )}
+        <DynamicOptions
+          options={categoryOptions}
+          selections={config.optionSelections || {}}
+          onSelect={onChangeOptionSelection}
+        />
       </Section>
 
       {/* Price */}

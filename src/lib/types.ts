@@ -551,10 +551,22 @@ export interface ConfigurateurLabels {
   modalDescription: string;
 }
 
+export interface ConfigurateurOption {
+  slug: string;
+  nom: string;
+  prix: number;
+  categorie: 'furniture' | 'worktop' | 'shelf';
+  type: 'compteur' | 'toggle' | 'choix';
+  groupe?: string;
+  actif: boolean;
+  sortOrder: number;
+}
+
 export interface ConfigurateurSettings {
   materials: ConfigurateurMaterial[];
   product_types: ConfigurateurProductType[];
   option_prices: ConfigurateurOptionPrices;
+  options: ConfigurateurOption[];
   labels: ConfigurateurLabels;
 }
 
@@ -587,6 +599,8 @@ export interface Configurateur2DConfig {
   nbNiveaux: number;
   nbSeparateurs: number;
   mountingType: MountingType;
+  // Dynamic options selections: slug -> quantity (0 = not selected)
+  optionSelections: Record<string, number>;
 }
 
 export interface Configurateur2DLineItem {

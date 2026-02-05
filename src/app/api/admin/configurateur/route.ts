@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, rawQuery } from '@/lib/db';
 import type { ConfigurateurSettingsRow } from '@/lib/types';
@@ -36,7 +37,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Cle et valeur requises' }, { status: 400 });
     }
 
-    const validKeys = ['materials', 'product_types', 'option_prices', 'labels'];
+    const validKeys = ['materials', 'product_types', 'option_prices', 'options', 'labels'];
     if (!validKeys.includes(key)) {
       return NextResponse.json({ error: 'Cle invalide' }, { status: 400 });
     }
@@ -48,6 +49,7 @@ export async function PUT(request: NextRequest) {
       [key, JSON.stringify(value)]
     );
 
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Error updating configurateur settings:', err);

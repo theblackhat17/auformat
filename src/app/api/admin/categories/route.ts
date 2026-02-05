@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
       published: published ?? true,
     });
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(category, { status: 201 });
   } catch (err: unknown) {
     if (err instanceof Error && err.message?.includes('unique')) {

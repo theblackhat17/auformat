@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
 
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       published: published ?? false,
     });
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(member, { status: 201 });
   } catch (err) {
     console.error('Equipe POST error:', err);

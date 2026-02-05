@@ -6,6 +6,7 @@ import type {
   ConfigurateurMaterial,
   ConfigurateurOptionPrices,
   ConfigurateurProductType,
+  ConfigurateurOption,
 } from '@/lib/types';
 
 export function calculatePrice2D(
@@ -13,6 +14,7 @@ export function calculatePrice2D(
   materials: ConfigurateurMaterial[],
   optionPrices: ConfigurateurOptionPrices,
   productTypes: ConfigurateurProductType[],
+  options?: ConfigurateurOption[],
 ): Configurateur2DPriceBreakdown {
   const lineItems: Configurateur2DLineItem[] = [];
   const material = materials[config.materialIndex] || materials[0];
@@ -30,19 +32,16 @@ export function calculatePrice2D(
   let surfaceM2: number;
 
   if (productType.optionsCategorie === 'worktop') {
-    // Worktop: surface = largeur x profondeur
     surfaceM2 = largeurM * profondeurM;
     if (config.worktopShape === 'L') surfaceM2 *= 1.5;
     if (config.worktopShape === 'U') surfaceM2 *= 2;
   } else if (productType.optionsCategorie === 'shelf') {
-    // Shelf: surface of back + shelves
     surfaceM2 = largeurM * hauteurM + config.nbNiveaux * largeurM * profondeurM;
   } else {
-    // Furniture: 2 sides + top/bottom + back
     surfaceM2 =
-      2 * (hauteurM * profondeurM) + // sides
-      2 * (largeurM * profondeurM) + // top + bottom
-      (config.avecDos ? largeurM * hauteurM : 0); // back
+      2 * (hauteurM * profondeurM) +
+      2 * (largeurM * profondeurM) +
+      (config.avecDos ? largeurM * hauteurM : 0);
   }
 
   // Material cost
@@ -56,91 +55,29 @@ export function calculatePrice2D(
 
   let optionsCost = 0;
 
-  if (productType.optionsCategorie === 'furniture') {
-    // Shelves
-    if (config.nbEtageres > 0) {
-      const cost = config.nbEtageres * optionPrices.etagere;
-      optionsCost += cost;
-      lineItems.push({ label: 'Etagere(s)', quantity: config.nbEtageres, unitPrice: optionPrices.etagere, total: cost });
-    }
+  // Use dynamic options if available
+  if (options && options.length > 0 && config.optionSelections) {
+    const categoryOptions = options.filter((o) => o.categorie === productType.optionsCategorie && o.actif);
 
-    // Drawers
-    if (config.nbTiroirs > 0) {
-      const cost = config.nbTiroirs * optionPrices.tiroir;
-      optionsCost += cost;
-      lineItems.push({ label: 'Tiroir(s)', quantity: config.nbTiroirs, unitPrice: optionPrices.tiroir, total: cost });
-    }
+    for (const opt of categoryOptions) {
+      const qty = config.optionSelections[opt.slug] || 0;
+      if (qty <= 0) continue;
 
-    // Doors
-    if (config.porteType !== 'aucune' && config.nbPortes > 0) {
-      const price = config.porteType === 'coulissante' ? optionPrices.coulissantes : optionPrices.porte;
-      const cost = config.nbPortes * price;
+      // For choice options with prix = 0, skip line item
+      if (opt.prix === 0) continue;
+
+      const cost = qty * opt.prix;
       optionsCost += cost;
       lineItems.push({
-        label: config.porteType === 'coulissante' ? 'Porte(s) coulissante(s)' : 'Porte(s) battante(s)',
-        quantity: config.nbPortes,
-        unitPrice: price,
-        total: cost,
+        label: opt.nom,
+        quantity: qty,
+        unitPrice: opt.prix,
+        total: Math.round(cost * 100) / 100,
       });
     }
-
-    // Feet
-    if (config.piedType !== 'sans') {
-      const nbPieds = 4;
-      const cost = nbPieds * optionPrices.pied;
-      optionsCost += cost;
-      lineItems.push({ label: 'Pieds', quantity: nbPieds, unitPrice: optionPrices.pied, total: cost });
-    }
-
-    // Back panel
-    if (config.avecDos) {
-      optionsCost += optionPrices.dos;
-      lineItems.push({ label: 'Panneau de dos', quantity: 1, unitPrice: optionPrices.dos, total: optionPrices.dos });
-    }
-  } else if (productType.optionsCategorie === 'worktop') {
-    // Edge type
-    if (config.edgeType === 'arrondi') {
-      optionsCost += optionPrices.bord_arrondi;
-      lineItems.push({ label: 'Bord arrondi', quantity: 1, unitPrice: optionPrices.bord_arrondi, total: optionPrices.bord_arrondi });
-    } else if (config.edgeType === 'chanfrein') {
-      optionsCost += optionPrices.bord_chanfrein;
-      lineItems.push({ label: 'Bord chanfrein', quantity: 1, unitPrice: optionPrices.bord_chanfrein, total: optionPrices.bord_chanfrein });
-    }
-
-    // Cutouts
-    if (config.nbDecoupesRondes > 0) {
-      const cost = config.nbDecoupesRondes * optionPrices.decoupe_ronde;
-      optionsCost += cost;
-      lineItems.push({ label: 'Decoupe(s) ronde(s)', quantity: config.nbDecoupesRondes, unitPrice: optionPrices.decoupe_ronde, total: cost });
-    }
-    if (config.nbDecoupesRect > 0) {
-      const cost = config.nbDecoupesRect * optionPrices.decoupe_rectangulaire;
-      optionsCost += cost;
-      lineItems.push({ label: 'Decoupe(s) rectangulaire(s)', quantity: config.nbDecoupesRect, unitPrice: optionPrices.decoupe_rectangulaire, total: cost });
-    }
-  } else if (productType.optionsCategorie === 'shelf') {
-    // Shelves/levels
-    if (config.nbNiveaux > 0) {
-      const cost = config.nbNiveaux * optionPrices.etagere;
-      optionsCost += cost;
-      lineItems.push({ label: 'Niveau(x)', quantity: config.nbNiveaux, unitPrice: optionPrices.etagere, total: cost });
-    }
-
-    // Separators
-    if (config.nbSeparateurs > 0) {
-      const cost = config.nbSeparateurs * optionPrices.separateur;
-      optionsCost += cost;
-      lineItems.push({ label: 'Separateur(s)', quantity: config.nbSeparateurs, unitPrice: optionPrices.separateur, total: cost });
-    }
-
-    // Mounting
-    if (config.mountingType === 'murale') {
-      optionsCost += optionPrices.fixation_murale;
-      lineItems.push({ label: 'Fixation murale', quantity: 1, unitPrice: optionPrices.fixation_murale, total: optionPrices.fixation_murale });
-    } else if (config.mountingType === 'sol') {
-      optionsCost += optionPrices.fixation_sol;
-      lineItems.push({ label: 'Fixation au sol', quantity: 1, unitPrice: optionPrices.fixation_sol, total: optionPrices.fixation_sol });
-    }
+  } else {
+    // Fallback to legacy hardcoded pricing
+    optionsCost = calculateLegacyOptions(config, optionPrices, productType, lineItems);
   }
 
   const subtotalHt = Math.round((materialCost + optionsCost) * 100) / 100;
@@ -156,4 +93,83 @@ export function calculatePrice2D(
     totalTtc,
     lineItems,
   };
+}
+
+function calculateLegacyOptions(
+  config: Configurateur2DConfig,
+  optionPrices: ConfigurateurOptionPrices,
+  productType: ConfigurateurProductType,
+  lineItems: Configurateur2DLineItem[],
+): number {
+  let optionsCost = 0;
+
+  if (productType.optionsCategorie === 'furniture') {
+    if (config.nbEtageres > 0) {
+      const cost = config.nbEtageres * optionPrices.etagere;
+      optionsCost += cost;
+      lineItems.push({ label: 'Etagere(s)', quantity: config.nbEtageres, unitPrice: optionPrices.etagere, total: cost });
+    }
+    if (config.nbTiroirs > 0) {
+      const cost = config.nbTiroirs * optionPrices.tiroir;
+      optionsCost += cost;
+      lineItems.push({ label: 'Tiroir(s)', quantity: config.nbTiroirs, unitPrice: optionPrices.tiroir, total: cost });
+    }
+    if (config.porteType !== 'aucune' && config.nbPortes > 0) {
+      const price = config.porteType === 'coulissante' ? optionPrices.coulissantes : optionPrices.porte;
+      const cost = config.nbPortes * price;
+      optionsCost += cost;
+      lineItems.push({
+        label: config.porteType === 'coulissante' ? 'Porte(s) coulissante(s)' : 'Porte(s) battante(s)',
+        quantity: config.nbPortes, unitPrice: price, total: cost,
+      });
+    }
+    if (config.piedType !== 'sans') {
+      const nbPieds = 4;
+      const cost = nbPieds * optionPrices.pied;
+      optionsCost += cost;
+      lineItems.push({ label: 'Pieds', quantity: nbPieds, unitPrice: optionPrices.pied, total: cost });
+    }
+    if (config.avecDos) {
+      optionsCost += optionPrices.dos;
+      lineItems.push({ label: 'Panneau de dos', quantity: 1, unitPrice: optionPrices.dos, total: optionPrices.dos });
+    }
+  } else if (productType.optionsCategorie === 'worktop') {
+    if (config.edgeType === 'arrondi') {
+      optionsCost += optionPrices.bord_arrondi;
+      lineItems.push({ label: 'Bord arrondi', quantity: 1, unitPrice: optionPrices.bord_arrondi, total: optionPrices.bord_arrondi });
+    } else if (config.edgeType === 'chanfrein') {
+      optionsCost += optionPrices.bord_chanfrein;
+      lineItems.push({ label: 'Bord chanfrein', quantity: 1, unitPrice: optionPrices.bord_chanfrein, total: optionPrices.bord_chanfrein });
+    }
+    if (config.nbDecoupesRondes > 0) {
+      const cost = config.nbDecoupesRondes * optionPrices.decoupe_ronde;
+      optionsCost += cost;
+      lineItems.push({ label: 'Decoupe(s) ronde(s)', quantity: config.nbDecoupesRondes, unitPrice: optionPrices.decoupe_ronde, total: cost });
+    }
+    if (config.nbDecoupesRect > 0) {
+      const cost = config.nbDecoupesRect * optionPrices.decoupe_rectangulaire;
+      optionsCost += cost;
+      lineItems.push({ label: 'Decoupe(s) rectangulaire(s)', quantity: config.nbDecoupesRect, unitPrice: optionPrices.decoupe_rectangulaire, total: cost });
+    }
+  } else if (productType.optionsCategorie === 'shelf') {
+    if (config.nbNiveaux > 0) {
+      const cost = config.nbNiveaux * optionPrices.etagere;
+      optionsCost += cost;
+      lineItems.push({ label: 'Niveau(x)', quantity: config.nbNiveaux, unitPrice: optionPrices.etagere, total: cost });
+    }
+    if (config.nbSeparateurs > 0) {
+      const cost = config.nbSeparateurs * optionPrices.separateur;
+      optionsCost += cost;
+      lineItems.push({ label: 'Separateur(s)', quantity: config.nbSeparateurs, unitPrice: optionPrices.separateur, total: cost });
+    }
+    if (config.mountingType === 'murale') {
+      optionsCost += optionPrices.fixation_murale;
+      lineItems.push({ label: 'Fixation murale', quantity: 1, unitPrice: optionPrices.fixation_murale, total: optionPrices.fixation_murale });
+    } else if (config.mountingType === 'sol') {
+      optionsCost += optionPrices.fixation_sol;
+      lineItems.push({ label: 'Fixation au sol', quantity: 1, unitPrice: optionPrices.fixation_sol, total: optionPrices.fixation_sol });
+    }
+  }
+
+  return optionsCost;
 }

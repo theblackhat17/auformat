@@ -30,6 +30,8 @@ export const DEFAULT_CONFIG: Configurateur2DConfig = {
   nbNiveaux: 3,
   nbSeparateurs: 0,
   mountingType: 'murale',
+  // Dynamic options
+  optionSelections: {},
 };
 
 type Action =
@@ -37,6 +39,7 @@ type Action =
   | { type: 'SET_DIMENSION'; field: 'largeur' | 'hauteur' | 'profondeur' | 'epaisseur'; value: number }
   | { type: 'SET_MATERIAL'; index: number }
   | { type: 'SET_OPTION'; field: keyof Configurateur2DConfig; value: unknown }
+  | { type: 'SET_OPTION_SELECTION'; slug: string; value: number }
   | { type: 'LOAD_CONFIG'; config: Configurateur2DConfig };
 
 function reducer(state: Configurateur2DConfig, action: Action): Configurateur2DConfig {
@@ -59,6 +62,55 @@ function reducer(state: Configurateur2DConfig, action: Action): Configurateur2DC
       return { ...state, materialIndex: action.index };
     case 'SET_OPTION':
       return { ...state, [action.field]: action.value };
+    case 'SET_OPTION_SELECTION': {
+      const newSelections = { ...state.optionSelections, [action.slug]: action.value };
+      // Sync SVG-relevant fields from option slugs
+      const svgUpdates: Partial<Configurateur2DConfig> = {};
+      if (action.slug === 'etagere') svgUpdates.nbEtageres = action.value;
+      if (action.slug === 'tiroir') svgUpdates.nbTiroirs = action.value;
+      if (action.slug === 'dos') svgUpdates.avecDos = action.value > 0;
+      if (action.slug === 'niveau') svgUpdates.nbNiveaux = action.value;
+      if (action.slug === 'separateur') svgUpdates.nbSeparateurs = action.value;
+      if (action.slug === 'decoupe_ronde') svgUpdates.nbDecoupesRondes = action.value;
+      if (action.slug === 'decoupe_rectangulaire') svgUpdates.nbDecoupesRect = action.value;
+      // Choice groups affecting SVG
+      if (action.slug === 'pied_rond' && action.value > 0) svgUpdates.piedType = 'rond';
+      if (action.slug === 'pied_carre' && action.value > 0) svgUpdates.piedType = 'carre';
+      if (action.slug === 'pied_oblique' && action.value > 0) svgUpdates.piedType = 'oblique';
+      if (['pied_rond', 'pied_carre', 'pied_oblique'].includes(action.slug) && action.value === 0) {
+        const hasPied = ['pied_rond', 'pied_carre', 'pied_oblique'].some(
+          (s) => s !== action.slug && (newSelections[s] || 0) > 0
+        );
+        if (!hasPied) svgUpdates.piedType = 'sans';
+      }
+      if (action.slug === 'bord_droit' && action.value > 0) svgUpdates.edgeType = 'droit';
+      if (action.slug === 'bord_arrondi' && action.value > 0) svgUpdates.edgeType = 'arrondi';
+      if (action.slug === 'bord_chanfrein' && action.value > 0) svgUpdates.edgeType = 'chanfrein';
+      if (action.slug === 'fixation_murale' && action.value > 0) svgUpdates.mountingType = 'murale';
+      if (action.slug === 'fixation_sol' && action.value > 0) svgUpdates.mountingType = 'sol';
+      if (['fixation_murale', 'fixation_sol'].includes(action.slug) && action.value === 0) {
+        const hasFixation = ['fixation_murale', 'fixation_sol'].some(
+          (s) => s !== action.slug && (newSelections[s] || 0) > 0
+        );
+        if (!hasFixation) svgUpdates.mountingType = 'aucune';
+      }
+      // Door handling
+      if (action.slug === 'porte_battante') {
+        const totalPortes = action.value + (newSelections['porte_coulissante'] || 0);
+        svgUpdates.nbPortes = totalPortes;
+        if (action.value > 0) svgUpdates.porteType = 'battante';
+        else if ((newSelections['porte_coulissante'] || 0) > 0) svgUpdates.porteType = 'coulissante';
+        else svgUpdates.porteType = 'aucune';
+      }
+      if (action.slug === 'porte_coulissante') {
+        const totalPortes = (newSelections['porte_battante'] || 0) + action.value;
+        svgUpdates.nbPortes = totalPortes;
+        if (action.value > 0) svgUpdates.porteType = 'coulissante';
+        else if ((newSelections['porte_battante'] || 0) > 0) svgUpdates.porteType = 'battante';
+        else svgUpdates.porteType = 'aucune';
+      }
+      return { ...state, ...svgUpdates, optionSelections: newSelections };
+    }
     case 'LOAD_CONFIG':
       return action.config;
     default:
@@ -101,5 +153,12 @@ export function useConfigurateur2D() {
     [],
   );
 
-  return { config, setProduct, setDimension, setMaterial, setOption };
+  const setOptionSelection = useCallback(
+    (slug: string, value: number) => {
+      dispatch({ type: 'SET_OPTION_SELECTION', slug, value });
+    },
+    [],
+  );
+
+  return { config, setProduct, setDimension, setMaterial, setOption, setOptionSelection };
 }

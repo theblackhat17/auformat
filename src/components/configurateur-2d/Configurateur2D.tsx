@@ -15,13 +15,13 @@ interface Props {
 }
 
 export function Configurateur2D({ settings }: Props) {
-  const { materials, product_types: productTypes, option_prices: optionPrices, labels } = settings;
-  const { config, setProduct, setDimension, setMaterial, setOption } = useConfigurateur2D();
+  const { materials, product_types: productTypes, option_prices: optionPrices, options = [], labels } = settings;
+  const { config, setProduct, setDimension, setMaterial, setOption, setOptionSelection } = useConfigurateur2D();
   const [quoteOpen, setQuoteOpen] = useState(false);
 
   const price = useMemo(
-    () => calculatePrice2D(config, materials, optionPrices, productTypes),
-    [config, materials, optionPrices, productTypes],
+    () => calculatePrice2D(config, materials, optionPrices, productTypes, options),
+    [config, materials, optionPrices, productTypes, options],
   );
 
   return (
@@ -64,12 +64,14 @@ export function Configurateur2D({ settings }: Props) {
                 materials={materials}
                 productTypes={productTypes}
                 optionPrices={optionPrices}
+                options={options}
                 labels={labels}
                 price={price}
                 onChangeProduct={(slug) => setProduct(slug, productTypes)}
                 onChangeDimension={setDimension}
                 onChangeMaterial={setMaterial}
                 onChangeOption={setOption}
+                onChangeOptionSelection={setOptionSelection}
                 onRequestQuote={() => setQuoteOpen(true)}
               />
             </div>

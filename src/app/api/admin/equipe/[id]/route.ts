@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
 
@@ -24,6 +25,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(member);
   } catch (err) {
     console.error('Equipe PUT error:', err);
@@ -43,6 +45,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Membre introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Equipe DELETE error:', err);

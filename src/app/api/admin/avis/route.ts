@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, insert } from '@/lib/db';
 
@@ -39,6 +40,7 @@ export async function POST(request: NextRequest) {
       date: date || new Date().toISOString(),
     });
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(avis, { status: 201 });
   } catch (err) {
     console.error('Avis POST error:', err);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { queryOne, rawQuery } from '@/lib/db';
 
@@ -39,6 +40,7 @@ export async function PUT(request: NextRequest) {
          WHERE id = $13 RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, existing.id]
       );
+      revalidatePath('/', 'layout');
       return NextResponse.json(result.rows[0]);
     } else {
       const result = await rawQuery(
@@ -46,6 +48,7 @@ export async function PUT(request: NextRequest) {
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook]
       );
+      revalidatePath('/', 'layout');
       return NextResponse.json(result.rows[0]);
     }
   } catch (err) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { update, deleteById } from '@/lib/db';
 
@@ -32,6 +33,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Materiau introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json(materiau);
   } catch (err) {
     console.error('Materiaux PUT error:', err);
@@ -51,6 +53,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Materiau introuvable' }, { status: 404 });
     }
 
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Materiaux DELETE error:', err);

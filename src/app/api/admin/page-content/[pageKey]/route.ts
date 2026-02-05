@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { query, rawQuery } from '@/lib/db';
 
@@ -38,6 +39,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         [pageKey, section.sectionKey, JSON.stringify(section.content), section.sortOrder ?? 0]
       );
     }
+
+    revalidatePath('/', 'layout');
 
     const rows = await query('SELECT * FROM page_content WHERE page_key = $1 ORDER BY sort_order', [pageKey]);
     return NextResponse.json(rows);
