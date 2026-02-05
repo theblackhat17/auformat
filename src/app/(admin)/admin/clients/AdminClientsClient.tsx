@@ -14,6 +14,7 @@ export function AdminClientsClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const fetchClients = useCallback(() => {
     fetch('/api/admin/clients').then((r) => r.json()).then(setClients).finally(() => setLoading(false));
@@ -43,6 +44,26 @@ export function AdminClientsClient() {
       alert('Erreur reseau');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const deleteClient = async (client: ClientWithRole) => {
+    if (!confirm(`Supprimer definitivement ${client.fullName || client.email} et toutes ses donnees (projets, devis, sessions) ?`)) return;
+    if (!confirm('Cette action est irreversible. Confirmer la suppression ?')) return;
+
+    setDeletingId(client.id);
+    try {
+      const res = await fetch(`/api/admin/clients/${client.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || 'Erreur');
+        return;
+      }
+      setClients((prev) => prev.filter((c) => c.id !== client.id));
+    } catch {
+      alert('Erreur reseau');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -132,9 +153,18 @@ export function AdminClientsClient() {
                   {client.lastLogin ? timeAgo(client.lastLogin) : 'Jamais'}
                 </td>
                 <td className="px-4 py-3">
-                  <Link href={`/admin/clients/${client.id}`} className="text-xs font-medium text-vert-foret hover:underline">
-                    Detail
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link href={`/admin/clients/${client.id}`} className="text-xs font-medium text-vert-foret hover:underline">
+                      Detail
+                    </Link>
+                    <button
+                      onClick={() => deleteClient(client)}
+                      disabled={deletingId === client.id}
+                      className="text-xs font-medium text-red-500 hover:text-red-700 hover:underline disabled:opacity-50"
+                    >
+                      {deletingId === client.id ? '...' : 'Supprimer'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

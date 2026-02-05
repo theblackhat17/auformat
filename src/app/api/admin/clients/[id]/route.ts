@@ -75,6 +75,44 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+
+  try {
+    // Prevent deleting yourself
+    if (id === auth.userId) {
+      return NextResponse.json({ error: 'Vous ne pouvez pas supprimer votre propre compte' }, { status: 400 });
+    }
+
+    const profile = await queryOne<{ id: string; role: string }>('SELECT id, role FROM profiles WHERE id = $1', [id]);
+    if (!profile) {
+      return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
+    }
+
+    // Nullify references in shared tables
+    await rawQuery('UPDATE settings SET updated_by = NULL WHERE updated_by = $1', [id]);
+    await rawQuery('UPDATE uploads SET uploaded_by = NULL WHERE uploaded_by = $1', [id]);
+
+    // Delete user-owned data
+    await rawQuery('DELETE FROM activity_logs WHERE user_id = $1', [id]);
+    await rawQuery('DELETE FROM notifications WHERE user_id = $1', [id]);
+    await rawQuery('DELETE FROM user_sessions WHERE user_id = $1', [id]);
+    await rawQuery('DELETE FROM quotes WHERE user_id = $1', [id]);
+    await rawQuery('DELETE FROM projects WHERE user_id = $1', [id]);
+
+    // Delete the profile
+    await rawQuery('DELETE FROM profiles WHERE id = $1', [id]);
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Admin delete client error:', err);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;

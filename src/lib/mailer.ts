@@ -11,6 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const FROM = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@auformat.fr';
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL || 'contact@auformat.fr';
 
 function isConfigured(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
@@ -35,6 +36,8 @@ export async function notifyAdminsNewQuote(quoteNumber: string, clientName: stri
   const { query } = await import('./db');
   const admins = await query<{ email: string }>('SELECT email FROM profiles WHERE role = $1', ['admin']);
 
+  const recipients = new Set([NOTIFY_EMAIL, ...admins.map((a) => a.email)]);
+
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -51,9 +54,51 @@ export async function notifyAdminsNewQuote(quoteNumber: string, clientName: stri
     </div>
   `;
 
-  for (const admin of admins) {
-    await sendMail(admin.email, `Nouveau devis ${quoteNumber} - ${clientName}`, html);
+  for (const recipient of recipients) {
+    await sendMail(recipient, `Nouveau devis ${quoteNumber} - ${clientName}`, html);
   }
+}
+
+export async function sendWelcomeEmail(to: string, clientName: string): Promise<boolean> {
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Bienvenue chez Au Format !</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Bonjour ${clientName},</p>
+        <p>Votre compte a bien ete cree sur <strong>Au Format</strong>.</p>
+        <p>Vous pouvez desormais :</p>
+        <ul>
+          <li>Configurer vos meubles sur mesure avec notre configurateur</li>
+          <li>Demander des devis en ligne</li>
+          <li>Suivre l'avancement de vos commandes</li>
+        </ul>
+        <p>N'hesitez pas a nous contacter pour toute question.</p>
+        <br/>
+        <p style="color: #888; font-size: 13px;">Au Format - Menuiserie sur mesure</p>
+      </div>
+    </div>
+  `;
+
+  return sendMail(to, 'Bienvenue chez Au Format !', html);
+}
+
+export async function notifyNewRegistration(clientName: string, clientEmail: string): Promise<void> {
+  const html = `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Nouveau client inscrit</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p><strong>Nom :</strong> ${clientName}</p>
+        <p><strong>Email :</strong> ${clientEmail}</p>
+        <p style="color: #888; font-size: 13px;">Inscription le ${new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+      </div>
+    </div>
+  `;
+
+  await sendMail(NOTIFY_EMAIL, `Nouveau client inscrit - ${clientName}`, html);
 }
 
 export async function sendQuoteToClient(
