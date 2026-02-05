@@ -43,6 +43,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await authClient.signIn.email({ email, password });
       if (result.error) {
+        const status = result.error.status;
+        if (status === 429) {
+          return { success: false, error: 'Trop de tentatives. Veuillez réessayer dans quelques minutes.' };
+        }
         return { success: false, error: result.error.message || 'Erreur de connexion' };
       }
       return { success: true };

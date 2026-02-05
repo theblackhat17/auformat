@@ -16,6 +16,7 @@ const PAGE_TABS = [
   { key: 'about', label: 'À propos' },
   { key: 'homemade', label: 'Savoir-faire' },
   { key: 'processus', label: 'Processus' },
+  { key: 'footer', label: 'Pied de page' },
 ];
 
 export function AdminPageContentClient() {
