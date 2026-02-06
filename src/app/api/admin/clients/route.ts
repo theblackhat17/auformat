@@ -30,10 +30,10 @@ export async function GET(request: NextRequest) {
         FROM quotes GROUP BY user_id
       ) q ON q.user_id = p.id
       LEFT JOIN (
-        SELECT user_id,
+        SELECT "userId" as user_id,
           COUNT(*)::int as total_logins,
-          MAX(logged_in_at) as last_login
-        FROM user_sessions GROUP BY user_id
+          MAX("createdAt") as last_login
+        FROM session GROUP BY "userId"
       ) s ON s.user_id = p.id
       ORDER BY p.role ASC, p.created_at DESC
     `);

@@ -39,10 +39,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         FROM quotes GROUP BY user_id
       ) q ON q.user_id = p.id
       LEFT JOIN (
-        SELECT user_id,
+        SELECT "userId" as user_id,
           COUNT(*)::int as total_logins,
-          MAX(logged_in_at) as last_login
-        FROM user_sessions GROUP BY user_id
+          MAX("createdAt") as last_login
+        FROM session GROUP BY "userId"
       ) s ON s.user_id = p.id
       WHERE p.id = $1
     `, [id]);
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Get sessions
     const sessions = await query(
-      'SELECT * FROM user_sessions WHERE user_id = $1 ORDER BY logged_in_at DESC LIMIT 10',
+      'SELECT id, "userId" as user_id, "createdAt" as logged_in_at, "ipAddress" as ip_address, "userAgent" as user_agent FROM session WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 10',
       [id]
     );
 
