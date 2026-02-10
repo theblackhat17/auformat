@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { getSettings } from '@/lib/content';
 import { buildPageMetadata } from '@/lib/seo';

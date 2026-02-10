@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'img', 'uploads');
+const UPLOAD_DIR = '/opt/auformat-next/public/img/uploads';
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const uniqueName = `${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${ext}`;
     const filePath = path.join(UPLOAD_DIR, uniqueName);
-    const publicPath = `/img/uploads/${uniqueName}`;
+    const publicPath = `/api/uploads/${uniqueName}`;
 
     // Write file to disk
     const buffer = Buffer.from(await file.arrayBuffer());

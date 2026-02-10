@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { getAvis } from '@/lib/content';
 import { AvisClient } from './AvisClient';

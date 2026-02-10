@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && cp -r .next/static .next/standalone/.next/static && cp -r public/* .next/standalone/public/",
-    "deploy": "next build && cp -r .next/static .next/standalone/.next/static && cp -r public/* .next/standalone/public/ && pm2 delete auformat && pm2 start ecosystem.config.js",
+    "build": "next build && cp -r .next/static .next/standalone/.next/static && ln -sfn $(pwd)/public .next/standalone/public",
+    "deploy": "next build && cp -r .next/static .next/standalone/.next/static && ln -sfn $(pwd)/public .next/standalone/public && pm2 delete auformat && pm2 start ecosystem.config.js",
     "start": "next start",
     "lint": "eslint"
   },

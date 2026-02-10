@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { getRealisations, getCategories } from '@/lib/content';
 import { RealisationsClient } from './RealisationsClient';

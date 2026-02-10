@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { ContactForm } from './ContactForm';
 import { getSettings } from '@/lib/content';
