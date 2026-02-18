@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
-import { update, deleteById } from '@/lib/db';
+import { update, deleteById, rawQuery } from '@/lib/db';
 import { logAdminAction } from '@/lib/activity-logger';
+
+async function uniqueSlug(base: string, excludeId: string): Promise<string> {
+  let slug = base;
+  let suffix = 2;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existing = await rawQuery(
+      `SELECT id FROM realisations WHERE slug = $1 AND id != $2 LIMIT 1`,
+      [slug, excludeId]
+    );
+    if (existing.rows.length === 0) return slug;
+    slug = `${base}-${suffix}`;
+    suffix++;
+  }
+}
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
@@ -11,11 +26,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, location, features, published, date, sortOrder } = body;
+    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, materialId, location, features, published, date, sortOrder } = body;
+
+    const finalSlug = await uniqueSlug(slug, id);
 
     const realisation = await update('realisations', id, {
       title,
-      slug,
+      slug: finalSlug,
       categoryId: categoryId || null,
       description: description || '',
       body: bodyText || null,
@@ -24,6 +41,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       duration: duration || null,
       surface: surface || null,
       material: material || null,
+      materialId: materialId || null,
       location: location || null,
       features: JSON.stringify(features || []),
       published: published ?? false,
@@ -39,10 +57,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     revalidatePath('/', 'layout');
     return NextResponse.json(realisation);
-  } catch (err: unknown) {
-    if (err instanceof Error && err.message?.includes('unique')) {
-      return NextResponse.json({ error: 'Ce slug existe deja' }, { status: 409 });
-    }
+  } catch (err) {
     console.error('Realisations PUT error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

@@ -21,12 +21,15 @@ interface Realisation {
   duration: string | null;
   surface: string | null;
   material: string | null;
+  materialId: string | null;
   location: string | null;
   features: { feature: string }[];
   published: boolean;
   date: string;
   sortOrder: number;
 }
+
+interface MateriauOption { id: string; name: string; }
 
 interface Category { id: string; label: string; slug: string; }
 
@@ -36,13 +39,14 @@ function slugify(text: string): string {
 
 const EMPTY: Omit<Realisation, 'id'> = {
   title: '', slug: '', categoryId: null, description: '', body: null,
-  image: null, gallery: [], duration: null, surface: null, material: null,
+  image: null, gallery: [], duration: null, surface: null, material: null, materialId: null,
   location: null, features: [], published: false, date: new Date().toISOString(), sortOrder: 0,
 };
 
 export function AdminRealisationsClient() {
   const [items, setItems] = useState<Realisation[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [materiaux, setMateriaux] = useState<MateriauOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Realisation | null>(null);
@@ -52,15 +56,18 @@ export function AdminRealisationsClient() {
 
   const load = useCallback(async () => {
     try {
-      const [realRes, catRes] = await Promise.all([
+      const [realRes, catRes, matRes] = await Promise.all([
         fetch('/api/admin/realisations'),
         fetch('/api/admin/categories?type=realisation'),
+        fetch('/api/admin/materiaux'),
       ]);
-      if (!realRes.ok || !catRes.ok) throw new Error();
+      if (!realRes.ok || !catRes.ok || !matRes.ok) throw new Error();
       const realData = await realRes.json();
       const catData = await catRes.json();
+      const matData = await matRes.json();
       setItems(Array.isArray(realData) ? realData : []);
       setCategories(Array.isArray(catData) ? catData : []);
+      setMateriaux(Array.isArray(matData) ? matData.map((m: MateriauOption) => ({ id: m.id, name: m.name })) : []);
     } catch {
       toast.error('Erreur chargement');
     } finally {
@@ -83,7 +90,8 @@ export function AdminRealisationsClient() {
       description: item.description, body: item.body, image: item.image,
       gallery: Array.isArray(item.gallery) ? item.gallery : [],
       duration: item.duration, surface: item.surface, material: item.material,
-      location: item.location, features: Array.isArray(item.features) ? item.features : [],
+      materialId: item.materialId, location: item.location,
+      features: Array.isArray(item.features) ? item.features : [],
       published: item.published, date: item.date, sortOrder: item.sortOrder,
     });
     setModalOpen(true);
@@ -182,15 +190,9 @@ export function AdminRealisationsClient() {
         </>
       }>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
-              <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, slug: editing ? form.slug : slugify(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Slug</label>
-              <input type="text" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret font-mono text-sm" />
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+            <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value, slug: editing ? form.slug : slugify(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" />
           </div>
 
           <div>
@@ -214,7 +216,13 @@ export function AdminRealisationsClient() {
           <div className="grid grid-cols-2 gap-4">
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Durée</label><input type="text" value={form.duration || ''} onChange={(e) => setForm({ ...form, duration: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 3 semaines" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Surface</label><input type="text" value={form.surface || ''} onChange={(e) => setForm({ ...form, surface: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 25m2" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1">Matériau</label><input type="text" value={form.material || ''} onChange={(e) => setForm({ ...form, material: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Chêne massif" /></div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Matériau</label>
+              <select value={form.materialId || ''} onChange={(e) => { const id = e.target.value || null; const mat = materiaux.find((m) => m.id === id); setForm({ ...form, materialId: id, material: mat?.name || null }); }} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret">
+                <option value="">-- Aucun --</option>
+                {materiaux.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+              </select>
+            </div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label><input type="text" value={form.location || ''} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: Lille" /></div>
           </div>
 

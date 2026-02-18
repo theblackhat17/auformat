@@ -11,7 +11,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, features, usages, published, sortOrder } = body;
+    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, colorHex, prixM2, features, usages, published, sortOrder } = body;
 
     const materiau = await update('materiaux', id, {
       name,
@@ -24,6 +24,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       stability: stability ?? 0,
       origin: origin || '',
       color: color || '',
+      colorHex: colorHex || null,
+      prixM2: prixM2 ?? null,
       features: JSON.stringify(features || []),
       usages: JSON.stringify(usages || []),
       published: published ?? false,

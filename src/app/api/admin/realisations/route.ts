@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
-import { query, insert } from '@/lib/db';
+import { query, insert, rawQuery } from '@/lib/db';
 import { logAdminAction } from '@/lib/activity-logger';
+
+async function uniqueSlug(base: string, excludeId?: string): Promise<string> {
+  let slug = base;
+  let suffix = 2;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const existing = await rawQuery(
+      excludeId
+        ? `SELECT id FROM realisations WHERE slug = $1 AND id != $2 LIMIT 1`
+        : `SELECT id FROM realisations WHERE slug = $1 LIMIT 1`,
+      excludeId ? [slug, excludeId] : [slug]
+    );
+    if (existing.rows.length === 0) return slug;
+    slug = `${base}-${suffix}`;
+    suffix++;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -28,15 +45,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, location, features, published, date, sortOrder } = body;
+    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, materialId, location, features, published, date, sortOrder } = body;
 
-    if (!title || !slug) {
-      return NextResponse.json({ error: 'Titre et slug sont requis' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'Le titre est requis' }, { status: 400 });
     }
+
+    const finalSlug = await uniqueSlug(slug || title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
 
     const realisation = await insert('realisations', {
       title,
-      slug,
+      slug: finalSlug,
       categoryId: categoryId || null,
       description: description || '',
       body: bodyText || null,
@@ -45,6 +64,7 @@ export async function POST(request: NextRequest) {
       duration: duration || null,
       surface: surface || null,
       material: material || null,
+      materialId: materialId || null,
       location: location || null,
       features: JSON.stringify(features || []),
       published: published ?? false,
@@ -56,10 +76,7 @@ export async function POST(request: NextRequest) {
 
     revalidatePath('/', 'layout');
     return NextResponse.json(realisation, { status: 201 });
-  } catch (err: unknown) {
-    if (err instanceof Error && err.message?.includes('unique')) {
-      return NextResponse.json({ error: 'Ce slug existe deja' }, { status: 409 });
-    }
+  } catch (err) {
     console.error('Realisations POST error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

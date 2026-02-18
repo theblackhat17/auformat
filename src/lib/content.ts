@@ -2,10 +2,11 @@ import { query, queryOne } from './db';
 import type { Realisation, Avis, Materiau, TeamMember, SiteSettings, Category, PageContent, GeneralSettings, HomepageSettings } from './types';
 
 export async function getRealisations(): Promise<Realisation[]> {
-  const rows = await query<Realisation & { categorySlug: string; categoryLabel: string }>(
-    `SELECT r.*, c.slug as category_slug, c.label as category_label
+  const rows = await query<Realisation & { categorySlug: string; categoryLabel: string; matName: string | null }>(
+    `SELECT r.*, c.slug as category_slug, c.label as category_label, mat.name as mat_name
      FROM realisations r
      LEFT JOIN categories c ON r.category_id = c.id
+     LEFT JOIN materiaux mat ON r.material_id = mat.id
      WHERE r.published = true
      ORDER BY r.date DESC`
   );
@@ -13,6 +14,7 @@ export async function getRealisations(): Promise<Realisation[]> {
     ...r,
     category: r.categorySlug || '',
     categoryLabel: r.categoryLabel || '',
+    materialName: r.matName || r.material || '',
   }));
 }
 
@@ -28,6 +30,21 @@ export async function getMateriaux(): Promise<Materiau[]> {
      FROM materiaux m
      LEFT JOIN categories c ON m.category_id = c.id
      WHERE m.published = true
+     ORDER BY m.sort_order`
+  );
+  return rows.map((m) => ({
+    ...m,
+    category: m.categorySlug || '',
+    categoryLabel: m.categoryLabel || '',
+  }));
+}
+
+export async function getMateriauxForConfigurateur(): Promise<Materiau[]> {
+  const rows = await query<Materiau & { categorySlug: string; categoryLabel: string }>(
+    `SELECT m.*, c.slug as category_slug, c.label as category_label
+     FROM materiaux m
+     LEFT JOIN categories c ON m.category_id = c.id
+     WHERE m.published = true AND m.prix_m2 IS NOT NULL
      ORDER BY m.sort_order`
   );
   return rows.map((m) => ({

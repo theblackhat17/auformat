@@ -2,17 +2,16 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type {
-  ConfigurateurMaterial,
   ConfigurateurProductType,
   ConfigurateurOptionPrices,
   ConfigurateurLabels,
   ConfigurateurOption,
 } from '@/lib/types';
+import Link from 'next/link';
 
-type TabKey = 'materials' | 'types' | 'prices' | 'options' | 'labels';
+type TabKey = 'types' | 'prices' | 'options' | 'labels';
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: 'materials', label: 'Materiaux' },
   { key: 'types', label: 'Types de produit' },
   { key: 'prices', label: 'Prix (ancien)' },
   { key: 'options', label: 'Options' },
@@ -20,8 +19,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export function AdminConfigurateurClient() {
-  const [activeTab, setActiveTab] = useState<TabKey>('materials');
-  const [materials, setMaterials] = useState<ConfigurateurMaterial[]>([]);
+  const [activeTab, setActiveTab] = useState<TabKey>('types');
   const [productTypes, setProductTypes] = useState<ConfigurateurProductType[]>([]);
   const [optionPrices, setOptionPrices] = useState<ConfigurateurOptionPrices | null>(null);
   const [options, setOptions] = useState<ConfigurateurOption[]>([]);
@@ -40,7 +38,6 @@ export function AdminConfigurateurClient() {
       const res = await fetch('/api/admin/configurateur');
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setMaterials(data.materials || []);
       setProductTypes(data.product_types || []);
       setOptionPrices(data.option_prices || null);
       setOptions(data.options || []);
@@ -107,16 +104,18 @@ export function AdminConfigurateurClient() {
         ))}
       </div>
 
+      {/* Materials link */}
+      <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+        <p className="text-sm text-amber-800">
+          Les materiaux du configurateur sont desormais geres depuis la page Materiaux.
+        </p>
+        <Link href="/admin/materiaux" className="px-4 py-1.5 text-sm bg-vert-foret text-white rounded-lg hover:bg-vert-foret-dark transition-colors whitespace-nowrap ml-4">
+          Gerer les materiaux
+        </Link>
+      </div>
+
       {/* Tab content */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
-        {activeTab === 'materials' && (
-          <MaterialsTab
-            materials={materials}
-            onChange={(m) => setMaterials(m)}
-            onSave={() => saveKey('materials', materials)}
-            saving={saving}
-          />
-        )}
         {activeTab === 'types' && (
           <ProductTypesTab
             types={productTypes}
@@ -150,112 +149,6 @@ export function AdminConfigurateurClient() {
           />
         )}
       </div>
-    </div>
-  );
-}
-
-/* ================================= */
-/* Materials Tab                      */
-/* ================================= */
-function MaterialsTab({
-  materials,
-  onChange,
-  onSave,
-  saving,
-}: {
-  materials: ConfigurateurMaterial[];
-  onChange: (m: ConfigurateurMaterial[]) => void;
-  onSave: () => void;
-  saving: boolean;
-}) {
-  const updateItem = (index: number, field: keyof ConfigurateurMaterial, value: string | number) => {
-    const updated = [...materials];
-    updated[index] = { ...updated[index], [field]: value };
-    onChange(updated);
-  };
-
-  const addItem = () => {
-    onChange([
-      ...materials,
-      { name: 'Nouveau materiau', colorHex: '#CCCCCC', prixM2: 30, sortOrder: materials.length + 1 },
-    ]);
-  };
-
-  const removeItem = (index: number) => {
-    onChange(materials.filter((_, i) => i !== index));
-  };
-
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Materiaux ({materials.length})</h2>
-        <div className="flex gap-2">
-          <button onClick={addItem} className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-            + Ajouter
-          </button>
-          <button onClick={onSave} disabled={saving} className="px-4 py-1.5 text-sm bg-vert-foret text-white rounded-lg hover:bg-vert-foret-dark transition-colors disabled:opacity-50">
-            {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
-        </div>
-      </div>
-
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 text-left text-gray-500">
-            <th className="pb-2 font-medium">Couleur</th>
-            <th className="pb-2 font-medium">Nom</th>
-            <th className="pb-2 font-medium">Prix/m2</th>
-            <th className="pb-2 font-medium">Ordre</th>
-            <th className="pb-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {materials.map((m, i) => (
-            <tr key={i} className="border-b border-gray-100">
-              <td className="py-2">
-                <input
-                  type="color"
-                  value={m.colorHex}
-                  onChange={(e) => updateItem(i, 'colorHex', e.target.value)}
-                  className="w-8 h-8 rounded cursor-pointer border border-gray-200"
-                />
-              </td>
-              <td className="py-2">
-                <input
-                  type="text"
-                  value={m.name}
-                  onChange={(e) => updateItem(i, 'name', e.target.value)}
-                  className="w-full px-2 py-1 border border-gray-200 rounded"
-                />
-              </td>
-              <td className="py-2">
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    value={m.prixM2}
-                    onChange={(e) => updateItem(i, 'prixM2', parseFloat(e.target.value) || 0)}
-                    className="w-20 px-2 py-1 border border-gray-200 rounded"
-                  />
-                  <span className="text-gray-400">EUR</span>
-                </div>
-              </td>
-              <td className="py-2">
-                <input
-                  type="number"
-                  value={m.sortOrder}
-                  onChange={(e) => updateItem(i, 'sortOrder', parseInt(e.target.value) || 0)}
-                  className="w-16 px-2 py-1 border border-gray-200 rounded"
-                />
-              </td>
-              <td className="py-2 text-right">
-                <button onClick={() => removeItem(i)} className="text-red-400 hover:text-red-600 text-xs">
-                  Supprimer
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

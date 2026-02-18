@@ -19,6 +19,8 @@ interface MateriauItem {
   stability: number;
   origin: string;
   color: string;
+  colorHex: string | null;
+  prixM2: number | null;
   features: { feature: string }[];
   usages: { usage: string }[];
   published: boolean;
@@ -30,6 +32,7 @@ interface Category { id: string; label: string; }
 const EMPTY: Omit<MateriauItem, 'id'> = {
   name: '', latinName: null, image: null, categoryId: null, tag: null,
   description: '', hardness: 0, stability: 0, origin: '', color: '',
+  colorHex: null, prixM2: null,
   features: [], usages: [], published: false, sortOrder: 0,
 };
 
@@ -70,7 +73,8 @@ export function AdminMateriauxClient() {
       name: item.name, latinName: item.latinName, image: item.image,
       categoryId: item.categoryId, tag: item.tag, description: item.description,
       hardness: item.hardness, stability: item.stability, origin: item.origin,
-      color: item.color, features: Array.isArray(item.features) ? item.features : [],
+      color: item.color, colorHex: item.colorHex, prixM2: item.prixM2,
+      features: Array.isArray(item.features) ? item.features : [],
       usages: Array.isArray(item.usages) ? item.usages : [], published: item.published,
       sortOrder: item.sortOrder,
     });
@@ -194,6 +198,23 @@ export function AdminMateriauxClient() {
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Stabilité (0-5)</label><input type="number" min={0} max={5} value={form.stability} onChange={(e) => setForm({ ...form, stability: Number(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Origine</label><input type="text" value={form.origin} onChange={(e) => setForm({ ...form, origin: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
             <div><label className="block text-sm font-medium text-gray-700 mb-1">Couleur</label><input type="text" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" /></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Couleur Hex (configurateur)</label>
+              <div className="flex gap-2 items-center">
+                <input type="color" value={form.colorHex || '#CCCCCC'} onChange={(e) => setForm({ ...form, colorHex: e.target.value })} className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
+                <input type="text" value={form.colorHex || ''} onChange={(e) => setForm({ ...form, colorHex: e.target.value })} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret font-mono text-sm" placeholder="#D4A574" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prix / m2 (configurateur)</label>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.01" min={0} value={form.prixM2 ?? ''} onChange={(e) => setForm({ ...form, prixM2: e.target.value ? Number(e.target.value) : null })} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret" placeholder="ex: 45" />
+                <span className="text-sm text-gray-400">EUR/m2</span>
+              </div>
+            </div>
           </div>
 
           <ImageUpload value={form.image || ''} onChange={(path) => setForm({ ...form, image: path || null })} />

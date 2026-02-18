@@ -152,12 +152,6 @@ export interface FurnitureModule {
   offsetX?: number;
 }
 
-export interface WoodMaterial {
-  name: string;
-  color: number;
-  price: number;
-  texture: string;
-}
 
 export interface ModuleCatalogItem {
   name: string;
@@ -403,6 +397,8 @@ export interface Realisation {
   duration?: string;
   surface?: string;
   material?: string;
+  materialId?: string;
+  materialName?: string;
   location?: string;
   features?: { feature: string }[];
   published: boolean;
@@ -436,6 +432,8 @@ export interface Materiau {
   stability: number;
   origin: string;
   color: string;
+  colorHex?: string;
+  prixM2?: number;
   features?: { feature: string }[];
   usages?: { usage: string }[];
   published: boolean;

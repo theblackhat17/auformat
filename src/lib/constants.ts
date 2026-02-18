@@ -1,5 +1,5 @@
 import type {
-  WoodMaterial, ModuleCatalogItem, HandleType,
+  ModuleCatalogItem, HandleType,
   HingeCatalogItem, DrawerSlideCatalogItem, EdgeBandingCatalogItem,
   FinishCatalogItem, ShelfSupportCatalogItem, CountertopMaterialItem,
   KitchenCabinetCatalogItem, MeubleTemplateDef, KitchenLayoutShape, Cabinet,
@@ -146,22 +146,6 @@ export const ACTION_TYPE_ICONS: Record<string, string> = {
   error: '⚠️',
   update_profile: '👤',
   reset_password: '🔒',
-};
-
-// Wood materials for configurator
-export const WOOD_MATERIALS: Record<string, WoodMaterial> = {
-  chene: { name: 'Chêne massif', color: 0xD4A574, price: 45, texture: 'oak' },
-  noyer: { name: 'Noyer', color: 0x8B5A3C, price: 55, texture: 'walnut' },
-  pin: { name: 'Pin', color: 0xE8D4B0, price: 35, texture: 'pine' },
-  hetre: { name: 'Hêtre', color: 0xDEB887, price: 42, texture: 'beech' },
-  bouleau: { name: 'Bouleau', color: 0xEDE0C8, price: 38, texture: 'birch' },
-  frene: { name: 'Frêne', color: 0xC8B990, price: 48, texture: 'ash' },
-  blanc: { name: 'Mélamine blanc', color: 0xF5F5F5, price: 40, texture: 'white' },
-  noir: { name: 'Mélamine noir', color: 0x2D2D2D, price: 42, texture: 'black' },
-  mdf_brut: { name: 'MDF brut', color: 0xC4A882, price: 22, texture: 'mdf' },
-  mdf_laque: { name: 'MDF laqué', color: 0xE8E8E8, price: 35, texture: 'mdf-lacquer' },
-  contreplaque: { name: 'Contreplaqué bouleau', color: 0xD2C4A8, price: 30, texture: 'plywood' },
-  stratifie_chene: { name: 'Stratifié chêne', color: 0xC9A96E, price: 28, texture: 'laminate-oak' },
 };
 
 // Module catalog

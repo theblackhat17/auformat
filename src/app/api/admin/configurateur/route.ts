@@ -38,7 +38,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Cle et valeur requises' }, { status: 400 });
     }
 
-    const validKeys = ['materials', 'product_types', 'option_prices', 'options', 'labels'];
+    const validKeys = ['product_types', 'option_prices', 'options', 'labels'];
     if (!validKeys.includes(key)) {
       return NextResponse.json({ error: 'Cle invalide' }, { status: 400 });
     }

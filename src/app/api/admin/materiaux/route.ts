@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, features, usages, published, sortOrder } = body;
+    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, colorHex, prixM2, features, usages, published, sortOrder } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Le nom est requis' }, { status: 400 });
@@ -45,6 +45,8 @@ export async function POST(request: NextRequest) {
       stability: stability ?? 0,
       origin: origin || '',
       color: color || '',
+      colorHex: colorHex || null,
+      prixM2: prixM2 ?? null,
       features: JSON.stringify(features || []),
       usages: JSON.stringify(usages || []),
       published: published ?? false,

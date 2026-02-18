@@ -110,7 +110,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
               <span className="text-xs font-medium bg-beige text-bois-fonce px-3 py-1 rounded-full">{categoryLabels[selectedItem.category] || selectedItem.category}</span>
               {selectedItem.duration && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Duree: {selectedItem.duration}</span>}
               {selectedItem.surface && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Surface: {selectedItem.surface}</span>}
-              {selectedItem.material && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Materiau: {selectedItem.material}</span>}
+              {(selectedItem.materialName || selectedItem.material) && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Materiau: {selectedItem.materialName || selectedItem.material}</span>}
               {selectedItem.location && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Lieu: {selectedItem.location}</span>}
             </div>
             <p className="text-sm text-noir/70 leading-relaxed">{selectedItem.description}</p>
