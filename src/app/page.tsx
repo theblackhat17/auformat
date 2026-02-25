@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getRealisations, getAvis, getPageContent } from '@/lib/content';
+import { getRealisations, getAvis, getPageContent, getSettings } from '@/lib/content';
 import { ratingStars } from '@/lib/utils';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
@@ -20,10 +20,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [realisations, avis, sections] = await Promise.all([
+  const [realisations, avis, sections, siteSettings] = await Promise.all([
     getRealisations(),
     getAvis(),
     getPageContent('homepage'),
+    getSettings(),
   ]);
 
   const topRealisations = realisations.slice(0, 3);
@@ -47,7 +48,21 @@ export default async function HomePage() {
       <main className="pt-18 lg:pt-22">
         {/* Hero Section */}
         <section className="relative min-h-[85vh] flex items-center bg-noir overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-noir via-noir/95 to-bois-fonce/30" />
+          {siteSettings?.heroBackground ? (
+            <>
+              <Image
+                src={siteSettings.heroBackground}
+                alt=""
+                fill
+                priority
+                className="object-cover"
+                sizes="100vw"
+              />
+              <div className="absolute inset-0 bg-noir/60" />
+            </>
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-noir via-noir/95 to-bois-fonce/30" />
+          )}
           <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20">
             <div className="max-w-2xl">
               <p className="text-bois-clair font-medium tracking-widest uppercase text-sm mb-4">{hero.subtitle_top || 'Menuiserie sur mesure'}</p>
@@ -65,16 +80,20 @@ export default async function HomePage() {
                 >
                   {hero.cta_primary || 'Demander un devis'}
                 </Link>
-                <Link
-                  href={hero.cta_secondary_link || '/configurateur'}
-                  className="inline-flex items-center px-8 py-3.5 border-2 border-white/20 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
-                >
-                  {hero.cta_secondary || 'Configurateur 3D'}
-                </Link>
+                {(siteSettings?.configurateurEnabled || (hero.cta_secondary_link && hero.cta_secondary_link !== '/configurateur')) && (
+                  <Link
+                    href={hero.cta_secondary_link || '/configurateur'}
+                    className="inline-flex items-center px-8 py-3.5 border-2 border-white/20 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
+                  >
+                    {hero.cta_secondary || 'Configurateur 3D'}
+                  </Link>
+                )}
               </div>
             </div>
           </div>
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/3 h-2/3 bg-gradient-to-l from-bois-fonce/10 to-transparent rounded-l-full hidden lg:block" />
+          {!siteSettings?.heroBackground && (
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/3 h-2/3 bg-gradient-to-l from-bois-fonce/10 to-transparent rounded-l-full hidden lg:block" />
+          )}
         </section>
 
         {/* Stats section */}

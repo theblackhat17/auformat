@@ -464,6 +464,8 @@ export interface SiteSettings {
   hoursSunday: string;
   instagram: string | null;
   facebook: string | null;
+  heroBackground: string | null;
+  configurateurEnabled: boolean;
 }
 
 export interface Category {

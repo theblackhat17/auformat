@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest) {
     const {
       companyName, slogan, address, zipcode, city,
       phone, email, hoursWeekdays, hoursSaturday, hoursSunday,
-      instagram, facebook,
+      instagram, facebook, heroBackground, configurateurEnabled,
     } = body;
 
     // Check if a row exists
@@ -37,18 +37,18 @@ export async function PUT(request: NextRequest) {
         `UPDATE site_settings SET
           company_name = $1, slogan = $2, address = $3, zipcode = $4, city = $5,
           phone = $6, email = $7, hours_weekdays = $8, hours_saturday = $9, hours_sunday = $10,
-          instagram = $11, facebook = $12, updated_at = NOW()
-         WHERE id = $13 RETURNING *`,
-        [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, existing.id]
+          instagram = $11, facebook = $12, hero_background = $13, configurateur_enabled = $14, updated_at = NOW()
+         WHERE id = $15 RETURNING *`,
+        [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, heroBackground || null, configurateurEnabled ?? false, existing.id]
       );
       logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');
       return NextResponse.json(result.rows[0]);
     } else {
       const result = await rawQuery(
-        `INSERT INTO site_settings (company_name, slogan, address, zipcode, city, phone, email, hours_weekdays, hours_saturday, hours_sunday, instagram, facebook)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
-        [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook]
+        `INSERT INTO site_settings (company_name, slogan, address, zipcode, city, phone, email, hours_weekdays, hours_saturday, hours_sunday, instagram, facebook, hero_background, configurateur_enabled)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *`,
+        [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, heroBackground || null, configurateurEnabled ?? false]
       );
       logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');

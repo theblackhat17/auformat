@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
+import { ImageUpload } from '@/components/admin/ImageUpload';
 
 interface Settings {
   id?: string;
@@ -17,6 +18,8 @@ interface Settings {
   hoursSunday: string;
   instagram: string;
   facebook: string;
+  heroBackground: string;
+  configurateurEnabled: boolean;
 }
 
 interface SeoEntry {
@@ -29,7 +32,7 @@ interface SeoEntry {
 const EMPTY: Settings = {
   companyName: '', slogan: '', address: '', zipcode: '', city: '',
   phone: '', email: '', hoursWeekdays: '', hoursSaturday: '', hoursSunday: '',
-  instagram: '', facebook: '',
+  instagram: '', facebook: '', heroBackground: '', configurateurEnabled: false,
 };
 
 const SEO_PAGE_LABELS: Record<string, string> = {
@@ -188,6 +191,48 @@ export function AdminSettingsClient() {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Instagram (URL)" value={settings.instagram || ''} onChange={(v) => update('instagram', v)} type="url" placeholder="https://instagram.com/..." />
               <Field label="Facebook (URL)" value={settings.facebook || ''} onChange={(v) => update('facebook', v)} type="url" placeholder="https://facebook.com/..." />
+            </div>
+          </div>
+
+          {/* Hero Background */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-noir mb-2">Image de fond - Page d&apos;accueil</h2>
+            <p className="text-sm text-noir/50 mb-4">
+              Cette image sera affichée en arrière-plan de la section hero sur la page d&apos;accueil, derrière le texte &quot;Franchissons ensemble, le pas vers le bois&quot;.
+            </p>
+            <ImageUpload
+              label="Image de fond hero"
+              value={settings.heroBackground || ''}
+              onChange={(v) => update('heroBackground', v)}
+            />
+          </div>
+
+          {/* Configurateur toggle */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-noir">Configurateur en ligne</h2>
+                <p className="text-sm text-noir/50 mt-1">
+                  {settings.configurateurEnabled
+                    ? 'Le configurateur est visible sur le site (navigation, footer, page d\'accueil).'
+                    : 'Le configurateur est masqué du site. Activez-le quand vous serez prêt pour le lancement.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={settings.configurateurEnabled}
+                onClick={() => setSettings((s) => ({ ...s, configurateurEnabled: !s.configurateurEnabled }))}
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-vert-foret/20 ${
+                  settings.configurateurEnabled ? 'bg-vert-foret' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.configurateurEnabled ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>

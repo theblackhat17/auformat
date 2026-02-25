@@ -55,8 +55,10 @@ export async function Footer() {
   const seoData = getFooterSection('seo_text') as { text?: string } | undefined;
   const socialsData = getFooterSection('socials') as { items?: { platform: string; url: string }[] } | undefined;
 
+  const configurateurEnabled = settings?.configurateurEnabled ?? false;
   const addresses = addressesData?.items?.length ? addressesData.items : DEFAULT_ADDRESSES;
-  const links = linksData?.items?.length ? linksData.items : DEFAULT_LINKS;
+  const allLinks = linksData?.items?.length ? linksData.items : DEFAULT_LINKS;
+  const links = configurateurEnabled ? allLinks : allLinks.filter((l) => l.href !== '/configurateur');
   const seoText = seoData?.text || DEFAULT_SEO_TEXT;
   const socials = socialsData?.items?.length ? socialsData.items : DEFAULT_SOCIALS;
 

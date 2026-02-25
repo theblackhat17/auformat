@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { NAV_LINKS } from '@/lib/constants';
 import { getDisplayName } from '@/lib/utils';
 
-export function MobileMenu() {
+export function MobileMenu({ navLinks }: { navLinks?: { href: string; label: string }[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated, profile, logout } = useAuth();
 
@@ -49,7 +49,7 @@ export function MobileMenu() {
 
             {/* Navigation links */}
             <nav className="py-2">
-              {NAV_LINKS.map((link) => (
+              {(navLinks || NAV_LINKS).map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}

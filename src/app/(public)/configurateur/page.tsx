@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
 import ConfigurateurPageClient from './ConfigurateurPageClient';
 import { buildPageMetadata } from '@/lib/seo';
+import { getSettings } from '@/lib/content';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/configurateur', {
@@ -10,6 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default function ConfigurateurPage() {
+export default async function ConfigurateurPage() {
+  const settings = await getSettings();
+  if (!settings?.configurateurEnabled) redirect('/');
+
   return <ConfigurateurPageClient />;
 }

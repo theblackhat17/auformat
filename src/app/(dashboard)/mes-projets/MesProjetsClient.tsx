@@ -17,9 +17,13 @@ export function MesProjetsClient() {
   const [quoteModal, setQuoteModal] = useState<Project | null>(null);
   const [quoteMessage, setQuoteMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [configurateurEnabled, setConfigurateurEnabled] = useState(false);
 
   useEffect(() => {
     fetch('/api/projects').then((r) => r.json()).then(setProjects).finally(() => setLoading(false));
+    fetch('/api/content/settings').then((r) => r.json()).then((d) => {
+      setConfigurateurEnabled(d?.general?.configurateurEnabled ?? false);
+    }).catch(() => {});
   }, []);
 
   async function handleDelete(project: Project) {
@@ -53,13 +57,20 @@ export function MesProjetsClient() {
           <h1 className="text-2xl font-bold text-noir">Mes projets</h1>
           <p className="text-sm text-noir/50 mt-1">{projects.length} projet(s)</p>
         </div>
-        <Link href="/configurateur">
-          <Button>Nouveau projet</Button>
-        </Link>
+        {configurateurEnabled && (
+          <Link href="/configurateur">
+            <Button>Nouveau projet</Button>
+          </Link>
+        )}
       </div>
 
       {projects.length === 0 ? (
-        <EmptyState icon="📁" title="Aucun projet" description="Utilisez le configurateur 3D pour créer votre premier projet." action={<Link href="/configurateur"><Button>Ouvrir le configurateur</Button></Link>} />
+        <EmptyState
+          icon="📁"
+          title="Aucun projet"
+          description={configurateurEnabled ? 'Utilisez le configurateur pour créer votre premier projet.' : 'Aucun projet pour le moment.'}
+          action={configurateurEnabled ? <Link href="/configurateur"><Button>Ouvrir le configurateur</Button></Link> : undefined}
+        />
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
@@ -72,9 +83,11 @@ export function MesProjetsClient() {
               <p className="text-xs text-noir/40 mb-4">{formatDate(project.createdAt)}</p>
               {project.notes && <p className="text-sm text-noir/50 mb-4 line-clamp-2">{project.notes}</p>}
               <div className="flex gap-2 pt-3 border-t border-gray-50">
-                <Link href={`/configurateur?project=${project.id}`} className="flex-1">
-                  <Button variant="outline" size="sm" className="w-full">Modifier</Button>
-                </Link>
+                {configurateurEnabled && (
+                  <Link href={`/configurateur?project=${project.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full">Modifier</Button>
+                  </Link>
+                )}
                 {project.status === 'draft' && (
                   <Button variant="secondary" size="sm" onClick={() => setQuoteModal(project)}>Devis</Button>
                 )}

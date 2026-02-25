@@ -1,10 +1,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { NAV_LINKS } from '@/lib/constants';
+import { getSettings } from '@/lib/content';
 import { UserDropdown } from './UserDropdown';
 import { MobileMenu } from './MobileMenu';
 
-export function Header() {
+export async function Header() {
+  const settings = await getSettings();
+  const configurateurEnabled = settings?.configurateurEnabled ?? false;
+  const navLinks = configurateurEnabled
+    ? NAV_LINKS
+    : NAV_LINKS.filter((l) => l.href !== '/configurateur');
+
   return (
     <header className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
       <nav className="max-w-7xl mx-auto px-6 lg:px-8">
@@ -23,7 +30,7 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <ul className="hidden lg:flex items-center gap-8">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
@@ -38,7 +45,7 @@ export function Header() {
           {/* User area + Mobile toggle */}
           <div className="flex items-center gap-4">
             <UserDropdown />
-            <MobileMenu />
+            <MobileMenu navLinks={navLinks} />
           </div>
         </div>
       </nav>
