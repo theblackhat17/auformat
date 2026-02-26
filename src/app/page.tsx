@@ -122,11 +122,11 @@ export default async function HomePage() {
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {services.items.map((service) => (
-                  <div key={service.title} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                  <Link key={service.title} href="/realisations" className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 block">
                     <span className="text-3xl mb-4 block">{service.icon}</span>
                     <h3 className="text-lg font-semibold text-noir mb-2">{service.title}</h3>
                     <p className="text-sm text-noir/50 leading-relaxed">{service.desc}</p>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
