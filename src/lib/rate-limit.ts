@@ -87,3 +87,13 @@ const CONTACT_CONFIG: RateLimitConfig = {
 export function checkContactRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
   return checkLimit(`contact:${ip}`, CONTACT_CONFIG);
 }
+
+const QUOTE_CONFIG: RateLimitConfig = {
+  maxAttempts: 5,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  blockDurationMs: 60 * 60 * 1000, // blocked 1 hour
+};
+
+export function checkQuoteRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+  return checkLimit(`quote:${ip}`, QUOTE_CONFIG);
+}

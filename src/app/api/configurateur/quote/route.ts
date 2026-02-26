@@ -2,9 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { rawQuery, queryOne } from '@/lib/db';
 import { TAX_RATE } from '@/lib/constants';
 import { notifyAdminsNewQuote, sendQuoteToClient } from '@/lib/mailer';
+import { checkQuoteRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+    const rateLimit = checkQuoteRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: 'Trop de demandes. Reessayez plus tard.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+      );
+    }
+
     const body = await request.json();
     const { nom, email, telephone, message, productType, dimensions, materiau, items, subtotalHt, tva, totalTtc, configData } = body;
 

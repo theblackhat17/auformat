@@ -6,6 +6,10 @@ import crypto from 'crypto';
 import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration, sendPasswordResetEmail } from './mailer';
 import { logActivity } from './activity-logger';
 
+if (!process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET.length < 32) {
+  throw new Error('BETTER_AUTH_SECRET must be defined and at least 32 characters');
+}
+
 export const auth = betterAuth({
   database: pool,
   baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',

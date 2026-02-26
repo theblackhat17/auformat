@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: 'SMTP non configure: variables SMTP_HOST, SMTP_USER ou SMTP_PASS manquantes',
-      config: { host: host || 'MISSING', port, secure, user: user || 'MISSING', from },
+      config: { host: host ? '***' : 'MISSING', port, secure, user: user ? '***' : 'MISSING', from },
     }, { status: 500 });
   }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       success: false,
       step: 'connection',
       error: `Connexion SMTP echouee: ${message}`,
-      config: { host, port, secure, user, from },
+      config: { host: '***', port, secure, user: '***', from },
     }, { status: 500 });
   }
 
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Email de test envoye a ${to}`,
       messageId: info.messageId,
-      config: { host, port, secure, user, from },
+      config: { host: '***', port, secure, user: '***', from },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       success: false,
       step: 'send',
       error: `Connexion OK mais envoi echoue: ${message}`,
-      config: { host, port, secure, user, from },
+      config: { host: '***', port, secure, user: '***', from },
     }, { status: 500 });
   }
 }

@@ -26,13 +26,20 @@ export async function GET(
   }
 
   const ext = safeName.split('.').pop()?.toLowerCase() || '';
-  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  const contentType = MIME_TYPES[ext];
+
+  // Only serve known image types
+  if (!contentType) {
+    return new NextResponse(null, { status: 403 });
+  }
 
   const fileBuffer = fs.readFileSync(filePath);
 
   return new NextResponse(fileBuffer, {
     headers: {
       'Content-Type': contentType,
+      'Content-Disposition': `inline; filename="${safeName}"`,
+      'X-Content-Type-Options': 'nosniff',
       'Cache-Control': 'public, max-age=31536000, immutable',
     },
   });
