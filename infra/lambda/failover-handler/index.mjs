@@ -1,0 +1,314 @@
+import {
+  EC2Client,
+  StartInstancesCommand,
+  StopInstancesCommand,
+  DescribeInstancesCommand,
+} from "@aws-sdk/client-ec2";
+import {
+  S3Client,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
+import {
+  SSMClient,
+  SendCommandCommand,
+  GetCommandInvocationCommand,
+} from "@aws-sdk/client-ssm";
+
+const {
+  EC2_INSTANCE_ID,
+  EC2_REGION,
+  BUCKET_NAME,
+  CLOUDFLARE_ZONE_ID,
+  CLOUDFLARE_TOKEN,
+  CLOUDFLARE_RECORD_ID,
+  DOMAIN_NAME,
+  TUNNEL_CNAME,
+  HEARTBEAT_MAX_AGE_SECONDS,
+} = process.env;
+
+const ec2 = new EC2Client({ region: EC2_REGION });
+const s3 = new S3Client({ region: EC2_REGION });
+const ssm = new SSMClient({ region: EC2_REGION });
+
+const MAX_AGE = parseInt(HEARTBEAT_MAX_AGE_SECONDS || "300", 10); // 5 min par défaut
+
+/**
+ * Vérifie le heartbeat S3 pour savoir si le serveur maison est vivant
+ * Retourne true si le serveur est UP (heartbeat récent)
+ */
+async function isHomeServerAlive() {
+  try {
+    const { LastModified } = await s3.send(
+      new HeadObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: "heartbeat.txt",
+      })
+    );
+
+    const ageSeconds = (Date.now() - LastModified.getTime()) / 1000;
+    console.log(`Heartbeat age: ${Math.round(ageSeconds)}s (max: ${MAX_AGE}s)`);
+
+    return ageSeconds < MAX_AGE;
+  } catch (error) {
+    console.error("Impossible de lire le heartbeat:", error.message);
+    return false; // Pas de heartbeat = serveur down
+  }
+}
+
+/**
+ * Récupère le record DNS actuel dans Cloudflare
+ */
+async function getCurrentDNSRecord() {
+  const url = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${CLOUDFLARE_RECORD_ID}`;
+
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${CLOUDFLARE_TOKEN}` },
+  });
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(`Cloudflare API error: ${JSON.stringify(data.errors)}`);
+  }
+
+  return data.result;
+}
+
+/**
+ * Met à jour le record DNS Cloudflare
+ */
+async function updateCloudflareDNS(type, content) {
+  const url = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${CLOUDFLARE_RECORD_ID}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${CLOUDFLARE_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type,
+      name: DOMAIN_NAME,
+      content,
+      ttl: 60,
+      proxied: true,
+    }),
+  });
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(`Cloudflare API error: ${JSON.stringify(data.errors)}`);
+  }
+
+  console.log(`DNS mis à jour: ${DOMAIN_NAME} → ${type} ${content}`);
+  return data;
+}
+
+/**
+ * Récupère l'état actuel de l'EC2
+ */
+async function getInstanceState() {
+  const { Reservations } = await ec2.send(
+    new DescribeInstancesCommand({
+      InstanceIds: [EC2_INSTANCE_ID],
+    })
+  );
+
+  const instance = Reservations[0]?.Instances[0];
+  return {
+    state: instance?.State?.Name,
+    publicIp: instance?.PublicIpAddress,
+  };
+}
+
+/**
+ * Attend que l'instance atteigne l'état désiré
+ */
+async function waitForInstanceState(targetState, maxAttempts = 40) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const { state, publicIp } = await getInstanceState();
+    console.log(`Instance state: ${state} (attempt ${i + 1}/${maxAttempts})`);
+
+    if (state === targetState) {
+      return { state, publicIp };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+
+  throw new Error(`Instance n'a pas atteint l'état ${targetState}`);
+}
+
+/**
+ * Détermine si on est actuellement en mode failover
+ * (le DNS pointe vers un A record au lieu du CNAME tunnel)
+ */
+async function isInFailoverMode() {
+  const record = await getCurrentDNSRecord();
+  console.log(`DNS actuel: ${record.type} → ${record.content}`);
+  return record.type === "A";
+}
+
+/**
+ * Démarre le failover : EC2 start + DNS CNAME → A record
+ */
+async function startFailover() {
+  console.log("=== DÉMARRAGE DU FAILOVER ===");
+
+  const { state } = await getInstanceState();
+
+  if (state === "running") {
+    console.log("EC2 déjà running, vérification du DNS...");
+    const { publicIp } = await getInstanceState();
+    if (publicIp) {
+      await updateCloudflareDNS("A", publicIp);
+    }
+    return { action: "dns_update_only" };
+  }
+
+  if (state !== "stopped") {
+    console.log(`EC2 dans l'état ${state}, attente du stop...`);
+    await waitForInstanceState("stopped");
+  }
+
+  // Démarrer l'instance
+  console.log(`Démarrage de l'instance ${EC2_INSTANCE_ID}...`);
+  await ec2.send(
+    new StartInstancesCommand({ InstanceIds: [EC2_INSTANCE_ID] })
+  );
+
+  // Attendre que l'instance soit running
+  const { publicIp } = await waitForInstanceState("running");
+  console.log(`Instance démarrée avec IP: ${publicIp}`);
+
+  // Attendre que l'app démarre (on-boot.sh restore DB + start)
+  console.log("Attente de 90s pour le démarrage de l'application...");
+  await new Promise((resolve) => setTimeout(resolve, 90000));
+
+  // Basculer le DNS : CNAME tunnel → A record EC2
+  await updateCloudflareDNS("A", publicIp);
+
+  console.log("=== FAILOVER ACTIVÉ ===");
+  return { action: "failover_started", ip: publicIp };
+}
+
+/**
+ * Déclenche un backup final de la DB sur l'EC2 via SSM RunCommand
+ * Attend la fin de l'exécution avant de retourner
+ */
+async function triggerFinalBackup() {
+  console.log("Déclenchement du backup final de la DB sur EC2...");
+
+  try {
+    const { Command } = await ssm.send(
+      new SendCommandCommand({
+        InstanceIds: [EC2_INSTANCE_ID],
+        DocumentName: "AWS-RunShellScript",
+        Parameters: {
+          commands: ["/opt/auformat-next/infra/scripts/backup-db-ec2.sh"],
+        },
+        TimeoutSeconds: 120,
+      })
+    );
+
+    const commandId = Command.CommandId;
+    console.log(`SSM Command envoyée: ${commandId}`);
+
+    // Attendre la fin de la commande (max 60s)
+    for (let i = 0; i < 12; i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+
+      try {
+        const { Status, StatusDetails } = await ssm.send(
+          new GetCommandInvocationCommand({
+            CommandId: commandId,
+            InstanceId: EC2_INSTANCE_ID,
+          })
+        );
+
+        console.log(`SSM Command status: ${Status} (${StatusDetails})`);
+
+        if (Status === "Success") {
+          console.log("Backup final terminé avec succès");
+          return true;
+        }
+
+        if (["Failed", "Cancelled", "TimedOut"].includes(Status)) {
+          console.error(`Backup final échoué: ${StatusDetails}`);
+          return false;
+        }
+      } catch (invocationError) {
+        // InvocationDoesNotExist = pas encore prêt, on attend
+        if (invocationError.name !== "InvocationDoesNotExist") {
+          throw invocationError;
+        }
+      }
+    }
+
+    console.error("Backup final: timeout après 60s");
+    return false;
+  } catch (error) {
+    console.error("Erreur SSM RunCommand:", error.message);
+    return false;
+  }
+}
+
+/**
+ * Arrête le failover : backup final + DNS A record → CNAME tunnel + EC2 stop
+ */
+async function stopFailover() {
+  console.log("=== ARRÊT DU FAILOVER ===");
+
+  // 1. Backup final de la DB avant de couper
+  const backupOk = await triggerFinalBackup();
+  if (!backupOk) {
+    console.warn("ATTENTION: le backup final a échoué, on continue quand même");
+  }
+
+  // 2. Remettre le DNS vers le tunnel Cloudflare
+  await updateCloudflareDNS("CNAME", TUNNEL_CNAME);
+  console.log("DNS remis vers le Cloudflare Tunnel");
+
+  // 3. Attendre un peu avant de stopper
+  console.log("Attente de 30s avant arrêt de l'EC2...");
+  await new Promise((resolve) => setTimeout(resolve, 30000));
+
+  // 4. Stopper l'instance EC2
+  await ec2.send(
+    new StopInstancesCommand({ InstanceIds: [EC2_INSTANCE_ID] })
+  );
+
+  console.log("=== FAILOVER DÉSACTIVÉ ===");
+  return { action: "failover_stopped", backupOk };
+}
+
+/**
+ * Handler principal - invoqué par EventBridge toutes les 2 minutes
+ */
+export async function handler() {
+  console.log(`=== Check failover - ${new Date().toISOString()} ===`);
+
+  try {
+    const serverAlive = await isHomeServerAlive();
+    const inFailover = await isInFailoverMode();
+
+    console.log(`Serveur maison: ${serverAlive ? "UP" : "DOWN"}`);
+    console.log(`Mode failover: ${inFailover ? "ACTIF" : "INACTIF"}`);
+
+    if (!serverAlive && !inFailover) {
+      // Serveur down + pas encore en failover → DÉMARRER
+      return await startFailover();
+    }
+
+    if (serverAlive && inFailover) {
+      // Serveur de retour + encore en failover → ARRÊTER
+      return await stopFailover();
+    }
+
+    // Rien à faire
+    console.log("Aucune action nécessaire");
+    return { action: "no_change", serverAlive, inFailover };
+  } catch (error) {
+    console.error("Erreur:", error);
+    throw error;
+  }
+}

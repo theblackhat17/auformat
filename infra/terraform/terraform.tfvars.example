@@ -1,0 +1,63 @@
+# ============================================
+# Au Format - Failover AWS Configuration
+# ============================================
+# Copier ce fichier en terraform.tfvars et remplir les valeurs
+# cp terraform.tfvars.example terraform.tfvars
+
+# --- AWS ---
+aws_region = "eu-west-3" # Paris
+
+# --- Cloudflare ---
+# Dashboard > auformat.com > Overview (colonne droite) > Zone ID
+cloudflare_zone_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# API Token : Dashboard > My Profile > API Tokens > Create Token
+# Template: "Edit zone DNS" > Zone: auformat.com
+cloudflare_api_token = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Record ID du CNAME tunnel :
+# curl -s -X GET "https://api.cloudflare.com/client/v4/zones/ZONE_ID/dns_records?type=CNAME&name=auformat.com" \
+#   -H "Authorization: Bearer TOKEN" | python3 -c "import json,sys; print(json.load(sys.stdin)['result'][0]['id'])"
+cloudflare_record_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# CNAME du Cloudflare Tunnel (la valeur "content" du CNAME record)
+tunnel_cname = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.cfargotunnel.com"
+
+# --- Heartbeat ---
+# Délai max en secondes avant de considérer le serveur down (défaut: 300 = 5 min)
+# heartbeat_max_age_seconds = 300
+
+# --- EC2 ---
+# Clé SSH publique (cat ~/.ssh/id_ed25519.pub)
+ssh_public_key = "ssh-ed25519 AAAA..."
+
+# Ton IP maison pour accès SSH (format CIDR)
+ssh_allowed_ip = "xxx.xxx.xxx.xxx/32"
+
+# --- Base de données ---
+db_name     = "auformat_db"
+db_user     = "auformat_user"
+db_password = "CHANGE_ME_STRONG_PASSWORD"
+
+# --- Secrets App ---
+# Copier depuis ton .env.local
+jwt_secret         = ""
+better_auth_secret = ""
+
+# --- SMTP (ProtonMail) ---
+smtp_host = "smtp.protonmail.ch"
+smtp_port = "587"
+smtp_user = "contact@auformat.com"
+smtp_pass = ""
+smtp_from = "contact@auformat.com"
+
+# --- Google OAuth ---
+google_client_id     = ""
+google_client_secret = ""
+
+# --- GitHub ---
+github_repo = "https://github.com/theblackhat17/auformat.git"
+
+# --- S3 ---
+# Doit être unique globalement - ajouter un suffixe si nécessaire
+backup_bucket_name = "auformat-failover-backups"

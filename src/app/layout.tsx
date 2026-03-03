@@ -7,6 +7,13 @@ import './globals.css';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.auformat.com'),
+  icons: {
+    icon: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+  },
   title: {
     default: 'Au Format | Menuiserie sur mesure a Cysoing (Lille) et Montreuil-sur-Mer (Le Touquet)',
     template: '%s | Au Format - Menuiserie sur mesure',
