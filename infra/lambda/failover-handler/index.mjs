@@ -30,11 +30,10 @@ const ec2 = new EC2Client({ region: EC2_REGION });
 const s3 = new S3Client({ region: EC2_REGION });
 const ssm = new SSMClient({ region: EC2_REGION });
 
-const MAX_AGE = parseInt(HEARTBEAT_MAX_AGE_SECONDS || "300", 10); // 5 min par défaut
+const MAX_AGE = parseInt(HEARTBEAT_MAX_AGE_SECONDS || "300", 10);
 
 /**
  * Vérifie le heartbeat S3 pour savoir si le serveur maison est vivant
- * Retourne true si le serveur est UP (heartbeat récent)
  */
 async function isHomeServerAlive() {
   try {
@@ -51,7 +50,7 @@ async function isHomeServerAlive() {
     return ageSeconds < MAX_AGE;
   } catch (error) {
     console.error("Impossible de lire le heartbeat:", error.message);
-    return false; // Pas de heartbeat = serveur down
+    return false;
   }
 }
 
@@ -74,9 +73,9 @@ async function getCurrentDNSRecord() {
 }
 
 /**
- * Met à jour le record DNS Cloudflare
+ * Met à jour le record DNS Cloudflare (A record vers une IP)
  */
-async function updateCloudflareDNS(type, content) {
+async function setDNStoEC2(ip) {
   const url = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${CLOUDFLARE_RECORD_ID}`;
 
   const response = await fetch(url, {
@@ -86,9 +85,9 @@ async function updateCloudflareDNS(type, content) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      type,
+      type: "A",
       name: DOMAIN_NAME,
-      content,
+      content: ip,
       ttl: 60,
       proxied: true,
     }),
@@ -99,7 +98,37 @@ async function updateCloudflareDNS(type, content) {
     throw new Error(`Cloudflare API error: ${JSON.stringify(data.errors)}`);
   }
 
-  console.log(`DNS mis à jour: ${DOMAIN_NAME} → ${type} ${content}`);
+  console.log(`DNS mis à jour: ${DOMAIN_NAME} → A ${ip}`);
+  return data;
+}
+
+/**
+ * Remet le DNS vers le Cloudflare Tunnel (CNAME)
+ */
+async function setDNStoTunnel() {
+  const url = `https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/dns_records/${CLOUDFLARE_RECORD_ID}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${CLOUDFLARE_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      type: "CNAME",
+      name: DOMAIN_NAME,
+      content: TUNNEL_CNAME,
+      ttl: 60,
+      proxied: true,
+    }),
+  });
+
+  const data = await response.json();
+  if (!data.success) {
+    throw new Error(`Cloudflare API error: ${JSON.stringify(data.errors)}`);
+  }
+
+  console.log(`DNS mis à jour: ${DOMAIN_NAME} → CNAME ${TUNNEL_CNAME}`);
   return data;
 }
 
@@ -139,35 +168,82 @@ async function waitForInstanceState(targetState, maxAttempts = 40) {
 }
 
 /**
- * Détermine si on est actuellement en mode failover
- * (le DNS pointe vers un A record au lieu du CNAME tunnel)
+ * Détermine l'état du système failover en croisant DNS type + EC2 state.
+ *
+ * Normal:    DNS = CNAME tunnel, EC2 stopped
+ * Failover:  DNS = A (EC2 IP),   EC2 running
+ * Stale:     DNS = A,            EC2 stopped  → needs cleanup
  */
-async function isInFailoverMode() {
+async function getFailoverStatus() {
   const record = await getCurrentDNSRecord();
   console.log(`DNS actuel: ${record.type} → ${record.content}`);
-  return record.type === "A";
+
+  const { state: ec2State, publicIp: ec2Ip } = await getInstanceState();
+  console.log(`EC2 state: ${ec2State}${ec2Ip ? ` (IP: ${ec2Ip})` : ""}`);
+
+  const dnsIsCname = record.type === "CNAME";
+  const ec2Running = ec2State === "running";
+
+  // Failover actif SEULEMENT si DNS est A record ET EC2 est running
+  const inFailover = !dnsIsCname && ec2Running;
+
+  if (!dnsIsCname && !ec2Running) {
+    console.log("ÉTAT INCOHÉRENT: DNS en A record mais EC2 stoppé → nettoyage requis");
+  }
+
+  return { inFailover, dnsIsCname, ec2State, ec2Running, ec2Ip };
 }
 
 /**
- * Démarre le failover : EC2 start + DNS CNAME → A record
+ * Vérifie que l'app sur l'EC2 est accessible (health check HTTP)
+ */
+async function checkEC2Health(ip) {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const response = await fetch(`http://${ip}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    const ok = response.status >= 200 && response.status < 500;
+    console.log(`Health check EC2 (${ip}): HTTP ${response.status} → ${ok ? "OK" : "KO"}`);
+    return ok;
+  } catch (error) {
+    console.log(`Health check EC2 (${ip}): ÉCHEC (${error.message})`);
+    return false;
+  }
+}
+
+/**
+ * Démarre le failover : EC2 start + DNS CNAME → A record EC2
  */
 async function startFailover() {
   console.log("=== DÉMARRAGE DU FAILOVER ===");
 
   const { state } = await getInstanceState();
 
-  if (state === "running") {
-    console.log("EC2 déjà running, vérification du DNS...");
-    const { publicIp } = await getInstanceState();
-    if (publicIp) {
-      await updateCloudflareDNS("A", publicIp);
-    }
-    return { action: "dns_update_only" };
-  }
-
   if (state !== "stopped") {
-    console.log(`EC2 dans l'état ${state}, attente du stop...`);
-    await waitForInstanceState("stopped");
+    if (state === "running") {
+      console.log("EC2 déjà running, vérification que l'app répond...");
+      const { publicIp } = await getInstanceState();
+      if (publicIp) {
+        const healthy = await checkEC2Health(publicIp);
+        if (healthy) {
+          await setDNStoEC2(publicIp);
+          return { action: "dns_update_only", ip: publicIp };
+        }
+        console.log("EC2 running mais app non accessible, on stoppe et redémarre...");
+        await ec2.send(
+          new StopInstancesCommand({ InstanceIds: [EC2_INSTANCE_ID] })
+        );
+        await waitForInstanceState("stopped");
+      }
+    } else {
+      console.log(`EC2 dans l'état ${state}, attente du stop...`);
+      await waitForInstanceState("stopped");
+    }
   }
 
   // Démarrer l'instance
@@ -185,7 +261,7 @@ async function startFailover() {
   await new Promise((resolve) => setTimeout(resolve, 90000));
 
   // Basculer le DNS : CNAME tunnel → A record EC2
-  await updateCloudflareDNS("A", publicIp);
+  await setDNStoEC2(publicIp);
 
   console.log("=== FAILOVER ACTIVÉ ===");
   return { action: "failover_started", ip: publicIp };
@@ -193,7 +269,6 @@ async function startFailover() {
 
 /**
  * Déclenche un backup final de la DB sur l'EC2 via SSM RunCommand
- * Attend la fin de l'exécution avant de retourner
  */
 async function triggerFinalBackup() {
   console.log("Déclenchement du backup final de la DB sur EC2...");
@@ -213,7 +288,6 @@ async function triggerFinalBackup() {
     const commandId = Command.CommandId;
     console.log(`SSM Command envoyée: ${commandId}`);
 
-    // Attendre la fin de la commande (max 60s)
     for (let i = 0; i < 12; i++) {
       await new Promise((resolve) => setTimeout(resolve, 5000));
 
@@ -237,7 +311,6 @@ async function triggerFinalBackup() {
           return false;
         }
       } catch (invocationError) {
-        // InvocationDoesNotExist = pas encore prêt, on attend
         if (invocationError.name !== "InvocationDoesNotExist") {
           throw invocationError;
         }
@@ -253,7 +326,7 @@ async function triggerFinalBackup() {
 }
 
 /**
- * Arrête le failover : backup final + DNS A record → CNAME tunnel + EC2 stop
+ * Arrête le failover : backup final + DNS A → CNAME tunnel + EC2 stop
  */
 async function stopFailover() {
   console.log("=== ARRÊT DU FAILOVER ===");
@@ -264,8 +337,8 @@ async function stopFailover() {
     console.warn("ATTENTION: le backup final a échoué, on continue quand même");
   }
 
-  // 2. Remettre le DNS vers le tunnel Cloudflare
-  await updateCloudflareDNS("CNAME", TUNNEL_CNAME);
+  // 2. Remettre le DNS vers le Cloudflare Tunnel
+  await setDNStoTunnel();
   console.log("DNS remis vers le Cloudflare Tunnel");
 
   // 3. Attendre un peu avant de stopper
@@ -289,7 +362,7 @@ export async function handler() {
 
   try {
     const serverAlive = await isHomeServerAlive();
-    const inFailover = await isInFailoverMode();
+    const { inFailover, dnsIsCname, ec2Running } = await getFailoverStatus();
 
     console.log(`Serveur maison: ${serverAlive ? "UP" : "DOWN"}`);
     console.log(`Mode failover: ${inFailover ? "ACTIF" : "INACTIF"}`);
@@ -302,6 +375,13 @@ export async function handler() {
     if (serverAlive && inFailover) {
       // Serveur de retour + encore en failover → ARRÊTER
       return await stopFailover();
+    }
+
+    // Nettoyage : serveur UP, DNS en A record (stale) mais EC2 stoppé
+    if (serverAlive && !dnsIsCname && !ec2Running) {
+      console.log("Nettoyage: DNS stale en A record, remise vers tunnel CNAME...");
+      await setDNStoTunnel();
+      return { action: "dns_cleanup" };
     }
 
     // Rien à faire

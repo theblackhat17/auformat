@@ -17,6 +17,13 @@ BUCKET="${BUCKET_NAME:-auformat-failover-backups}"
 DB_NAME="${DB_NAME:-auformat_db}"
 DB_USER="${DB_USER:-auformat_user}"
 
+# --- 0. Auto-update : télécharger la dernière version des scripts depuis S3 ---
+echo "[0/6] Mise à jour des scripts depuis S3..."
+mkdir -p "$APP_DIR/infra/scripts"
+aws s3 cp "s3://${BUCKET}/scripts/on-boot.sh" "$APP_DIR/infra/scripts/on-boot.sh" --region "$AWS_REGION" 2>/dev/null || echo "Pas de script mis à jour dans S3"
+aws s3 cp "s3://${BUCKET}/scripts/backup-db-ec2.sh" "$APP_DIR/infra/scripts/backup-db-ec2.sh" --region "$AWS_REGION" 2>/dev/null || true
+chmod +x "$APP_DIR/infra/scripts/"*.sh 2>/dev/null || true
+
 # --- 1. Récupérer les secrets depuis SSM ---
 echo "[1/5] Récupération des secrets depuis SSM..."
 
@@ -88,26 +95,37 @@ else
   echo "ERREUR: Pas de backup trouvé dans S3"
 fi
 
-# --- 3. Télécharger le build standalone ---
+# --- 3. Télécharger le build depuis S3 ---
 echo "[3/5] Téléchargement du build depuis S3..."
+
+mkdir -p "$APP_DIR/.next"
 
 # Standalone build
 aws s3 cp "s3://${BUCKET}/build/standalone.tar.gz" /tmp/standalone.tar.gz --region "$AWS_REGION"
 if [ -f /tmp/standalone.tar.gz ]; then
-  # Nettoyer l'ancien build
   rm -rf "$APP_DIR/.next/standalone"
-  mkdir -p "$APP_DIR/.next"
   tar xzf /tmp/standalone.tar.gz -C "$APP_DIR/.next/"
   rm -f /tmp/standalone.tar.gz
+  echo "Build standalone restauré"
+else
+  echo "ERREUR: Pas de build standalone trouvé dans S3"
+fi
 
-  # Copier les static files
-  if [ -d "$APP_DIR/.next/static" ]; then
+# Static files (CSS, JS chunks — requis par Nginx et le standalone server)
+aws s3 cp "s3://${BUCKET}/build/static.tar.gz" /tmp/static.tar.gz --region "$AWS_REGION"
+if [ -f /tmp/static.tar.gz ]; then
+  rm -rf "$APP_DIR/.next/static"
+  tar xzf /tmp/static.tar.gz -C "$APP_DIR/.next/"
+  rm -f /tmp/static.tar.gz
+
+  # Copier aussi dans le standalone pour que Next.js les serve
+  if [ -d "$APP_DIR/.next/standalone/.next" ]; then
     cp -r "$APP_DIR/.next/static" "$APP_DIR/.next/standalone/.next/"
   fi
 
-  echo "Build standalone restauré"
+  echo "Static files restaurés"
 else
-  echo "ERREUR: Pas de build trouvé dans S3"
+  echo "ERREUR: Pas de static files trouvés dans S3"
 fi
 
 # Public assets
@@ -129,8 +147,19 @@ echo "$CRON_LINE" > /etc/cron.d/auformat-failover-backup
 chmod 644 /etc/cron.d/auformat-failover-backup
 echo "Cron backup EC2 activé (*/5 min)"
 
-# --- 5. Créer ecosystem.config.js ---
+# --- 5. Créer ecosystem.config.js avec les variables d'environnement ---
 echo "[5/6] Configuration PM2..."
+
+# Lire toutes les vars de .env.local et les injecter dans la config PM2
+# (PM2 daemon ne hérite pas des vars du shell parent)
+ENV_BLOCK=""
+while IFS='=' read -r key value; do
+  # Ignorer les lignes vides et les commentaires
+  [[ -z "$key" || "$key" =~ ^# ]] && continue
+  # Échapper les quotes simples dans la valeur
+  escaped_value=$(echo "$value" | sed "s/'/\\\\'/g")
+  ENV_BLOCK="${ENV_BLOCK}      ${key}: '${escaped_value}',\n"
+done < "$APP_DIR/.env.local"
 
 cat > "$APP_DIR/ecosystem.config.js" << PMEOF
 module.exports = {
@@ -142,7 +171,7 @@ module.exports = {
       NODE_ENV: 'production',
       PORT: 3006,
       HOSTNAME: '0.0.0.0',
-    },
+$(echo -e "$ENV_BLOCK")    },
     max_memory_restart: '512M',
     error_file: '/var/log/auformat/error.log',
     out_file: '/var/log/auformat/out.log',
@@ -155,6 +184,12 @@ PMEOF
 # Symlink public si nécessaire
 ln -sfn "$APP_DIR/public" "$APP_DIR/.next/standalone/public" 2>/dev/null || true
 
+# Fixer les permissions pour ec2-user (PM2 tourne sous ce user)
+chown -R ec2-user:ec2-user /var/log/auformat/
+chown -R ec2-user:ec2-user "$APP_DIR/.next/"
+chown ec2-user:ec2-user "$APP_DIR/ecosystem.config.js"
+chown -R ec2-user:ec2-user "$APP_DIR/public" 2>/dev/null || true
+
 # --- 6. Démarrer l'application ---
 echo "[6/6] Démarrage de l'application..."
 
@@ -163,7 +198,7 @@ systemctl start nginx || true
 
 # Stopper l'ancien process PM2 s'il existe
 cd "$APP_DIR"
-sudo -u ec2-user bash -c "source $APP_DIR/.env.local && cd $APP_DIR && pm2 delete auformat 2>/dev/null || true && pm2 start ecosystem.config.js"
+sudo -u ec2-user bash -c "cd $APP_DIR && pm2 delete auformat 2>/dev/null || true && pm2 start ecosystem.config.js"
 
 # Health check
 sleep 5

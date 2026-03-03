@@ -33,8 +33,8 @@ else
 fi
 
 # Upload vers S3 (latest + archive)
-if aws s3 cp "$TMP_FILE" "s3://${BUCKET}/db/latest.sql.gz" --region "$REGION" --quiet && \
-   aws s3 cp "$TMP_FILE" "s3://${BUCKET}/db/archive/${TIMESTAMP}.sql.gz" --region "$REGION" --quiet; then
+if /usr/local/bin/aws s3 cp "$TMP_FILE" "s3://${BUCKET}/db/latest.sql.gz" --region "$REGION" --quiet && \
+   /usr/local/bin/aws s3 cp "$TMP_FILE" "s3://${BUCKET}/db/archive/${TIMESTAMP}.sql.gz" --region "$REGION" --quiet; then
   log "Upload S3 OK (latest + archive/${TIMESTAMP})"
 else
   log "ERREUR: Upload S3 a échoué"

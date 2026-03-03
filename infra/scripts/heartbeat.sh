@@ -8,4 +8,4 @@
 BUCKET="auformat-failover-backups"
 REGION="eu-west-3"
 
-echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | aws s3 cp - "s3://${BUCKET}/heartbeat.txt" --region "$REGION" --quiet 2>/dev/null
+echo "$(date -u +%Y-%m-%dT%H:%M:%SZ)" | /usr/local/bin/aws s3 cp - "s3://${BUCKET}/heartbeat.txt" --region "$REGION" --quiet 2>/dev/null
