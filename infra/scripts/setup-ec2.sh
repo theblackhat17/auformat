@@ -55,12 +55,26 @@ npm install -g pm2
 echo "[5/9] Installation Nginx..."
 dnf install -y nginx
 
-# Configuration Nginx (identique au serveur maison)
+# Générer un certificat auto-signé pour HTTPS (Cloudflare Full accepte les auto-signés)
+mkdir -p /etc/nginx/ssl
+openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  -keyout /etc/nginx/ssl/selfsigned.key \
+  -out /etc/nginx/ssl/selfsigned.crt \
+  -subj "/CN=auformat.com" 2>/dev/null
+echo "Certificat SSL auto-signé généré"
+
+# Configuration Nginx (HTTP + HTTPS pour Cloudflare proxied)
 cat > /etc/nginx/conf.d/auformat.conf << 'NGINX_CONF'
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
     server_name _;
+
+    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
 
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;

@@ -12,7 +12,7 @@ resource "aws_lambda_function" "failover_handler" {
   role          = aws_iam_role.lambda.arn
   handler       = "index.handler"
   runtime       = "nodejs22.x"
-  timeout       = 180
+  timeout       = 360
   memory_size   = 128
 
   filename         = data.archive_file.failover_handler.output_path

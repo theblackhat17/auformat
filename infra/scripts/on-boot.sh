@@ -18,11 +18,25 @@ DB_NAME="${DB_NAME:-auformat_db}"
 DB_USER="${DB_USER:-auformat_user}"
 
 # --- 0. Auto-update : télécharger la dernière version des scripts depuis S3 ---
-echo "[0/6] Mise à jour des scripts depuis S3..."
-mkdir -p "$APP_DIR/infra/scripts"
-aws s3 cp "s3://${BUCKET}/scripts/on-boot.sh" "$APP_DIR/infra/scripts/on-boot.sh" --region "$AWS_REGION" 2>/dev/null || echo "Pas de script mis à jour dans S3"
-aws s3 cp "s3://${BUCKET}/scripts/backup-db-ec2.sh" "$APP_DIR/infra/scripts/backup-db-ec2.sh" --region "$AWS_REGION" 2>/dev/null || true
-chmod +x "$APP_DIR/infra/scripts/"*.sh 2>/dev/null || true
+# Si ON_BOOT_UPDATED est set, on a déjà fait l'auto-update → skip
+if [ -z "${ON_BOOT_UPDATED:-}" ]; then
+  echo "[0/6] Mise à jour des scripts depuis S3..."
+  mkdir -p "$APP_DIR/infra/scripts"
+  aws s3 cp "s3://${BUCKET}/scripts/on-boot.sh" "$APP_DIR/infra/scripts/on-boot.sh.new" --region "$AWS_REGION" 2>/dev/null || true
+  aws s3 cp "s3://${BUCKET}/scripts/backup-db-ec2.sh" "$APP_DIR/infra/scripts/backup-db-ec2.sh" --region "$AWS_REGION" 2>/dev/null || true
+  chmod +x "$APP_DIR/infra/scripts/"*.sh 2>/dev/null || true
+
+  # Si une nouvelle version a été téléchargée, relancer le script avec celle-ci
+  if [ -f "$APP_DIR/infra/scripts/on-boot.sh.new" ]; then
+    mv "$APP_DIR/infra/scripts/on-boot.sh.new" "$APP_DIR/infra/scripts/on-boot.sh"
+    chmod +x "$APP_DIR/infra/scripts/on-boot.sh"
+    echo "Script mis à jour, relancement..."
+    export ON_BOOT_UPDATED=1
+    exec "$APP_DIR/infra/scripts/on-boot.sh"
+  fi
+else
+  echo "[0/6] Auto-update déjà fait, skip."
+fi
 
 # --- 1. Récupérer les secrets depuis SSM ---
 echo "[1/5] Récupération des secrets depuis SSM..."
@@ -142,6 +156,7 @@ echo "[4/6] Activation du backup cron EC2..."
 chmod +x /opt/auformat-next/infra/scripts/backup-db-ec2.sh 2>/dev/null || true
 
 # Ajouter le cron pour backup pendant le failover
+mkdir -p /etc/cron.d
 CRON_LINE="*/5 * * * * root BUCKET_NAME=${BUCKET} AWS_DEFAULT_REGION=${AWS_REGION} DB_NAME=${DB_NAME} /opt/auformat-next/infra/scripts/backup-db-ec2.sh"
 echo "$CRON_LINE" > /etc/cron.d/auformat-failover-backup
 chmod 644 /etc/cron.d/auformat-failover-backup
@@ -190,11 +205,89 @@ chown -R ec2-user:ec2-user "$APP_DIR/.next/"
 chown ec2-user:ec2-user "$APP_DIR/ecosystem.config.js"
 chown -R ec2-user:ec2-user "$APP_DIR/public" 2>/dev/null || true
 
-# --- 6. Démarrer l'application ---
-echo "[6/6] Démarrage de l'application..."
+# --- 6. Configurer Nginx avec HTTPS (requis par Cloudflare en mode Full) ---
+echo "[6/7] Configuration Nginx avec SSL..."
 
-# S'assurer que Nginx est démarré
-systemctl start nginx || true
+# Générer un certificat auto-signé si absent (Cloudflare Full accepte les auto-signés)
+SSL_DIR="/etc/nginx/ssl"
+if [ ! -f "$SSL_DIR/selfsigned.crt" ]; then
+  mkdir -p "$SSL_DIR"
+  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+    -keyout "$SSL_DIR/selfsigned.key" \
+    -out "$SSL_DIR/selfsigned.crt" \
+    -subj "/CN=auformat.com" 2>/dev/null
+  echo "Certificat SSL auto-signé généré"
+else
+  echo "Certificat SSL existant réutilisé"
+fi
+
+# Écrire la config Nginx complète (HTTP + HTTPS)
+cat > /etc/nginx/conf.d/auformat.conf << 'NGINX_CONF'
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
+    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript image/svg+xml;
+
+    location /_next/static/ {
+        alias /opt/auformat-next/.next/static/;
+        include /etc/nginx/mime.types;
+        expires 365d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /img/uploads/ {
+        alias /opt/auformat-next/public/img/uploads/;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    location /img/ {
+        proxy_pass http://127.0.0.1:3006;
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3006;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_buffering off;
+
+        proxy_hide_header Cache-Control;
+        add_header Cache-Control "private, no-cache, must-revalidate" always;
+    }
+
+    client_max_body_size 10M;
+}
+NGINX_CONF
+
+rm -f /etc/nginx/conf.d/default.conf
+
+# S'assurer que Nginx est démarré (ou redémarré pour prendre la nouvelle config)
+systemctl restart nginx || systemctl start nginx || true
 
 # Stopper l'ancien process PM2 s'il existe
 cd "$APP_DIR"

@@ -256,9 +256,29 @@ async function startFailover() {
   const { publicIp } = await waitForInstanceState("running");
   console.log(`Instance démarrée avec IP: ${publicIp}`);
 
-  // Attendre que l'app démarre (on-boot.sh restore DB + start)
-  console.log("Attente de 90s pour le démarrage de l'application...");
-  await new Promise((resolve) => setTimeout(resolve, 90000));
+  // Attendre que l'app soit prête (health check en boucle, max 5 min)
+  console.log("Attente du démarrage de l'application (health check toutes les 15s, max 5min)...");
+  const maxWaitMs = 300000; // 5 min
+  const intervalMs = 15000; // 15s
+  const startTime = Date.now();
+  let appReady = false;
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+    const healthy = await checkEC2Health(publicIp);
+    if (healthy) {
+      console.log(`Application prête après ${elapsed}s`);
+      appReady = true;
+      break;
+    }
+    console.log(`App pas encore prête (${elapsed}s écoulées), retry dans 15s...`);
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+
+  if (!appReady) {
+    console.error("TIMEOUT: l'application n'a pas démarré après 5 min. DNS non basculé.");
+    return { action: "failover_timeout", ip: publicIp };
+  }
 
   // Basculer le DNS : CNAME tunnel → A record EC2
   await setDNStoEC2(publicIp);
