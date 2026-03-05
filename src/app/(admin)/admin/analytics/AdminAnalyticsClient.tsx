@@ -220,12 +220,12 @@ function JourneyCard({ journey }: { journey: Journey }) {
     <div className="border border-gray-100 rounded-lg overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors text-left"
+        className="w-full flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-3 hover:bg-gray-50/50 transition-colors text-left gap-2 sm:gap-0"
       >
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-lg" title={journey.device}>{deviceIcon}</span>
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm flex-wrap">
               <span className="font-medium text-noir truncate">{entryPage}</span>
               {journey.pages.length > 1 && (
                 <>
@@ -234,23 +234,23 @@ function JourneyCard({ journey }: { journey: Journey }) {
                 </>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-noir/40 mt-0.5">
+            <div className="flex items-center gap-2 text-[11px] text-noir/40 mt-0.5 flex-wrap">
               <span>{flag}</span>
               <span>{journey.browser}</span>
               <span className="text-noir/20">|</span>
               <span>{journey.os}</span>
-              <span className="text-noir/20">|</span>
-              <span>{journey.screen}</span>
+              <span className="text-noir/20 hidden sm:inline">|</span>
+              <span className="hidden sm:inline">{journey.screen}</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="text-right">
+        <div className="flex items-center gap-3 flex-shrink-0 pl-8 sm:pl-0">
+          <div className="text-left sm:text-right">
             <p className="text-xs font-medium text-noir">{journey.views} pages</p>
             <p className="text-[10px] text-noir/40">{fmtTime(Math.round(duration))}</p>
           </div>
           <span className="text-[10px] text-noir/30">{fmtDateFull(journey.firstAt)}</span>
-          <svg className={`w-4 h-4 text-noir/30 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-4 h-4 text-noir/30 transition-transform ml-auto sm:ml-0 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </div>
@@ -344,12 +344,12 @@ export function AdminAnalyticsClient() {
             )}
           </p>
         </div>
-        <div className="flex bg-gray-100 rounded-lg p-0.5">
+        <div className="flex bg-gray-100 rounded-lg p-0.5 overflow-x-auto">
           {PERIODS.map((p) => (
             <button
               key={p.value}
               onClick={() => setPeriod(p.value)}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+              className={`px-3 py-1.5 text-sm rounded-md transition-colors whitespace-nowrap ${
                 period === p.value
                   ? 'bg-white text-noir font-medium shadow-sm'
                   : 'text-noir/50 hover:text-noir'
@@ -373,7 +373,7 @@ export function AdminAnalyticsClient() {
 
       {/* Loading */}
       {loading && !data && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <Card key={i} className="border-l-4 border-l-gray-200 animate-pulse" padding="sm">
               <div className="h-3 bg-gray-200 rounded w-16 mb-2" />
@@ -386,7 +386,7 @@ export function AdminAnalyticsClient() {
       {data && (
         <>
           {/* Stats row */}
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <StatCard label="Visiteurs" value={data.stats.visitors.value} prev={data.stats.visitors.prev} color="border-l-blue-500" icon={'\u{1F465}'} />
             <StatCard label="Pages vues" value={data.stats.pageviews.value} prev={data.stats.pageviews.prev} color="border-l-green-500" icon={'\u{1F4C4}'} />
             <StatCard label="Sessions" value={data.stats.visits.value} prev={data.stats.visits.prev} color="border-l-purple-500" icon={'\u{1F4CA}'} />
@@ -414,7 +414,7 @@ export function AdminAnalyticsClient() {
           )}
 
           {/* Tech & Geo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricsTable title="Navigateurs" data={data.browsers} labelHeader="Navigateur" icon={'\u{1F310}'} />
             <MetricsTable title="Appareils" data={data.devices} labelHeader="Type" icon={'\u{1F4BB}'} />
             <MetricsTable title="Langues" data={data.languages} labelHeader="Langue" icon={'\u{1F30D}'} />
