@@ -1,0 +1,19 @@
+services:
+  umami:
+    image: ghcr.io/umami-software/umami:latest
+    container_name: umami
+    network_mode: host
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@localhost:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      TRACKER_SCRIPT_NAME: stats.js
+      COLLECT_API_ENDPOINT: /api/collect
+      CLIENT_IP_HEADER: X-Forwarded-For
+      DISABLE_TELEMETRY: 1
+      PORT: 3001
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/api/heartbeat || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
