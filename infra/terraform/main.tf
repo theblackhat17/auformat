@@ -13,3 +13,9 @@ terraform {
 provider "aws" {
   region = var.aws_region
 }
+
+# Provider us-east-1 (requis pour les métriques de billing)
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}

@@ -144,6 +144,13 @@ variable "backup_bucket_name" {
   default     = "auformat-failover-backups"
 }
 
+# --- Alerting ---
+
+variable "alert_email" {
+  description = "Email pour recevoir les alertes CloudWatch"
+  type        = string
+}
+
 # --- Tags ---
 
 variable "project_tag" {

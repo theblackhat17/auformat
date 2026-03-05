@@ -44,6 +44,15 @@ resource "aws_security_group" "failover" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # HTTPS depuis partout (Cloudflare Full SSL mode)
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   # SSH restreint à l'IP maison
   ingress {
     description = "SSH"
