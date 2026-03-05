@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/umami",
+        destination: "http://localhost:3001/",
+      },
+      {
+        source: "/umami/:path*",
+        destination: "http://localhost:3001/:path*",
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -31,11 +43,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://apis.google.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://accounts.google.com https://apis.google.com https://www.auformat.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://*.googleusercontent.com",
-              "connect-src 'self' https://accounts.google.com https://apis.google.com",
+              "connect-src 'self' https://accounts.google.com https://apis.google.com https://www.auformat.com",
               "frame-src https://accounts.google.com",
               "object-src 'none'",
               "base-uri 'self'",

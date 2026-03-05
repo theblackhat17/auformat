@@ -218,6 +218,7 @@ export const NAV_LINKS = [
 // Admin navigation
 export const ADMIN_NAV_CRM = [
   { href: '/admin', label: 'Dashboard', icon: '📊' },
+  { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
   { href: '/admin/clients', label: 'Clients', icon: '👥' },
   { href: '/admin/devis', label: 'Devis', icon: '📄' },
   { href: '/admin/logs', label: 'Logs', icon: '📋' },
