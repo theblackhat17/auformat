@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
+    <AuthProvider>
     <div className="min-h-screen bg-beige/30 flex flex-col">
       <div className="p-4">
         <Link href="/" className="text-sm text-noir/50 hover:text-vert-foret transition-colors inline-flex items-center gap-1">
@@ -15,5 +17,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {children}
       </main>
     </div>
+    </AuthProvider>
   );
 }

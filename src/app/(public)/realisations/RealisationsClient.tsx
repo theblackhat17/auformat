@@ -50,7 +50,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
       <div className="flex flex-wrap gap-2 mb-10">
         <button
           onClick={() => setActiveCategory('all')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === 'all' ? 'bg-vert-foret text-white' : 'bg-beige text-bois-fonce hover:bg-beige/80'}`}
+          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === 'all' ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}
         >
           Tous
         </button>
@@ -58,7 +58,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-vert-foret text-white' : 'bg-beige text-bois-fonce hover:bg-beige/80'}`}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}
           >
             {categoryLabels[cat] || cat}
           </button>
@@ -107,7 +107,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
               </div>
             )}
             <div className="flex flex-wrap gap-3">
-              <span className="text-xs font-medium bg-beige text-bois-fonce px-3 py-1 rounded-full">{categoryLabels[selectedItem.category] || selectedItem.category}</span>
+              <span className="text-xs font-medium bg-beige text-noir/70 px-3 py-1 rounded-full">{categoryLabels[selectedItem.category] || selectedItem.category}</span>
               {selectedItem.duration && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Duree: {selectedItem.duration}</span>}
               {selectedItem.surface && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Surface: {selectedItem.surface}</span>}
               {(selectedItem.materialName || selectedItem.material) && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Materiau: {selectedItem.materialName || selectedItem.material}</span>}

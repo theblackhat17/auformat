@@ -80,6 +80,9 @@ export const ACTION_TYPE_LABELS: Record<string, string> = {
   update_content: 'Modification contenu',
   update_configurateur: 'Modification configurateur',
   update_seo: 'Modification SEO',
+  create_article: 'Création article',
+  update_article: 'Modification article',
+  delete_article: 'Suppression article',
   export_data: 'Export données',
   view_page: 'Consultation page',
   error: 'Erreur',
@@ -105,6 +108,7 @@ export const TARGET_TYPE_LABELS: Record<string, string> = {
   page_content: 'Contenu',
   configurateur: 'Configurateur',
   seo: 'SEO',
+  article: 'Article',
 };
 
 export const ACTION_TYPE_ICONS: Record<string, string> = {
@@ -141,6 +145,9 @@ export const ACTION_TYPE_ICONS: Record<string, string> = {
   update_content: '📝',
   update_configurateur: '🔧',
   update_seo: '🔍',
+  create_article: '📰',
+  update_article: '✏️',
+  delete_article: '🗑️',
   export_data: '📊',
   view_page: '👁️',
   error: '⚠️',
@@ -206,10 +213,13 @@ export const MATERIAL_CATEGORY_TITLES: Record<string, string> = {
 // Navigation links
 export const NAV_LINKS = [
   { href: '/configurateur', label: 'Configurateur' },
-  { href: '/homemade', label: 'Savoir-faire' },
+  { href: '/savoir-faire', label: 'Savoir-faire' },
   { href: '/realisations', label: 'Réalisations' },
   { href: '/processus', label: 'Processus' },
   { href: '/materiaux', label: 'Matériaux' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/menuiserie-lille', label: 'Atelier Lille' },
+  { href: '/menuiserie-le-touquet', label: 'Atelier Côte d\'Opale' },
   { href: '/avis', label: 'Avis' },
   { href: '/contact', label: 'Contact' },
   { href: '/about', label: 'À propos' },
@@ -228,6 +238,8 @@ export const ADMIN_NAV_CONTENT = [
   { href: '/admin/parametres', label: 'Paramètres', icon: '⚙️' },
   { href: '/admin/contenu', label: 'Pages', icon: '📝' },
   { href: '/admin/categories', label: 'Catégories', icon: '🏷️' },
+  { href: '/admin/services', label: 'Services', icon: '🔧' },
+  { href: '/admin/articles', label: 'Blog', icon: '📰' },
   { href: '/admin/realisations', label: 'Réalisations', icon: '🖼️' },
   { href: '/admin/avis', label: 'Avis', icon: '⭐' },
   { href: '/admin/materiaux', label: 'Matériaux', icon: '🪵' },

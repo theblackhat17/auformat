@@ -1,9 +1,11 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { getMateriauxGrouped, getCategories } from '@/lib/content';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/materiaux', {
@@ -38,11 +40,12 @@ export default async function MateriauxPage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Accueil', url: SITE_URL }, { name: 'Matériaux', url: `${SITE_URL}/materiaux` }])} />
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Nos essences</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">Matériaux</h1>
-          <p className="text-white/60 text-lg max-w-2xl">Des essences nobles et durables, sélectionnées pour leur qualité et leur beauté.</p>
+          <p className="text-white/80 text-lg max-w-2xl">Des essences nobles et durables, sélectionnées pour leur qualité et leur beauté.</p>
         </div>
       </section>
 
@@ -90,7 +93,7 @@ export default async function MateriauxPage() {
                       {m.usages && m.usages.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-gray-50">
                           {m.usages.map((u, j) => (
-                            <span key={j} className="text-xs bg-beige text-bois-fonce px-2 py-0.5 rounded">{u.usage}</span>
+                            <span key={j} className="text-xs bg-beige text-noir/70 px-2 py-0.5 rounded">{u.usage}</span>
                           ))}
                         </div>
                       )}

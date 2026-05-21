@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { ToastProvider } from '@/components/ui/Toast';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -11,11 +12,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <ToastProvider>
-      <div className="flex min-h-screen bg-gray-50">
-        <AdminSidebar />
-        <main className="flex-1 lg:ml-64 p-4 lg:p-8">{children}</main>
-      </div>
-    </ToastProvider>
+    <AuthProvider>
+      <ToastProvider>
+        <div className="flex min-h-screen bg-gray-50">
+          <AdminSidebar />
+          <main className="flex-1 lg:ml-64 p-4 lg:p-8">{children}</main>
+        </div>
+      </ToastProvider>
+    </AuthProvider>
   );
 }

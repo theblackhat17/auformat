@@ -103,8 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const defaultAuth: AuthContextType = {
+  isAuthenticated: false,
+  profile: null,
+  isLoading: false,
+  login: async () => ({ success: false, error: 'Auth not available' }),
+  register: async () => ({ success: false, error: 'Auth not available' }),
+  logout: async () => { window.location.href = '/'; },
+  refreshProfile: async () => {},
+};
+
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  return ctx ?? defaultAuth;
 }

@@ -1,4 +1,4 @@
-export const SITE_URL = 'https://www.auformat.com';
+export const SITE_URL = 'https://auformat.com';
 export const SITE_NAME = 'Au Format';
 export const DEFAULT_LOCALE = 'fr_FR';
 
@@ -11,8 +11,8 @@ export const LOCATIONS = {
     region: 'Hauts-de-France',
     department: 'Nord',
     nearCity: 'Lille',
-    lat: 50.5711,
-    lng: 3.2128,
+    lat: 50.57549,
+    lng: 3.21206,
     areaServed: ['Lille', 'Cysoing', 'Villeneuve-d\'Ascq', 'Roubaix', 'Tourcoing', 'Metropole lilloise', 'Nord'],
   },
   calotterie: {
@@ -23,8 +23,8 @@ export const LOCATIONS = {
     region: 'Hauts-de-France',
     department: 'Pas-de-Calais',
     nearCity: 'Le Touquet-Paris-Plage',
-    lat: 50.4628,
-    lng: 1.7614,
+    lat: 50.47213,
+    lng: 1.73850,
     areaServed: ['Montreuil-sur-Mer', 'Le Touquet-Paris-Plage', 'Boulogne-sur-Mer', 'Berck', 'Etaples', 'Côte d\'Opale', 'Pas-de-Calais'],
   },
 } as const;
@@ -36,6 +36,8 @@ export const EMAIL = 'contact@auformat.fr';
 export const SOCIALS = {
   instagram: 'https://www.instagram.com/auformat/',
   facebook: 'https://www.facebook.com/profile.php?id=100087409924806',
+  googleBusinessCysoing: 'https://www.google.com/maps/place/Au+format/@50.5754919,3.212056,17z/data=!3m1!4b1!4m6!3m5!1s0x47c2d139b2c06069:0x82a3d4bce3fdff91',
+  googleBusinessCalotterie: 'https://www.google.com/maps/place/Au+format/@50.4721322,1.7385005,17z/data=!3m1!4b1!4m6!3m5!1s0x47ddc5850eaa0a43:0xa15586d2b09b837e',
 };
 
 export const HOURS = {
@@ -49,25 +51,37 @@ import { getSeoMetadata } from './content';
 
 export async function buildPageMetadata(
   pagePath: string,
-  fallback: { title: string; description: string; keywords: string[]; ogTitle?: string; ogDescription?: string },
+  fallback: { title: string; description: string; keywords?: string[]; ogTitle?: string; ogDescription?: string },
 ): Promise<Metadata> {
   const seo = await getSeoMetadata(pagePath).catch(() => null);
 
   const title = seo?.metaTitle || fallback.title;
   const description = seo?.metaDescription || fallback.description;
-  const keywords = seo?.metaKeywords
-    ? seo.metaKeywords.split(',').map((k) => k.trim()).filter(Boolean)
-    : fallback.keywords;
+
+  const canonicalUrl = `${SITE_URL}${pagePath === '/' ? '' : pagePath}`;
 
   return {
     title,
     description,
-    keywords,
-    alternates: { canonical: `${SITE_URL}${pagePath === '/' ? '' : pagePath}` },
+    alternates: {
+      canonical: canonicalUrl,
+      languages: { 'fr': canonicalUrl },
+    },
     openGraph: {
+      type: 'website',
+      locale: DEFAULT_LOCALE,
+      siteName: SITE_NAME,
       title: fallback.ogTitle || title,
       description: fallback.ogDescription || description,
-      url: `${SITE_URL}${pagePath === '/' ? '' : pagePath}`,
+      url: canonicalUrl,
+      images: [
+        {
+          url: `${SITE_URL}/api/og?title=${encodeURIComponent(fallback.ogTitle || title)}&path=${encodeURIComponent(pagePath)}`,
+          width: 1200,
+          height: 630,
+          alt: fallback.ogTitle || title,
+        },
+      ],
     },
   };
 }

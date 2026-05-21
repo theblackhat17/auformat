@@ -466,7 +466,26 @@ export interface SiteSettings {
   facebook: string | null;
   heroBackground: string | null;
   configurateurEnabled: boolean;
+  colorBoisClair: string;
+  colorBoisFonce: string;
+  colorVertForet: string;
+  colorVertForetDark: string;
+  colorBeige: string;
+  colorNoir: string;
+  colorBlanc: string;
 }
+
+export const DEFAULT_THEME_COLORS = {
+  colorBoisClair: '#D4A574',
+  colorBoisFonce: '#8B6F47',
+  colorVertForet: '#2C5F2D',
+  colorVertForetDark: '#234a24',
+  colorBeige: '#F5F1E8',
+  colorNoir: '#2B2B2B',
+  colorBlanc: '#FFFFFF',
+} as const;
+
+export type ThemeColors = typeof DEFAULT_THEME_COLORS;
 
 export interface Category {
   id: string;
@@ -495,6 +514,63 @@ export interface Upload {
   path: string;
   uploadedBy: string | null;
   createdAt: string;
+}
+
+// =============================================
+// Services
+// =============================================
+
+export interface Service {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle: string | null;
+  icon: string | null;
+  shortDescription: string | null;
+  image: string | null;
+  content: {
+    intro?: string;
+    features?: { title: string; desc: string }[];
+    body?: string;
+    cta_title?: string;
+    cta_text?: string;
+  };
+  metaTitle: string | null;
+  metaDescription: string | null;
+  metaKeywords: string | null;
+  sortOrder: number;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// =============================================
+// Blog articles
+// =============================================
+
+export interface Article {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content: string; // markdown
+  coverImage: string | null;
+  categoryId: string | null;
+  authorId: string | null;
+  readingTime: number;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  metaKeywords: string | null;
+  published: boolean;
+  publishedAt: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  // joined fields
+  categorySlug?: string | null;
+  categoryLabel?: string | null;
+  categoryIcon?: string | null;
+  authorName?: string | null;
 }
 
 // =============================================

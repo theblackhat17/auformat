@@ -7,7 +7,12 @@ export function organizationJsonLd() {
     '@id': `${SITE_URL}/#organization`,
     name: SITE_NAME,
     url: SITE_URL,
-    logo: `${SITE_URL}/img/logo_tmp.png`,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${SITE_URL}/img/logo_tmp.png`,
+      width: 200,
+      height: 65,
+    },
     description: 'Menuiserie et agencement sur mesure dans le Nord et le Pas-de-Calais. Fabrication artisanale de meubles, dressings, cuisines et agencements en bois massif.',
     email: EMAIL,
     telephone: PHONE_INTL,
@@ -17,7 +22,7 @@ export function organizationJsonLd() {
         streetAddress: LOCATIONS.cysoing.streetAddress,
         addressLocality: LOCATIONS.cysoing.city,
         postalCode: LOCATIONS.cysoing.postalCode,
-        addressRegion: LOCATIONS.cysoing.department,
+        addressRegion: LOCATIONS.cysoing.region,
         addressCountry: 'FR',
       },
       {
@@ -25,11 +30,16 @@ export function organizationJsonLd() {
         streetAddress: LOCATIONS.calotterie.streetAddress,
         addressLocality: LOCATIONS.calotterie.city,
         postalCode: LOCATIONS.calotterie.postalCode,
-        addressRegion: LOCATIONS.calotterie.department,
+        addressRegion: LOCATIONS.calotterie.region,
         addressCountry: 'FR',
       },
     ],
-    sameAs: [SOCIALS.instagram, SOCIALS.facebook],
+    sameAs: [
+      SOCIALS.instagram,
+      SOCIALS.facebook,
+      SOCIALS.googleBusinessCysoing,
+      SOCIALS.googleBusinessCalotterie,
+    ].filter(Boolean),
     knowsAbout: [
       'menuiserie sur mesure', 'ebenisterie', 'agencement interieur',
       'meuble bois massif', 'dressing sur mesure', 'cuisine bois',
@@ -38,7 +48,12 @@ export function organizationJsonLd() {
   };
 }
 
-function buildLocalBusiness(key: 'cysoing' | 'calotterie') {
+interface AggregateRatingData {
+  ratingValue: number;
+  reviewCount: number;
+}
+
+function buildLocalBusiness(key: 'cysoing' | 'calotterie', rating?: AggregateRatingData) {
   const loc = LOCATIONS[key];
   return {
     '@context': 'https://schema.org',
@@ -46,7 +61,7 @@ function buildLocalBusiness(key: 'cysoing' | 'calotterie') {
     '@id': `${SITE_URL}/#${key}`,
     name: loc.name,
     image: `${SITE_URL}/img/logo_tmp.png`,
-    url: SITE_URL,
+    url: key === 'cysoing' ? `${SITE_URL}/menuiserie-lille` : `${SITE_URL}/menuiserie-le-touquet`,
     telephone: PHONE_INTL,
     email: EMAIL,
     address: {
@@ -70,18 +85,30 @@ function buildLocalBusiness(key: 'cysoing' | 'calotterie') {
         closes: '18:00',
       },
     ],
-    areaServed: loc.areaServed.map((name) => ({ '@type': 'City', name })),
+    areaServed: loc.areaServed.map((name) => {
+      const nonCities = ['Metropole lilloise', 'Nord', 'Côte d\'Opale', 'Pas-de-Calais'];
+      return { '@type': nonCities.includes(name) ? 'AdministrativeArea' : 'City', name };
+    }),
     priceRange: '$$',
-    parentOrganization: { '@id': `${SITE_URL}/#organization` },
+    branchOf: { '@id': `${SITE_URL}/#organization` },
+    ...(rating && rating.reviewCount > 0 ? {
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: rating.ratingValue,
+        bestRating: 5,
+        worstRating: 1,
+        reviewCount: rating.reviewCount,
+      },
+    } : {}),
   };
 }
 
-export function localBusinessCysoingJsonLd() {
-  return buildLocalBusiness('cysoing');
+export function localBusinessCysoingJsonLd(rating?: AggregateRatingData) {
+  return buildLocalBusiness('cysoing', rating);
 }
 
-export function localBusinessCalotterieJsonLd() {
-  return buildLocalBusiness('calotterie');
+export function localBusinessCalotterieJsonLd(rating?: AggregateRatingData) {
+  return buildLocalBusiness('calotterie', rating);
 }
 
 export function websiteJsonLd() {
@@ -107,6 +134,33 @@ export function breadcrumbJsonLd(items: { name: string; url: string }[]) {
       name: item.name,
       item: item.url,
     })),
+  };
+}
+
+export function serviceJsonLd(services: { name: string; description: string; url: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    '@id': `${SITE_URL}/#services`,
+    provider: { '@id': `${SITE_URL}/#organization` },
+    serviceType: 'Menuiserie sur mesure',
+    areaServed: [
+      ...LOCATIONS.cysoing.areaServed.map((name) => ({ '@type': 'City', name })),
+      ...LOCATIONS.calotterie.areaServed.map((name) => ({ '@type': 'City', name })),
+    ],
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Services de menuiserie sur mesure',
+      itemListElement: services.map((s) => ({
+        '@type': 'Offer',
+        itemOffered: {
+          '@type': 'Service',
+          name: s.name,
+          description: s.description,
+          url: s.url,
+        },
+      })),
+    },
   };
 }
 

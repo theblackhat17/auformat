@@ -38,11 +38,11 @@ export function AvisClient({ avis }: { avis: Avis[] }) {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 mb-8">
-        <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === 'all' ? 'bg-vert-foret text-white' : 'bg-beige text-bois-fonce hover:bg-beige/80'}`}>
+        <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === 'all' ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}>
           Tous
         </button>
         {projectTypes.map((type) => (
-          <button key={type} onClick={() => setFilter(type)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === type ? 'bg-vert-foret text-white' : 'bg-beige text-bois-fonce hover:bg-beige/80'}`}>
+          <button key={type} onClick={() => setFilter(type)} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === type ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}>
             {type}
           </button>
         ))}
@@ -58,7 +58,7 @@ export function AvisClient({ avis }: { avis: Avis[] }) {
             </div>
             <p className="text-sm text-noir/70 leading-relaxed mb-4 italic">&ldquo;{a.testimonial}&rdquo;</p>
             <div className="flex items-center gap-3 pt-3 border-t border-gray-50">
-              <div className="w-9 h-9 rounded-full bg-beige text-bois-fonce flex items-center justify-center text-xs font-bold">
+              <div className="w-9 h-9 rounded-full bg-beige text-noir/70 flex items-center justify-center text-xs font-bold">
                 {a.name.charAt(0)}
               </div>
               <div>

@@ -1,28 +1,46 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 import type { Metadata } from 'next';
-import { getAvis } from '@/lib/content';
+import { getAvis, getAvisStats } from '@/lib/content';
 import { AvisClient } from './AvisClient';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL, SITE_NAME } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/avis', {
-    title: 'Avis clients - Temoignages menuiserie sur mesure',
-    description: 'Lisez les avis de nos clients sur nos realisations de menuiserie sur mesure. Satisfaction client et travail de qualite a Cysoing, Lille, Le Touquet.',
+    title: 'Avis clients menuiserie Lille et Le Touquet',
+    description: 'Lisez les avis de nos clients sur nos réalisations de menuiserie sur mesure. Satisfaction client et travail de qualité à Cysoing, Lille et Le Touquet.',
     keywords: ['avis menuiserie Lille', 'temoignages clients meuble sur mesure', 'avis Au Format'],
   });
 }
 
 export default async function AvisPage() {
-  const avis = await getAvis();
+  const [avis, avisStats] = await Promise.all([getAvis(), getAvisStats()]);
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Accueil', url: SITE_URL }, { name: 'Avis clients', url: `${SITE_URL}/avis` }])} />
+      {avisStats && avisStats.reviewCount > 0 && (
+        <JsonLd data={{
+          '@context': 'https://schema.org',
+          '@type': 'LocalBusiness',
+          '@id': `${SITE_URL}/#organization`,
+          name: SITE_NAME,
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: avisStats.ratingValue,
+            bestRating: 5,
+            worstRating: 1,
+            reviewCount: avisStats.reviewCount,
+          },
+        }} />
+      )}
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Temoignages</p>
+          <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Témoignages</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">Avis clients</h1>
-          <p className="text-white/60 text-lg max-w-2xl">La satisfaction de nos clients est notre meilleure carte de visite.</p>
+          <p className="text-white/80 text-lg max-w-2xl">La satisfaction de nos clients est notre meilleure carte de visite.</p>
         </div>
       </section>
       <section className="py-16">

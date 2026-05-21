@@ -1,11 +1,13 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 300;
 
 import type { Metadata } from 'next';
 import { getPageContent } from '@/lib/content';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
-  return buildPageMetadata('/homemade', {
+  return buildPageMetadata('/savoir-faire', {
     title: 'Savoir-faire - Expertise menuiserie et ébénisterie',
     description: 'Découvrez le savoir-faire d\'Au Format : menuiserie traditionnelle, ébénisterie, usinage numérique CNC. L\'alliance de l\'artisanat et des technologies modernes.',
     keywords: ['savoir-faire menuiserie', 'ébénisterie artisanale', 'menuiserie CNC', 'artisan menuisier Nord'],
@@ -24,11 +26,12 @@ export default async function HomemadePage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Accueil', url: SITE_URL }, { name: 'Savoir-faire', url: `${SITE_URL}/savoir-faire` }])} />
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">{hero.subtitle_top || 'Notre expertise'}</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero.title || 'Savoir-faire'}</h1>
-          <p className="text-white/60 text-lg max-w-2xl">{hero.description || "L'alliance du savoir-faire artisanal et des technologies modernes."}</p>
+          <p className="text-white/80 text-lg max-w-2xl">{hero.description || "L'alliance du savoir-faire artisanal et des technologies modernes."}</p>
         </div>
       </section>
 
@@ -40,7 +43,7 @@ export default async function HomemadePage() {
               {stats.items.map((s) => (
                 <div key={s.label}>
                   <p className="text-3xl lg:text-4xl font-bold text-vert-foret">{s.value}</p>
-                  <p className="text-sm text-bois-fonce mt-1">{s.label}</p>
+                  <p className="text-sm text-noir/70 mt-1">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -75,7 +78,7 @@ export default async function HomemadePage() {
               {competences.items.map((e) => (
                 <div key={e.title} className="bg-white rounded-lg p-5 border border-gray-100">
                   <h3 className="text-base font-semibold text-noir mb-1.5">{e.title}</h3>
-                  <p className="text-sm text-noir/50">{e.desc}</p>
+                  <p className="text-sm text-noir/70">{e.desc}</p>
                 </div>
               ))}
             </div>

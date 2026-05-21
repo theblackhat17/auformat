@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 import type { Metadata } from 'next';
 import { getSettings } from '@/lib/content';
@@ -36,11 +36,12 @@ export default async function MentionsLegalesPage() {
           <ul>
             <li><strong>Raison sociale :</strong> {companyName}</li>
             <li><strong>Forme juridique :</strong> Entreprise individuelle / Auto-entrepreneur</li>
+            <li><strong>SIRET :</strong> 910 950 740 00035</li>
             <li><strong>Siège social :</strong> 88 Imp. de la Briqueterie, 59830 Cysoing, France</li>
             <li><strong>Atelier secondaire :</strong> 1056 Rue de Montreuil, 62170 La Calotterie, France</li>
             <li><strong>Téléphone :</strong> {phone}</li>
             <li><strong>Email :</strong> {email}</li>
-            <li><strong>Directeur de la publication :</strong> Le gérant de {companyName}</li>
+            <li><strong>Directeur de la publication :</strong> Gilles Vandewalle</li>
           </ul>
 
           <h2>2. Hébergement</h2>

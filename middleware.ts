@@ -20,11 +20,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Auth routes - redirect to home if already logged in
+  // Auth routes - redirect to profile if already logged in
   const authRoutes = ['/login', '/register'];
   if (authRoutes.some((route) => path === route)) {
     if (sessionCookie) {
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/profil', request.url));
     }
   }
 

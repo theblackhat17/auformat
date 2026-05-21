@@ -36,7 +36,7 @@ export function LoginForm() {
     const result = await login(email, password);
 
     if (result.success) {
-      const redirect = searchParams.get('redirect') || '/';
+      const redirect = searchParams.get('redirect') || '/profil';
       router.push(redirect);
     } else {
       setError(result.error || 'Erreur de connexion');

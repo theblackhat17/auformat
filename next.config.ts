@@ -2,13 +2,24 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  poweredByHeader: false,
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/homemade",
+        destination: "/savoir-faire",
+        permanent: true,
+      },
+    ];
   },
   async rewrites() {
     return [
@@ -48,7 +59,7 @@ const nextConfig: NextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://*.googleusercontent.com",
               "connect-src 'self' https://accounts.google.com https://apis.google.com https://www.auformat.com",
-              "frame-src https://accounts.google.com",
+              "frame-src https://accounts.google.com https://www.google.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

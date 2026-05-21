@@ -1,9 +1,11 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 import type { Metadata } from 'next';
 import { getRealisations, getCategories } from '@/lib/content';
 import { RealisationsClient } from './RealisationsClient';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/realisations', {
@@ -26,11 +28,12 @@ export default async function RealisationsPage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Accueil', url: SITE_URL }, { name: 'Réalisations', url: `${SITE_URL}/realisations` }])} />
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Notre portfolio</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">Nos réalisations</h1>
-          <p className="text-white/60 text-lg max-w-2xl">Découvrez nos créations sur mesure pour particuliers et professionnels.</p>
+          <p className="text-white/80 text-lg max-w-2xl">Découvrez nos créations sur mesure pour particuliers et professionnels.</p>
         </div>
       </section>
       <section className="py-16">

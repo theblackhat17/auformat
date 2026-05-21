@@ -1,3 +1,5 @@
+export const revalidate = 300;
+
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, faqJsonLd } from '@/lib/jsonld';
@@ -63,7 +65,7 @@ export default async function ProcessusPage() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">{hero?.subtitle_top || 'Du projet à la réalisation'}</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero?.title || 'Notre processus'}</h1>
-          <p className="text-white/60 text-lg max-w-2xl">{hero?.description || "Un accompagnement sur mesure, de la première idée à l'installation finale."}</p>
+          <p className="text-white/80 text-lg max-w-2xl">{hero?.description || "Un accompagnement sur mesure, de la première idée à l'installation finale."}</p>
         </div>
       </section>
 
@@ -85,9 +87,9 @@ export default async function ProcessusPage() {
                 <div className="flex-1 pt-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-semibold text-noir">{step.title}</h3>
-                    <span className="text-xs font-medium text-bois-fonce bg-beige px-2.5 py-0.5 rounded-full">{step.delay}</span>
+                    <span className="text-xs font-medium text-noir/70 bg-beige px-2.5 py-0.5 rounded-full">{step.delay}</span>
                   </div>
-                  <p className="text-sm text-noir/60 leading-relaxed">{step.desc}</p>
+                  <p className="text-sm text-noir/70 leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
@@ -104,7 +106,7 @@ export default async function ProcessusPage() {
               <div key={e.title} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm text-center">
                 <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vert-foret/10 text-vert-foret text-xl mb-4">{e.icon}</span>
                 <h3 className="text-lg font-semibold text-noir mb-2">{e.title}</h3>
-                <p className="text-sm text-noir/50">{e.desc}</p>
+                <p className="text-sm text-noir/70">{e.desc}</p>
               </div>
             ))}
           </div>
@@ -124,7 +126,7 @@ export default async function ProcessusPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </summary>
-                <div className="px-6 pb-4 text-sm text-noir/60 leading-relaxed">{item.answer}</div>
+                <div className="px-6 pb-4 text-sm text-noir/70 leading-relaxed">{item.answer}</div>
               </details>
             ))}
           </div>

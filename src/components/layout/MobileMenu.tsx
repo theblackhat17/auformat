@@ -15,7 +15,7 @@ export function MobileMenu({ navLinks }: { navLinks?: { href: string; label: str
       {/* Hamburger button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-beige/50 transition-colors"
+        className="flex items-center justify-center w-12 h-12 rounded-lg hover:bg-beige/50 transition-colors"
         aria-label="Menu"
       >
         <div className="w-5 h-4 flex flex-col justify-between">
@@ -29,7 +29,7 @@ export function MobileMenu({ navLinks }: { navLinks?: { href: string; label: str
       {isOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setIsOpen(false)} />
-          <div className="fixed top-16 right-0 w-72 h-[calc(100vh-4rem)] bg-white z-50 shadow-xl overflow-y-auto animate-slide-down">
+          <div className="fixed top-18 right-0 w-72 h-[calc(100vh-4.5rem)] bg-white z-50 shadow-xl overflow-y-auto animate-slide-down">
             {/* Auth section */}
             {isAuthenticated && profile ? (
               <div className="p-4 bg-beige/30 border-b border-gray-100">

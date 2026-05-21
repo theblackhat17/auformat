@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 import type { Metadata } from 'next';
 import { getSettings } from '@/lib/content';
@@ -23,7 +23,7 @@ export default async function CGVPage() {
       <section className="bg-noir text-white py-20">
         <div className="max-w-4xl mx-auto px-6 lg:px-8">
           <h1 className="text-3xl lg:text-4xl font-bold">Conditions Générales de Vente</h1>
-          <p className="text-white/60 mt-3">Applicables à compter du 1er janvier 2025</p>
+          <p className="text-white/80 mt-3">Applicables à compter du 1er janvier 2025</p>
         </div>
       </section>
 
@@ -167,8 +167,8 @@ export default async function CGVPage() {
             Le fait pour le Prestataire de ne pas se prévaloir d&apos;un manquement du Client à l&apos;une de ses obligations ne saurait être interprété comme une renonciation à l&apos;obligation en cause.
           </p>
 
-          <p className="text-sm text-noir/40 mt-12">
-            Dernière mise à jour : {new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+          <p className="text-sm text-noir/60 mt-12">
+            Dernière mise à jour : janvier 2025
           </p>
         </div>
       </section>

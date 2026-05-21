@@ -1,7 +1,11 @@
+export const revalidate = 300;
+
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import { getEquipe, getPageContent } from '@/lib/content';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/about', {
@@ -25,12 +29,13 @@ export default async function AboutPage() {
 
   return (
     <>
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Accueil', url: SITE_URL }, { name: 'À propos', url: `${SITE_URL}/about` }])} />
       {/* Hero */}
       <section className="bg-noir text-white py-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">{hero.subtitle_top || 'Notre histoire'}</p>
           <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero.title || "À propos d'Au Format"}</h1>
-          <p className="text-white/60 text-lg max-w-2xl">{hero.description || 'Une passion pour le bois et le sur-mesure, transmise de génération en génération.'}</p>
+          <p className="text-white/80 text-lg max-w-2xl">{hero.description || 'Une passion pour le bois et le sur-mesure, transmise de génération en génération.'}</p>
         </div>
       </section>
 
@@ -62,7 +67,7 @@ export default async function AboutPage() {
                 <div key={v.title} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
                   <span className="text-3xl mb-3 block">{v.icon}</span>
                   <h3 className="text-lg font-semibold text-noir mb-2">{v.title}</h3>
-                  <p className="text-sm text-noir/50 leading-relaxed">{v.desc}</p>
+                  <p className="text-sm text-noir/70 leading-relaxed">{v.desc}</p>
                 </div>
               ))}
             </div>
@@ -89,7 +94,7 @@ export default async function AboutPage() {
                   </div>
                   <h3 className="text-lg font-semibold text-noir">{member.name}</h3>
                   <p className="text-sm text-bois-fonce">{member.role}</p>
-                  {member.description && <p className="text-sm text-noir/50 mt-2">{member.description}</p>}
+                  {member.description && <p className="text-sm text-noir/70 mt-2">{member.description}</p>}
                 </div>
               ))}
             </div>

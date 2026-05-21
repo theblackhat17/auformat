@@ -1,15 +1,13 @@
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getRealisations, getAvis, getPageContent, getSettings } from '@/lib/content';
+import { getRealisations, getAvis, getAvisStats, getPageContent, getSettings, getServices } from '@/lib/content';
 import { ratingStars } from '@/lib/utils';
-import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { JsonLd } from '@/components/seo/JsonLd';
-import { localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
-import { buildPageMetadata } from '@/lib/seo';
+import { localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd, serviceJsonLd } from '@/lib/jsonld';
+import { buildPageMetadata, SITE_URL } from '@/lib/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/', {
@@ -20,11 +18,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [realisations, avis, sections, siteSettings] = await Promise.all([
+  const [realisations, avis, avisStats, sections, siteSettings, dbServices] = await Promise.all([
     getRealisations(),
     getAvis(),
+    getAvisStats(),
     getPageContent('homepage'),
     getSettings(),
+    getServices(),
   ]);
 
   const topRealisations = realisations.slice(0, 3);
@@ -42,17 +42,22 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={localBusinessCysoingJsonLd()} />
-      <JsonLd data={localBusinessCalotterieJsonLd()} />
-      <Header />
-      <main className="pt-18 lg:pt-22">
-        {/* Hero Section */}
+      <JsonLd data={localBusinessCysoingJsonLd(avisStats)} />
+      <JsonLd data={localBusinessCalotterieJsonLd(avisStats)} />
+      {dbServices.length > 0 && (
+        <JsonLd data={serviceJsonLd(dbServices.map((s) => ({
+          name: s.title,
+          description: s.shortDescription || s.title,
+          url: `${SITE_URL}/services/${s.slug}`,
+        })))} />
+      )}
+      {/* Hero Section */}
         <section className="relative min-h-[85vh] flex items-center bg-noir overflow-hidden">
           {siteSettings?.heroBackground ? (
             <>
               <Image
                 src={siteSettings.heroBackground}
-                alt=""
+                alt="Atelier Au Format — menuiserie sur mesure en bois massif"
                 fill
                 priority
                 className="object-cover"
@@ -70,7 +75,7 @@ export default async function HomePage() {
                 {hero.title_line1 || 'Franchissons ensemble,'}<br />
                 <span className="text-bois-clair">{hero.title_line2 || 'le pas vers le bois'}</span>
               </h1>
-              <p className="text-lg text-white/60 leading-relaxed mb-10 max-w-xl">
+              <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-xl">
                 {hero.description || 'Conception et fabrication de meubles sur mesure, dressings, cuisines et agencements pour particuliers et professionnels dans la région lilloise.'}
               </p>
               <div className="flex flex-wrap gap-4">
@@ -104,7 +109,7 @@ export default async function HomePage() {
                 {stats.items.map((stat) => (
                   <div key={stat.label}>
                     <p className="text-3xl lg:text-4xl font-bold text-vert-foret">{stat.value}</p>
-                    <p className="text-sm text-bois-fonce mt-1">{stat.label}</p>
+                    <p className="text-sm text-noir/70 mt-1">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -118,16 +123,23 @@ export default async function HomePage() {
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
               <div className="text-center mb-14">
                 <h2 className="text-3xl font-bold text-noir mb-3">{services.title || 'Nos savoir-faire'}</h2>
-                <p className="text-noir/50 max-w-xl mx-auto">{services.subtitle || ''}</p>
+                <p className="text-noir/70 max-w-xl mx-auto">{services.subtitle || ''}</p>
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {services.items.map((service) => (
-                  <Link key={service.title} href="/realisations" className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 block">
-                    <span className="text-3xl mb-4 block">{service.icon}</span>
-                    <h3 className="text-lg font-semibold text-noir mb-2">{service.title}</h3>
-                    <p className="text-sm text-noir/50 leading-relaxed">{service.desc}</p>
-                  </Link>
-                ))}
+                {(dbServices.length > 0 ? dbServices : services.items || []).map((service) => {
+                  const isDb = 'slug' in service;
+                  const href = isDb ? `/services/${(service as { slug: string }).slug}` : '/realisations';
+                  const icon = isDb ? (service as { icon: string | null }).icon : (service as { icon: string }).icon;
+                  const title = isDb ? (service as { title: string }).title : (service as { title: string }).title;
+                  const desc = isDb ? (service as { shortDescription: string | null }).shortDescription : (service as { desc: string }).desc;
+                  return (
+                    <Link key={title} href={href} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 block">
+                      <span className="text-3xl mb-4 block">{icon}</span>
+                      <h3 className="text-lg font-semibold text-noir mb-2">{title}</h3>
+                      <p className="text-sm text-noir/70 leading-relaxed">{desc}</p>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -140,7 +152,7 @@ export default async function HomePage() {
               <div className="flex items-end justify-between mb-10">
                 <div>
                   <h2 className="text-3xl font-bold text-noir mb-2">{realisationsPreview.title || 'Nos dernières réalisations'}</h2>
-                  <p className="text-noir/50">{realisationsPreview.subtitle || 'Découvrez nos créations récentes'}</p>
+                  <p className="text-noir/70">{realisationsPreview.subtitle || 'Découvrez nos créations récentes'}</p>
                 </div>
                 <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline hidden md:block">
                   {realisationsPreview.link_text || 'Voir tout'} &rarr;
@@ -153,9 +165,9 @@ export default async function HomePage() {
                       {r.image && <Image src={r.image} alt={r.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />}
                     </div>
                     <div className="p-5">
-                      <span className="text-xs font-medium text-bois-fonce uppercase tracking-wider">{r.categoryLabel || r.category}</span>
+                      <span className="text-xs font-medium text-noir/70 uppercase tracking-wider">{r.categoryLabel || r.category}</span>
                       <h3 className="text-lg font-semibold text-noir mt-1 mb-2">{r.title}</h3>
-                      <p className="text-sm text-noir/50 line-clamp-2">{r.description}</p>
+                      <p className="text-sm text-noir/70 line-clamp-2">{r.description}</p>
                     </div>
                   </div>
                 ))}
@@ -173,7 +185,7 @@ export default async function HomePage() {
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-noir mb-3">{testimonials.title || 'Ce que disent nos clients'}</h2>
-                <p className="text-noir/50">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure récompense'}</p>
+                <p className="text-noir/70">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure récompense'}</p>
               </div>
               <div className="grid md:grid-cols-3 gap-6">
                 {topAvis.map((a) => (
@@ -212,8 +224,6 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
-      </main>
-      <Footer />
     </>
   );
 }

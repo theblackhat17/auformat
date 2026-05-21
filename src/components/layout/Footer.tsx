@@ -11,13 +11,14 @@ const DEFAULT_LINKS = [
   { label: 'Nos réalisations', href: '/realisations' },
   { label: 'Essences de bois', href: '/materiaux' },
   { label: 'Notre processus', href: '/processus' },
-  { label: 'Savoir-faire', href: '/homemade' },
+  { label: 'Savoir-faire', href: '/savoir-faire' },
+  { label: 'Le blog', href: '/blog' },
   { label: 'Avis clients', href: '/avis' },
   { label: 'Demander un devis', href: '/contact' },
   { label: 'À propos', href: '/about' },
 ];
 
-const DEFAULT_SEO_TEXT = 'Au Format, menuiserie et agencement sur mesure dans le Nord et le Pas-de-Calais. Fabrication artisanale de meubles, dressings, bibliothèques, cuisines, bureaux, plans de travail, étagères et escaliers en bois massif. Nos ateliers à Cysoing près de Lille et à La Calotterie près de Montreuil-sur-Mer et du Touquet-Paris-Plage réalisent vos projets sur mesure pour particuliers et professionnels. Ébénisterie, agencement intérieur, menuiserie traditionnelle et numérique. Essences de bois nobles : chêne, noyer, hêtre, frêne. Devis gratuit dans la métropole lilloise, la Côte d\'Opale et les Hauts-de-France.';
+const DEFAULT_SEO_TEXT = 'Au Format conçoit et fabrique du mobilier sur mesure depuis ses deux ateliers : à Cysoing près de Lille (Nord) et à La Calotterie près de Montreuil-sur-Mer (Pas-de-Calais). Nous accompagnons particuliers et professionnels dans leurs projets de menuiserie, ébénisterie et agencement intérieur, de la conception à la pose. Devis gratuit, intervention dans toute la région Hauts-de-France.';
 
 const DEFAULT_SOCIALS = [
   { platform: 'instagram', url: 'https://www.instagram.com/auformat/' },
@@ -69,13 +70,13 @@ export async function Footer() {
           {/* Company */}
           <div className="lg:col-span-1">
             <h3 className="text-lg font-bold text-white mb-4">{companyName}</h3>
-            <p className="text-sm leading-relaxed text-white/60">
+            <p className="text-sm leading-relaxed text-white/80">
               {slogan}. Menuiserie et agencement sur mesure pour particuliers et professionnels.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 mt-4">
               {socials.map((social) => (
-                <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" className="text-white/50 hover:text-bois-clair transition-colors" aria-label={`${social.platform} Au Format`}>
+                <a key={social.platform} href={social.url} target="_blank" rel="noopener noreferrer" className="text-white/70 hover:text-bois-clair transition-colors" aria-label={`${social.platform} Au Format`}>
                   <SocialIcon platform={social.platform} />
                 </a>
               ))}
@@ -86,10 +87,10 @@ export async function Footer() {
           {addresses.map((addr) => (
             <div key={addr.title}>
               <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">{addr.title}</h4>
-              <address className="not-italic space-y-2 text-sm text-white/60">
+              <address className="not-italic space-y-2 text-sm text-white/80">
                 <p>{addr.line1}</p>
                 <p>{addr.line2}</p>
-                <p className="text-white/40 text-xs">{addr.note}</p>
+                <p className="text-white/60 text-xs">{addr.note}</p>
                 <a href={`tel:${phone.replace(/\s/g, '')}`} className="block hover:text-bois-clair transition-colors">{phone}</a>
                 <a href={`mailto:${email}`} className="block hover:text-bois-clair transition-colors">{email}</a>
               </address>
@@ -101,15 +102,15 @@ export async function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Horaires</h4>
             <ul className="space-y-2 text-sm">
               <li className="flex justify-between">
-                <span className="text-white/60">Lun - Ven</span>
+                <span className="text-white/80">Lun - Ven</span>
                 <span>{hoursWeekdays}</span>
               </li>
               <li className="flex justify-between">
-                <span className="text-white/60">Samedi</span>
+                <span className="text-white/80">Samedi</span>
                 <span>{hoursSaturday}</span>
               </li>
               <li className="flex justify-between">
-                <span className="text-white/60">Dimanche</span>
+                <span className="text-white/80">Dimanche</span>
                 <span>{hoursSunday}</span>
               </li>
             </ul>
@@ -128,18 +129,18 @@ export async function Footer() {
 
         {/* SEO text block */}
         <div className="mt-10 pt-8 border-t border-white/10">
-          <p className="text-xs text-white/20 leading-relaxed max-w-5xl">
+          <p className="text-xs text-white/50 leading-relaxed max-w-5xl">
             {seoText}
           </p>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/40">
+        <div className="mt-6 pt-6 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-white/50">
           <p>&copy; {new Date().getFullYear()} {companyName}. Tous droits réservés.</p>
           <div className="flex gap-6">
-            <Link href="/mentions-legales" className="hover:text-white/60 transition-colors">Mentions légales</Link>
-            <Link href="/politique-confidentialite" className="hover:text-white/60 transition-colors">Confidentialité</Link>
-            <Link href="/cgv" className="hover:text-white/60 transition-colors">CGV</Link>
+            <Link href="/mentions-legales" className="hover:text-white/80 transition-colors">Mentions légales</Link>
+            <Link href="/politique-confidentialite" className="hover:text-white/80 transition-colors">Confidentialité</Link>
+            <Link href="/cgv" className="hover:text-white/80 transition-colors">CGV</Link>
           </div>
         </div>
       </div>

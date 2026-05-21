@@ -1,5 +1,5 @@
 import { query, queryOne } from './db';
-import type { Realisation, Avis, Materiau, TeamMember, SiteSettings, Category, PageContent, GeneralSettings, HomepageSettings } from './types';
+import type { Realisation, Avis, Materiau, TeamMember, SiteSettings, Category, PageContent, GeneralSettings, HomepageSettings, Service, Article } from './types';
 
 export async function getRealisations(): Promise<Realisation[]> {
   const rows = await query<Realisation & { categorySlug: string; categoryLabel: string; matName: string | null }>(
@@ -80,6 +80,76 @@ export async function getCategories(type?: string): Promise<Category[]> {
     return query<Category>('SELECT * FROM categories WHERE type = $1 AND published = true ORDER BY sort_order', [type]);
   }
   return query<Category>('SELECT * FROM categories WHERE published = true ORDER BY type, sort_order');
+}
+
+export async function getServices(): Promise<Service[]> {
+  return query<Service>(
+    'SELECT * FROM services WHERE published = true ORDER BY sort_order'
+  );
+}
+
+export async function getServiceBySlug(slug: string): Promise<Service | null> {
+  return queryOne<Service>(
+    'SELECT * FROM services WHERE slug = $1 AND published = true',
+    [slug]
+  );
+}
+
+export async function getArticles(): Promise<Article[]> {
+  return query<Article>(
+    `SELECT a.*, c.slug as category_slug, c.label as category_label, c.icon as category_icon,
+            p.full_name as author_name
+     FROM articles a
+     LEFT JOIN categories c ON a.category_id = c.id
+     LEFT JOIN profiles p ON a.author_id = p.id
+     WHERE a.published = true
+     ORDER BY a.published_at DESC NULLS LAST, a.created_at DESC`
+  );
+}
+
+export async function getArticleBySlug(slug: string): Promise<Article | null> {
+  return queryOne<Article>(
+    `SELECT a.*, c.slug as category_slug, c.label as category_label, c.icon as category_icon,
+            p.full_name as author_name
+     FROM articles a
+     LEFT JOIN categories c ON a.category_id = c.id
+     LEFT JOIN profiles p ON a.author_id = p.id
+     WHERE a.slug = $1 AND a.published = true`,
+    [slug]
+  );
+}
+
+export async function getRelatedArticles(articleId: string, categoryId: string | null, limit = 3): Promise<Article[]> {
+  if (categoryId) {
+    return query<Article>(
+      `SELECT a.*, c.slug as category_slug, c.label as category_label, c.icon as category_icon
+       FROM articles a
+       LEFT JOIN categories c ON a.category_id = c.id
+       WHERE a.published = true AND a.id != $1 AND a.category_id = $2
+       ORDER BY a.published_at DESC NULLS LAST
+       LIMIT $3`,
+      [articleId, categoryId, limit]
+    );
+  }
+  return query<Article>(
+    `SELECT a.*, c.slug as category_slug, c.label as category_label, c.icon as category_icon
+     FROM articles a
+     LEFT JOIN categories c ON a.category_id = c.id
+     WHERE a.published = true AND a.id != $1
+     ORDER BY a.published_at DESC NULLS LAST
+     LIMIT $2`,
+    [articleId, limit]
+  );
+}
+
+export async function getAvisStats(): Promise<{ ratingValue: number; reviewCount: number }> {
+  const result = await queryOne<{ avg: string; count: string }>(
+    'SELECT ROUND(AVG(rating)::numeric, 1) as avg, COUNT(*)::text as count FROM avis WHERE published = true AND rating > 0'
+  );
+  return {
+    ratingValue: result ? parseFloat(result.avg) || 0 : 0,
+    reviewCount: result ? parseInt(result.count) || 0 : 0,
+  };
 }
 
 export async function getPageContent(pageKey: string): Promise<PageContent[]> {
