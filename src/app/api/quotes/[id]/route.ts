@@ -63,6 +63,30 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       if (body.description !== undefined) updates.description = body.description;
       if (body.adminNotes !== undefined) updates.adminNotes = body.adminNotes;
       if (body.validUntil !== undefined) updates.validUntil = body.validUntil;
+
+      // Lignes du devis : validées puis totaux recalculés côté serveur (jamais ceux du client)
+      if (body.items !== undefined) {
+        if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 100) {
+          return NextResponse.json({ error: 'Lignes de devis invalides' }, { status: 400 });
+        }
+        const items = [];
+        for (const it of body.items) {
+          const description = typeof it.description === 'string' ? it.description.trim().slice(0, 500) : '';
+          const quantity = Number(it.quantity);
+          const unitPrice = Number(it.unitPrice);
+          if (!description || !isFinite(quantity) || quantity <= 0 || quantity > 1000 || !isFinite(unitPrice) || unitPrice < 0 || unitPrice > 1_000_000) {
+            return NextResponse.json({ error: 'Ligne de devis invalide (désignation, quantité ou prix)' }, { status: 400 });
+          }
+          items.push({ description, quantity, unitPrice, total: Math.round(quantity * unitPrice * 100) / 100 });
+        }
+        const subtotalHt = Math.round(items.reduce((s, i) => s + i.total, 0) * 100) / 100;
+        const taxRate = existing.taxRate ?? 20;
+        const taxAmount = Math.round(subtotalHt * (taxRate / 100) * 100) / 100;
+        updates.items = JSON.stringify(items);
+        updates.subtotalHt = subtotalHt;
+        updates.taxAmount = taxAmount;
+        updates.totalTtc = Math.round((subtotalHt + taxAmount) * 100) / 100;
+      }
     } else {
       // Clients can only update limited fields
       if (body.title !== undefined) updates.title = body.title;

@@ -83,7 +83,7 @@ export function ContactForm() {
       </div>
       <div>
         <label htmlFor="typeProjet" className="block text-sm font-medium text-noir/70 mb-1.5">Type de projet</label>
-        <select id="typeProjet" name="typeProjet" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10">
+        <select id="typeProjet" name="typeProjet" className="w-full px-4 py-2.5 bg-white border border-noir/20 rounded-lg text-sm text-noir focus:outline-none focus:border-vert-foret focus:ring-[3px] focus:ring-vert-foret/15">
           <option value="">Sélectionnez...</option>
           <option value="Dressing">Dressing</option>
           <option value="Cuisine">Cuisine</option>
@@ -102,7 +102,7 @@ export function ContactForm() {
           required
           rows={5}
           placeholder="Décrivez votre projet..."
-          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/30 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none"
+          className="w-full px-4 py-2.5 bg-white border border-noir/20 rounded-lg text-sm text-noir placeholder-noir/55 focus:outline-none focus:border-vert-foret focus:ring-[3px] focus:ring-vert-foret/15 resize-none"
         />
       </div>
       {/* Honeypot - hidden from humans */}
@@ -110,7 +110,7 @@ export function ContactForm() {
         <label htmlFor="_hp_website">Website</label>
         <input type="text" id="_hp_website" name="_hp_website" tabIndex={-1} autoComplete="off" />
       </div>
-      <label className="flex items-start gap-2 text-xs text-noir/50">
+      <label className="flex items-start gap-2 text-xs text-noir/70">
         <input type="checkbox" required className="mt-0.5 accent-vert-foret" />
         J&apos;accepte que mes données soient traitées dans le cadre de ma demande de contact, conformément à la politique de confidentialité.
       </label>

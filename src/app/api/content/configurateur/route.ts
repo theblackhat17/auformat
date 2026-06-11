@@ -23,7 +23,13 @@ export async function GET() {
       colorHex: m.colorHex || '#CCCCCC',
       prixM2: m.prixM2 || 0,
       sortOrder: m.sortOrder || 0,
+      image: m.image || null,
+      renderType: (m as unknown as { renderType?: string }).renderType || null,
+      grainHex: (m as unknown as { grainHex?: string }).grainHex || null,
     }));
+
+    // L'assistant IA n'est proposé que si la clé API est configurée côté serveur
+    settings.ai_enabled = !!process.env.ANTHROPIC_API_KEY;
 
     return NextResponse.json(settings);
   } catch (err) {

@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // pdfkit embarque ses fichiers de polices (.afm) : il doit rester un require runtime
+  serverExternalPackages: ["pdfkit"],
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],

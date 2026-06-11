@@ -25,21 +25,11 @@ export function Configurateur2D({ settings }: Props) {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F3EF]">
+    <div className="min-h-screen bg-beige/40">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <a href="/" className="text-lg font-bold text-[#2C5F2D] hover:text-[#234a24] transition-colors">
-            Au Format
-          </a>
-          <span className="text-gray-300">|</span>
-          <h1 className="text-sm font-medium text-gray-700">{labels.titre}</h1>
-        </div>
-      </div>
-
-      {/* Subtitle */}
-      <div className="text-center py-4">
-        <p className="text-sm text-gray-500">{labels.sousTitre}</p>
+      <div className="max-w-[1400px] mx-auto px-4 pt-6 pb-5">
+        <h1 className="font-display text-xl sm:text-2xl text-noir">{labels.titre}</h1>
+        <p className="text-sm text-noir/60 mt-1">{labels.sousTitre}</p>
       </div>
 
       {/* Main layout */}
@@ -47,7 +37,7 @@ export function Configurateur2D({ settings }: Props) {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* SVG preview - 60% */}
           <div className="lg:w-[60%]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 lg:sticky lg:top-4 flex items-center justify-center" style={{ height: 'min(55vh, 500px)' }}>
+            <div className="bg-white rounded-2xl ring-1 ring-noir/8 p-4 lg:sticky lg:top-28 flex items-center justify-center" style={{ height: 'min(55vh, 500px)' }}>
               <SVGRenderer
                 config={config}
                 materials={materials}
@@ -58,7 +48,7 @@ export function Configurateur2D({ settings }: Props) {
 
           {/* Config panel - 40% */}
           <div className="lg:w-[40%]">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-white rounded-2xl ring-1 ring-noir/8">
               <ConfigPanel
                 config={config}
                 materials={materials}

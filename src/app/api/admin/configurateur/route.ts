@@ -38,7 +38,10 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Cle et valeur requises' }, { status: 400 });
     }
 
-    const validKeys = ['product_types', 'option_prices', 'options', 'labels'];
+    const validKeys = ['product_types', 'option_prices', 'options', 'labels', 'univers', 'module_types', 'pricing_mode'];
+    if (key === 'pricing_mode' && !['masque', 'estimation'].includes(value)) {
+      return NextResponse.json({ error: 'Mode de prix invalide' }, { status: 400 });
+    }
     if (!validKeys.includes(key)) {
       return NextResponse.json({ error: 'Cle invalide' }, { status: 400 });
     }

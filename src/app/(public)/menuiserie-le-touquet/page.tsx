@@ -1,11 +1,11 @@
 export const revalidate = 300;
 
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { getServices, getAvisStats, getPageContent } from '@/lib/content';
-import { buildPageMetadata, SITE_URL, LOCATIONS, PHONE, EMAIL, HOURS } from '@/lib/seo';
+import { buildPageMetadata, SITE_URL, LOCATIONS } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
+import { LocalAtelierSections } from '@/components/local/LocalAtelierSections';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/menuiserie-le-touquet', {
@@ -45,8 +45,8 @@ const DEFAULT_WHY = [
 const DEFAULT_AREAS = [
   'Le Touquet-Paris-Plage', 'Montreuil-sur-Mer', 'La Calotterie', 'Étaples',
   'Berck', 'Boulogne-sur-Mer', 'Le Portel', 'Hardelot', 'Merlimont',
-  'Rang-du-Fliers', 'Cucq', 'Camiers', 'Hesdin', 'Fruges',
-  'Saint-Omer', 'Desvres', 'Samer', 'Marquise', 'Wimereux', 'Audresselles',
+  'Stella-Plage', 'Cucq', 'Rang-du-Fliers', 'Verton', 'Beaurainville',
+  'Hesdin', 'Fruges', 'Hucqueliers', 'Desvres', 'Samer', 'Camiers',
 ];
 
 export default async function MenuiserieLeTouquetPage() {
@@ -61,6 +61,8 @@ export default async function MenuiserieLeTouquetPage() {
   const intro = (getSection('intro') as { title?: string; paragraphs?: string[] }) || DEFAULT_INTRO;
   const why = (getSection('why') as { items?: { icon: string; title: string; desc: string }[] })?.items || DEFAULT_WHY;
   const areas = (getSection('areas') as { items?: string[] })?.items || DEFAULT_AREAS;
+  const hero = (getSection('hero') || {}) as Record<string, string>;
+  const cta = (getSection('cta') || {}) as Record<string, string>;
 
   return (
     <>
@@ -70,150 +72,32 @@ export default async function MenuiserieLeTouquetPage() {
       ])} />
       <JsonLd data={localBusinessCalotterieJsonLd(avisStats)} />
 
-      {/* Hero */}
-      <section className="bg-noir text-white py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Atelier La Calotterie — Côte d&apos;Opale</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Menuiserie sur mesure au Touquet et Montreuil-sur-Mer</h1>
-          <p className="text-white/80 text-lg max-w-2xl">
-            Mobilier sur mesure en bois massif pour particuliers et professionnels de la Côte d&apos;Opale et du Pas-de-Calais.
-          </p>
-        </div>
-      </section>
-
-      {/* Intro */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-noir mb-6">{intro.title || DEFAULT_INTRO.title}</h2>
-          <div className="prose prose-lg text-noir/70 space-y-4">
-            {(intro.paragraphs || DEFAULT_INTRO.paragraphs).map((p, i) => (
-              <p key={i}>{p}</p>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      {services.length > 0 && (
-        <section className="py-20 bg-beige/50">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-noir text-center mb-10">Nos services sur la Côte d&apos;Opale</h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {services.map((s) => (
-                <Link key={s.slug} href={`/services/${s.slug}`}
-                  className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 block">
-                  <span className="text-3xl mb-4 block">{s.icon || '📦'}</span>
-                  <h3 className="text-lg font-semibold text-noir mb-2">{s.title}</h3>
-                  <p className="text-sm text-noir/70 leading-relaxed">{s.shortDescription?.slice(0, 100)}</p>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Why choose us */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-noir text-center mb-12">Pourquoi choisir Au Format sur la Côte d&apos;Opale ?</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {why.map((item) => (
-              <div key={item.title} className="bg-white rounded-xl p-8 border border-gray-100 shadow-sm">
-                <span className="text-4xl mb-4 block">{item.icon}</span>
-                <h3 className="text-xl font-semibold text-noir mb-3">{item.title}</h3>
-                <p className="text-sm text-noir/70 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Location */}
-      <section className="py-20 bg-beige/50">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-noir mb-6">Notre atelier à La Calotterie</h2>
-              <div className="space-y-4 text-noir/70">
-                <p>
-                  <strong className="text-noir">Adresse :</strong> {loc.streetAddress}, {loc.postalCode} {loc.city}
-                </p>
-                <p>
-                  <strong className="text-noir">Téléphone :</strong>{' '}
-                  <a href={`tel:${PHONE.replace(/\s/g, '')}`} className="text-vert-foret hover:underline">{PHONE}</a>
-                </p>
-                <p>
-                  <strong className="text-noir">Email :</strong>{' '}
-                  <a href={`mailto:${EMAIL}`} className="text-vert-foret hover:underline">{EMAIL}</a>
-                </p>
-                <p>
-                  <strong className="text-noir">Horaires :</strong> Lun-Ven {HOURS.weekdays} — Sur rendez-vous
-                </p>
-              </div>
-              <div className="mt-6">
-                <Link href="/contact" className="inline-flex items-center px-8 py-3.5 bg-vert-foret text-white font-semibold rounded-lg hover:bg-vert-foret-dark transition-colors shadow-lg shadow-vert-foret/20">
-                  Demander un devis gratuit
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-xl overflow-hidden shadow-md aspect-[4/3]">
-              <iframe
-                title="Atelier Au Format La Calotterie"
-                src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2535!2d${loc.lng}!3d${loc.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTDCsDI3JzQ2LjEiTiAxwrA0NSc0MS4wIkU!5e0!3m2!1sfr!2sfr`}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Zone d'intervention */}
-      <section className="py-20">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-noir text-center mb-8">Zone d&apos;intervention sur la Côte d&apos;Opale</h2>
-          <p className="text-noir/70 text-center mb-8">
-            Nous intervenons dans un rayon de 50 km autour de notre atelier de La Calotterie, couvrant le littoral de la Côte d&apos;Opale, le Montreuillois et le Boulonnais.
-          </p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {areas.map((city) => (
-              <span key={city} className="text-sm bg-beige text-noir/70 px-3 py-1.5 rounded-full">{city}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Other location */}
-      <section className="py-12 bg-white">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <p className="text-noir/70 text-sm">
-            Vous êtes dans la métropole lilloise ?{' '}
-            <Link href="/menuiserie-lille" className="text-vert-foret font-semibold hover:underline">
-              Découvrez notre atelier à Cysoing, près de Lille →
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="bg-vert-foret py-20">
-        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-4">Un projet sur la Côte d&apos;Opale ?</h2>
-          <p className="text-white/80 mb-8 text-lg">Contactez-nous pour un devis gratuit et sans engagement. Déplacement offert du Touquet à Boulogne-sur-Mer.</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <Link href="/contact" className="inline-flex items-center px-8 py-3.5 bg-white text-vert-foret font-semibold rounded-lg hover:bg-beige transition-colors shadow-lg">
-              Demander un devis gratuit
-            </Link>
-            <a href={`tel:${PHONE.replace(/\s/g, '')}`} className="inline-flex items-center px-8 py-3.5 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors">
-              Appeler : {PHONE}
-            </a>
-          </div>
-        </div>
-      </section>
+      <LocalAtelierSections
+        heroKicker={hero.subtitle_top || "Atelier La Calotterie — Côte d'Opale"}
+        heroTitle={hero.title || 'Menuiserie sur mesure au Touquet et Montreuil-sur-Mer'}
+        heroIntro={hero.description || "Mobilier sur mesure en bois massif pour particuliers et professionnels de la Côte d'Opale et du Pas-de-Calais."}
+        intro={intro}
+        introDefaults={DEFAULT_INTRO}
+        services={services}
+        servicesTitle="Nos services sur la Côte d'Opale"
+        whyTitle="Pourquoi choisir Au Format sur la Côte d'Opale ?"
+        why={why}
+        atelier={{ title: 'Notre atelier à La Calotterie', address: `${loc.streetAddress}, ${loc.postalCode} ${loc.city}` }}
+        mapTitle="Atelier Au Format La Calotterie"
+        mapSrc={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2535!2d${loc.lng}!3d${loc.lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNTDCsDI3JzQ2LjEiTiAxwrA0NSc0MS4wIkU!5e0!3m2!1sfr!2sfr`}
+        areasTitle="Zone d'intervention sur la Côte d'Opale"
+        areasIntro="Nous intervenons dans un rayon de 50 km autour de notre atelier de La Calotterie, du Touquet à Boulogne-sur-Mer en passant par le Montreuillois et l'arrière-pays."
+        areas={areas}
+        otherLocation={{
+          question: 'Vous êtes dans la métropole lilloise ?',
+          href: '/menuiserie-lille',
+          label: 'Découvrez notre atelier à Cysoing, près de Lille',
+        }}
+        cta={{
+          title: cta.title || "Un projet sur la Côte d'Opale ?",
+          text: cta.text || 'Contactez-nous pour un devis gratuit et sans engagement. Déplacement offert du Touquet à Boulogne-sur-Mer.',
+        }}
+      />
     </>
   );
 }

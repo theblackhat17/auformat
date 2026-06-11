@@ -33,14 +33,19 @@ function isConfigured(): boolean {
   return !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
 }
 
-export async function sendMail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendMail(
+  to: string,
+  subject: string,
+  html: string,
+  attachments?: { filename: string; content: Buffer; contentType?: string }[]
+): Promise<boolean> {
   if (!isConfigured()) {
     console.warn('[mailer] SMTP not configured, skipping email to:', to);
     return false;
   }
 
   try {
-    await transporter.sendMail({ from: FROM, to, subject, html });
+    await transporter.sendMail({ from: FROM, to, subject, html, attachments });
     return true;
   } catch (err) {
     console.error('[mailer] Failed to send email:', err);
@@ -149,6 +154,7 @@ export async function sendQuoteToClient(
   subtotalHt: number,
   tva: number,
   totalTtc: number,
+  pdfAttachment?: { filename: string; content: Buffer },
 ): Promise<boolean> {
   const formatEur = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
 
@@ -186,13 +192,20 @@ export async function sendQuoteToClient(
           <p style="margin: 4px 0; font-size: 18px; font-weight: bold; color: #2C5F2D;">Total TTC : ${formatEur(totalTtc)}</p>
         </div>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
-        <p style="color: #888; font-size: 13px;">Ce devis est estimatif. Notre équipe vous recontactera pour confirmer les détails et le prix final.</p>
+        ${pdfAttachment
+          ? `<p style="color: #555; font-size: 13px;">Votre devis détaillé est joint à cet email au format PDF. Pour l'accepter, retournez-le signé avec la mention « bon pour accord », ou répondez simplement à cet email.</p>`
+          : `<p style="color: #888; font-size: 13px;">Ce devis est estimatif. Notre équipe vous recontactera pour confirmer les détails et le prix final.</p>`}
         ${SIGNATURE}
       </div>
     </div>
   `;
 
-  return sendMail(to, `Votre devis ${esc(quoteNumber)} — Au Format`, html);
+  return sendMail(
+    to,
+    `Votre devis ${esc(quoteNumber)} — Au Format`,
+    html,
+    pdfAttachment ? [{ ...pdfAttachment, contentType: 'application/pdf' }] : undefined
+  );
 }
 
 export interface ContactFormData {

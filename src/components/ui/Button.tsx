@@ -10,24 +10,24 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, disabled, children, ...props }, ref) => {
     const variants = {
-      primary: 'bg-vert-foret text-white hover:bg-vert-foret-dark shadow-sm',
-      secondary: 'bg-beige text-bois-fonce hover:bg-beige/80',
-      outline: 'border-2 border-vert-foret text-vert-foret hover:bg-vert-foret hover:text-white',
-      ghost: 'text-noir/70 hover:bg-beige/50 hover:text-noir',
-      danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
+      primary: 'bg-vert-foret text-white hover:bg-vert-foret-dark',
+      secondary: 'bg-beige text-noir hover:bg-beige/80',
+      outline: 'border-[1.5px] border-vert-foret text-vert-foret hover:bg-vert-foret hover:text-white',
+      ghost: 'text-noir/75 hover:bg-beige/60 hover:text-noir',
+      danger: 'bg-red-700 text-white hover:bg-red-800',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-sm rounded-md',
-      md: 'px-5 py-2.5 text-sm rounded-lg',
-      lg: 'px-7 py-3 text-base rounded-lg',
+      sm: 'px-4 py-1.5 text-sm rounded-full',
+      md: 'px-6 py-2.5 text-sm rounded-full',
+      lg: 'px-8 py-3 text-base rounded-full',
     };
 
     return (
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-vert-foret/30 focus:ring-offset-2',
+          'inline-flex items-center justify-center font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-vert-foret focus-visible:ring-offset-2',
           variants[variant],
           sizes[size],
           isLoading && 'cursor-wait',

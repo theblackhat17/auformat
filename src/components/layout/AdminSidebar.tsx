@@ -13,10 +13,10 @@ function NavItem({ item, pathname, onClick }: { item: { href: string; label: str
     <Link
       href={item.href}
       onClick={onClick}
-      className={`flex items-center gap-3 px-6 py-2.5 text-sm transition-colors ${
+      className={`flex items-center gap-3 mx-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
         isActive
-          ? 'bg-white/10 text-white border-l-3 border-blue-400 font-medium'
-          : 'text-white/60 hover:bg-white/5 hover:text-white border-l-3 border-transparent'
+          ? 'bg-vert-foret text-white font-semibold'
+          : 'text-white/65 hover:bg-white/8 hover:text-white'
       }`}
     >
       <span className="text-base">{item.icon}</span>
@@ -52,7 +52,7 @@ export function AdminSidebar() {
       {/* Mobile hamburger button */}
       <button
         onClick={() => setOpen(true)}
-        className="fixed top-3 left-3 z-50 lg:hidden flex items-center justify-center w-10 h-10 rounded-lg bg-slate-800 text-white shadow-lg"
+        className="fixed top-3 left-3 z-50 lg:hidden flex items-center justify-center w-10 h-10 rounded-lg bg-noir text-white shadow-lg"
         aria-label="Ouvrir le menu"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -69,7 +69,7 @@ export function AdminSidebar() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 w-64 h-screen bg-gradient-to-b from-slate-800 to-slate-900 text-white flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed left-0 top-0 w-64 h-screen bg-noir text-white flex flex-col z-50 transition-transform duration-300 lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Close button (mobile) */}
         <button
           onClick={closeSidebar}
@@ -83,10 +83,10 @@ export function AdminSidebar() {
 
         {/* Logo area */}
         <div className="p-6 border-b border-white/10">
-          <Link href="/" className="text-lg font-bold tracking-wider text-white">
+          <Link href="/" className="font-display text-xl text-white">
             Au Format
           </Link>
-          <p className="text-xs text-white/40 mt-1">Administration</p>
+          <p className="text-xs text-bois-clair/80 mt-1">L&apos;établi — administration</p>
         </div>
 
         {/* Navigation */}

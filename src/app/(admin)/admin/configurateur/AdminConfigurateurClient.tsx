@@ -6,12 +6,16 @@ import type {
   ConfigurateurOptionPrices,
   ConfigurateurLabels,
   ConfigurateurOption,
+  ConfigurateurUnivers,
+  ConfigurateurModuleType,
 } from '@/lib/types';
 import Link from 'next/link';
+import { UniversModulesTab } from './UniversModulesTab';
 
-type TabKey = 'types' | 'prices' | 'options' | 'labels';
+type TabKey = 'univers' | 'types' | 'prices' | 'options' | 'labels';
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: 'univers', label: 'Univers & Modules' },
   { key: 'types', label: 'Types de produit' },
   { key: 'prices', label: 'Prix (ancien)' },
   { key: 'options', label: 'Options' },
@@ -19,11 +23,14 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export function AdminConfigurateurClient() {
-  const [activeTab, setActiveTab] = useState<TabKey>('types');
+  const [activeTab, setActiveTab] = useState<TabKey>('univers');
+  const [univers, setUnivers] = useState<ConfigurateurUnivers[]>([]);
+  const [moduleTypes, setModuleTypes] = useState<ConfigurateurModuleType[]>([]);
   const [productTypes, setProductTypes] = useState<ConfigurateurProductType[]>([]);
   const [optionPrices, setOptionPrices] = useState<ConfigurateurOptionPrices | null>(null);
   const [options, setOptions] = useState<ConfigurateurOption[]>([]);
   const [labels, setLabels] = useState<ConfigurateurLabels | null>(null);
+  const [pricingMode, setPricingMode] = useState<'masque' | 'estimation'>('masque');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -38,10 +45,13 @@ export function AdminConfigurateurClient() {
       const res = await fetch('/api/admin/configurateur');
       if (!res.ok) throw new Error();
       const data = await res.json();
+      setUnivers(data.univers || []);
+      setModuleTypes(data.module_types || []);
       setProductTypes(data.product_types || []);
       setOptionPrices(data.option_prices || null);
       setOptions(data.options || []);
       setLabels(data.labels || null);
+      setPricingMode(data.pricing_mode === 'estimation' ? 'estimation' : 'masque');
     } catch {
       showToast('Erreur de chargement');
     } finally {
@@ -104,6 +114,31 @@ export function AdminConfigurateurClient() {
         ))}
       </div>
 
+      {/* Mode de prix client */}
+      <div className="mb-4 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-sm font-semibold text-gray-900">Affichage des prix côté client</p>
+          <p className="text-xs text-gray-500 mt-0.5">
+            {pricingMode === 'masque'
+              ? '« Prix sur devis » : le client ne voit aucun prix, vous chiffrez depuis l\'admin.'
+              : 'Estimation indicative affichée en direct au client.'}
+          </p>
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-full p-1">
+          {(['masque', 'estimation'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => { setPricingMode(mode); saveKey('pricing_mode', mode); }}
+              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                pricingMode === mode ? 'bg-vert-foret text-white' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              {mode === 'masque' ? 'Prix sur devis' : 'Estimation visible'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Materials link */}
       <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
         <p className="text-sm text-amber-800">
@@ -116,6 +151,17 @@ export function AdminConfigurateurClient() {
 
       {/* Tab content */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
+        {activeTab === 'univers' && (
+          <UniversModulesTab
+            univers={univers}
+            moduleTypes={moduleTypes}
+            onUniversChange={setUnivers}
+            onModulesChange={setModuleTypes}
+            onSaveUnivers={() => saveKey('univers', univers)}
+            onSaveModules={() => saveKey('module_types', moduleTypes)}
+            saving={saving}
+          />
+        )}
         {activeTab === 'types' && (
           <ProductTypesTab
             types={productTypes}

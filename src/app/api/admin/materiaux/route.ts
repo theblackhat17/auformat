@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, colorHex, prixM2, features, usages, published, sortOrder } = body;
+    const { name, latinName, image, categoryId, tag, description, hardness, stability, origin, color, colorHex, prixM2, features, usages, published, sortOrder, renderType, grainHex, configurateurOnly } = body;
 
     if (!name) {
       return NextResponse.json({ error: 'Le nom est requis' }, { status: 400 });
@@ -51,6 +51,9 @@ export async function POST(request: NextRequest) {
       usages: JSON.stringify(usages || []),
       published: published ?? false,
       sortOrder: sortOrder ?? 0,
+      renderType: ['uni', 'bois'].includes(renderType) ? renderType : null,
+      grainHex: grainHex || null,
+      configurateurOnly: configurateurOnly ?? false,
     });
 
     logAdminAction(request, auth, 'create_materiau', 'materiau', (materiau as { id: string }).id, `Matériau "${name}" créé`);

@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { getArticleBySlug, getRelatedArticles, getArticles } from '@/lib/content';
 import { buildPageMetadata, SITE_URL } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
+import { ReadingProgress } from '@/components/blog/ReadingProgress';
+import { ArticleContent } from '@/components/blog/ArticleContent';
 
 export const revalidate = 60;
 
@@ -66,6 +66,9 @@ export default async function BlogArticlePage({ params }: Props) {
         breadcrumbJsonLd([
           { name: 'Accueil', url: SITE_URL },
           { name: 'Blog', url: `${SITE_URL}/blog` },
+          ...(article.categoryLabel && article.categorySlug
+            ? [{ name: article.categoryLabel, url: `${SITE_URL}/blog/categorie/${article.categorySlug}` }]
+            : []),
           { name: article.title, url: articleUrl },
         ]),
         {
@@ -93,11 +96,12 @@ export default async function BlogArticlePage({ params }: Props) {
         },
       ]} />
 
+      <ReadingProgress />
+
       <div className="bg-white">
         <article>
           {/* Article header */}
           <header className="relative pt-28 lg:pt-36 pb-12 lg:pb-16 bg-beige/30 overflow-hidden">
-            {/* Subtle grain */}
             <div
               className="absolute inset-0 opacity-[0.025] pointer-events-none mix-blend-multiply"
               style={{
@@ -106,56 +110,63 @@ export default async function BlogArticlePage({ params }: Props) {
             />
 
             <div className="max-w-4xl mx-auto px-6 lg:px-8 relative">
-              {/* Back link */}
-              <Link
-                href="/blog"
-                className="inline-flex items-center gap-2 text-[10px] tracking-[0.4em] text-bois-fonce uppercase font-medium mb-12 lg:mb-16 hover:text-vert-foret transition-colors group"
-              >
-                <span className="transition-transform duration-300 group-hover:-translate-x-1">←</span>
-                <span>Retour au journal</span>
-              </Link>
-
-              {/* Category */}
-              {article.categoryLabel && (
-                <div className="mb-8 flex items-center gap-3">
-                  <span className="h-px w-8 bg-bois-clair" />
-                  <span className="text-[11px] tracking-[0.3em] text-bois-fonce uppercase font-medium inline-flex items-center gap-2">
-                    {article.categoryIcon && <span className="opacity-80">{article.categoryIcon}</span>}
-                    <span>{article.categoryLabel}</span>
-                  </span>
-                </div>
-              )}
+              {/* Breadcrumb-style nav */}
+              <nav className="flex flex-wrap items-center gap-2 text-[11px] tracking-[0.25em] text-noir/55 uppercase font-medium mb-10 lg:mb-14">
+                <Link href="/blog" className="hover:text-vert-foret transition-colors inline-flex items-center gap-2 group">
+                  <span className="transition-transform duration-300 group-hover:-translate-x-0.5">←</span>
+                  <span>Journal</span>
+                </Link>
+                {article.categoryLabel && article.categorySlug && (
+                  <>
+                    <span className="text-noir/25">/</span>
+                    <Link
+                      href={`/blog/categorie/${article.categorySlug}`}
+                      className="hover:text-vert-foret transition-colors inline-flex items-center gap-1.5"
+                    >
+                      {article.categoryIcon && <span>{article.categoryIcon}</span>}
+                      <span>{article.categoryLabel}</span>
+                    </Link>
+                  </>
+                )}
+              </nav>
 
               {/* Title */}
-              <h1
-                className="text-4xl md:text-5xl lg:text-[3.75rem] font-light text-noir leading-[1.05] tracking-[-0.015em] mb-8 lg:mb-10"
-
-              >
+              <h1 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] text-noir leading-[1.1] tracking-[-0.01em] mb-8 lg:mb-10">
                 {article.title}
               </h1>
 
               {/* Excerpt */}
               {article.excerpt && (
-                <p
-                  className="text-xl md:text-2xl text-noir/60 leading-[1.5] font-light mb-10 lg:mb-12 italic"
-
-                >
+                <p className="text-xl md:text-2xl text-noir/65 leading-[1.5] font-light mb-10 lg:mb-12 italic">
                   {article.excerpt}
                 </p>
               )}
 
-              {/* Meta */}
-              <div className="flex flex-wrap items-center gap-3 text-[11px] tracking-[0.25em] text-noir/45 uppercase pt-6 border-t border-noir/10">
-                <time dateTime={article.publishedAt || article.createdAt}>
-                  {formatDateLong(article.publishedAt || article.createdAt)}
-                </time>
-                <span className="h-px w-6 bg-noir/20" />
-                <span>{article.readingTime} min de lecture</span>
+              {/* Meta — bigger and more visible */}
+              <div className="flex flex-wrap items-center gap-3 pt-6 border-t border-noir/10">
+                <span className="inline-flex items-center gap-2 text-sm text-noir/75 bg-white/80 backdrop-blur px-3.5 py-2 border border-noir/5">
+                  <svg className="w-4 h-4 text-bois-fonce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <time dateTime={article.publishedAt || article.createdAt} className="font-medium">
+                    {formatDateLong(article.publishedAt || article.createdAt)}
+                  </time>
+                </span>
+
+                <span className="inline-flex items-center gap-2 text-sm text-noir/75 bg-white/80 backdrop-blur px-3.5 py-2 border border-noir/5">
+                  <svg className="w-4 h-4 text-bois-fonce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-medium">{article.readingTime} min de lecture</span>
+                </span>
+
                 {article.authorName && (
-                  <>
-                    <span className="h-px w-6 bg-noir/20" />
-                    <span>par {article.authorName}</span>
-                  </>
+                  <span className="inline-flex items-center gap-2 text-sm text-noir/75 bg-white/80 backdrop-blur px-3.5 py-2 border border-noir/5">
+                    <svg className="w-4 h-4 text-bois-fonce" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span className="font-medium">par {article.authorName}</span>
+                  </span>
                 )}
               </div>
             </div>
@@ -177,13 +188,8 @@ export default async function BlogArticlePage({ params }: Props) {
 
           {/* Article body */}
           <div className="max-w-3xl mx-auto px-6 lg:px-8 py-16 lg:py-24">
-            <div
-              className="article-prose"
-
-            >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {article.content}
-              </ReactMarkdown>
+            <div className="article-prose">
+              <ArticleContent content={article.content} />
             </div>
 
             {/* End mark */}
@@ -199,9 +205,7 @@ export default async function BlogArticlePage({ params }: Props) {
             <div className="border-y border-noir/10 py-8 flex flex-wrap items-center justify-between gap-6">
               <div className="flex items-center gap-3">
                 <span className="h-px w-8 bg-bois-clair" />
-                <span
-                  className="text-[10px] tracking-[0.4em] text-bois-fonce uppercase font-medium"
-                >
+                <span className="text-[10px] tracking-[0.4em] text-bois-fonce uppercase font-medium">
                   Partager cet article
                 </span>
               </div>
@@ -295,14 +299,11 @@ export default async function BlogArticlePage({ params }: Props) {
                       </div>
                     )}
 
-                    <h3
-                      className="text-xl lg:text-[1.375rem] font-light text-noir leading-[1.2] tracking-[-0.005em] group-hover:text-vert-foret transition-colors duration-500 mb-4"
-
-                    >
+                    <h3 className="font-display text-xl lg:text-[1.375rem] text-noir leading-[1.2] group-hover:text-vert-foret transition-colors duration-500 mb-4">
                       {a.title}
                     </h3>
 
-                    <div className="mt-auto flex items-center gap-2 text-[10px] tracking-[0.25em] text-noir/40 uppercase">
+                    <div className="mt-auto flex items-center gap-2 text-[13px] text-noir/55">
                       <span>{a.readingTime} min</span>
                       <span className="h-px w-3 bg-noir/20" />
                       <span>{formatDateLong(a.publishedAt || a.createdAt)}</span>
@@ -328,23 +329,12 @@ export default async function BlogArticlePage({ params }: Props) {
               </span>
               <span className="h-px w-12 bg-bois-clair/60" />
             </div>
-            <h2
-              className="text-4xl md:text-5xl lg:text-[3.75rem] font-light leading-[1.05] tracking-[-0.015em] mb-8"
-
-            >
+            <h2 className="font-display text-4xl md:text-5xl lg:text-[3.5rem] leading-[1.1] tracking-[-0.01em] mb-8">
               Un projet de{' '}
-              <em
-                className="italic font-normal text-bois-clair"
-
-              >
-                menuiserie
-              </em>
+              <em className="italic font-normal text-bois-clair">menuiserie</em>
               &nbsp;?
             </h2>
-            <p
-              className="text-lg md:text-xl text-white/65 leading-[1.65] mb-12 font-light max-w-2xl mx-auto"
-
-            >
+            <p className="text-lg md:text-xl text-white/65 leading-[1.65] mb-12 font-light max-w-2xl mx-auto">
               De la première idée à la pose finale, notre atelier vous accompagne dans la création de pièces uniques en bois massif, à votre image.
             </p>
             <Link
@@ -545,6 +535,32 @@ export default async function BlogArticlePage({ params }: Props) {
           font-size: 1.25em;
           margin-left: 0.1em;
           line-height: 0;
+        }
+
+        /* Callouts override default prose styling inside .callout-body */
+        .article-prose .callout-body p {
+          margin: 0 0 0.75rem;
+          font-size: inherit;
+          font-style: normal;
+          font-weight: 400;
+          color: inherit;
+          line-height: inherit;
+          letter-spacing: normal;
+        }
+        .article-prose .callout-body p:last-child {
+          margin-bottom: 0;
+        }
+        .article-prose .callout-body p::before,
+        .article-prose .callout-body p::after {
+          content: none;
+        }
+        .article-prose .callout-body ul,
+        .article-prose .callout-body ol {
+          margin: 0.5rem 0 0.75rem;
+        }
+        .article-prose .callout-body ul > li,
+        .article-prose .callout-body ol > li {
+          margin-bottom: 0.35rem;
         }
 
         .article-prose img {

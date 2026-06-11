@@ -1,10 +1,24 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { Young_Serif, Hanken_Grotesk } from 'next/font/google';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
 import { getSettings } from '@/lib/content';
 import { DEFAULT_THEME_COLORS } from '@/lib/types';
 import './globals.css';
+
+const youngSerif = Young_Serif({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-young-serif',
+  display: 'swap',
+});
+
+const hankenGrotesk = Hanken_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-hanken',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://auformat.com'),
@@ -71,32 +85,44 @@ function safeColor(value: string | null | undefined, fallback: string): string {
   return value && HEX.test(value) ? value : fallback;
 }
 
-async function getThemeCss(): Promise<string> {
+async function getThemeStyle(): Promise<Record<string, string>> {
   try {
     const s = await getSettings();
-    const colors = {
-      boisClair: safeColor(s?.colorBoisClair, DEFAULT_THEME_COLORS.colorBoisClair),
-      boisFonce: safeColor(s?.colorBoisFonce, DEFAULT_THEME_COLORS.colorBoisFonce),
-      vertForet: safeColor(s?.colorVertForet, DEFAULT_THEME_COLORS.colorVertForet),
-      vertForetDark: safeColor(s?.colorVertForetDark, DEFAULT_THEME_COLORS.colorVertForetDark),
-      beige: safeColor(s?.colorBeige, DEFAULT_THEME_COLORS.colorBeige),
-      noir: safeColor(s?.colorNoir, DEFAULT_THEME_COLORS.colorNoir),
-      blanc: safeColor(s?.colorBlanc, DEFAULT_THEME_COLORS.colorBlanc),
+    return {
+      '--color-bois-clair': safeColor(s?.colorBoisClair, DEFAULT_THEME_COLORS.colorBoisClair),
+      '--color-bois-fonce': safeColor(s?.colorBoisFonce, DEFAULT_THEME_COLORS.colorBoisFonce),
+      '--color-vert-foret': safeColor(s?.colorVertForet, DEFAULT_THEME_COLORS.colorVertForet),
+      '--color-vert-foret-dark': safeColor(s?.colorVertForetDark, DEFAULT_THEME_COLORS.colorVertForetDark),
+      '--color-beige': safeColor(s?.colorBeige, DEFAULT_THEME_COLORS.colorBeige),
+      '--color-noir': safeColor(s?.colorNoir, DEFAULT_THEME_COLORS.colorNoir),
+      '--color-blanc': safeColor(s?.colorBlanc, DEFAULT_THEME_COLORS.colorBlanc),
     };
-    return `:root{--color-bois-clair:${colors.boisClair};--color-bois-fonce:${colors.boisFonce};--color-vert-foret:${colors.vertForet};--color-vert-foret-dark:${colors.vertForetDark};--color-beige:${colors.beige};--color-noir:${colors.noir};--color-blanc:${colors.blanc};}`;
   } catch {
-    return '';
+    return {};
+  }
+}
+
+async function getFontTheme(): Promise<'moderne' | 'classique'> {
+  try {
+    const s = await getSettings();
+    return s?.fontTheme === 'classique' ? 'classique' : 'moderne';
+  } catch {
+    return 'moderne';
   }
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const themeCss = await getThemeCss();
+  const [themeStyle, fontTheme] = await Promise.all([getThemeStyle(), getFontTheme()]);
   return (
-    <html lang="fr">
+    <html
+      lang="fr"
+      className={`${youngSerif.variable} ${hankenGrotesk.variable}`}
+      data-font-theme={fontTheme}
+      style={themeStyle as React.CSSProperties}
+    >
       <head>
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
-        {themeCss && <style dangerouslySetInnerHTML={{ __html: themeCss }} />}
       </head>
       <body className="min-h-screen bg-blanc text-noir antialiased">
         {children}

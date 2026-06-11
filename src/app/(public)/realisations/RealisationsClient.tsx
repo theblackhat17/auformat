@@ -47,10 +47,11 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
   return (
     <>
       {/* Filters */}
-      <div className="flex flex-wrap gap-2 mb-10">
+      <div className="flex flex-wrap gap-2.5 mb-12" role="group" aria-label="Filtrer les réalisations par catégorie">
         <button
           onClick={() => setActiveCategory('all')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === 'all' ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}
+          aria-pressed={activeCategory === 'all'}
+          className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors duration-200 ${activeCategory === 'all' ? 'bg-noir text-white border-noir' : 'bg-transparent text-noir border-noir/20 hover:border-noir'}`}
         >
           Tous
         </button>
@@ -58,42 +59,58 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === cat ? 'bg-vert-foret text-white' : 'bg-beige text-noir/70 hover:bg-beige/80'}`}
+            aria-pressed={activeCategory === cat}
+            className={`px-5 py-2 rounded-full text-sm font-medium border transition-colors duration-200 ${activeCategory === cat ? 'bg-noir text-white border-noir' : 'bg-transparent text-noir border-noir/20 hover:border-noir'}`}
           >
             {categoryLabels[cat] || cat}
           </button>
         ))}
       </div>
 
-      {/* Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((r) => (
-          <div
-            key={r.id}
-            onClick={() => setSelectedItem(r)}
-            className="group cursor-pointer bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
-          >
-            <div className="aspect-[4/3] bg-beige overflow-hidden relative">
-              {r.image && <Image src={r.image} alt={r.title} fill sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />}
-            </div>
-            <div className="p-5">
-              <span className="text-xs font-medium text-bois-fonce uppercase tracking-wider">{categoryLabels[r.category] || r.category}</span>
-              <h3 className="text-lg font-semibold text-noir mt-1 mb-2">{r.title}</h3>
-              <p className="text-sm text-noir/50 line-clamp-2">{r.description}</p>
-              {r.duration && (
-                <div className="flex gap-4 mt-3 text-xs text-noir/40">
-                  {r.duration && <span>Duree: {r.duration}</span>}
-                  {r.surface && <span>Surface: {r.surface}</span>}
-                </div>
+      {/* Galerie — rythme éditorial : 2 grandes, puis 3, en cycle */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-6 gap-5">
+        {filtered.map((r, i) => {
+          const wide = i % 5 === 0 || i % 5 === 1;
+          return (
+            <button
+              key={`${activeCategory}-${r.id}`}
+              onClick={() => setSelectedItem(r)}
+              style={{ animationDelay: `${Math.min(i * 50, 400)}ms` }}
+              className={`group relative text-left rounded-xl overflow-hidden animate-fade-in-up opacity-0 ${wide ? 'lg:col-span-3 aspect-[16/10]' : 'lg:col-span-2 aspect-[4/3]'}`}
+              aria-label={`Voir le projet : ${r.title}`}
+            >
+              {r.image ? (
+                <Image
+                  src={r.image}
+                  alt={r.title}
+                  fill
+                  sizes={wide ? '(max-width: 768px) 100vw, 50vw' : '(max-width: 768px) 100vw, 33vw'}
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                />
+              ) : (
+                <span className="absolute inset-0 bg-beige" aria-hidden="true" />
               )}
-            </div>
-          </div>
-        ))}
+              <span className="absolute inset-0 bg-gradient-to-t from-noir/80 via-noir/15 to-transparent transition-opacity duration-300" aria-hidden="true" />
+              <span className="absolute bottom-0 left-0 right-0 p-6 block">
+                <span className="block text-bois-clair text-sm font-semibold mb-1.5">{categoryLabels[r.category] || r.category}</span>
+                <span className="block font-display text-xl lg:text-[1.375rem] text-white leading-snug">{r.title}</span>
+                {(r.duration || r.surface) && (
+                  <span className="block mt-2 text-xs text-white/70">
+                    {[r.duration && `Durée : ${r.duration}`, r.surface && `Surface : ${r.surface}`].filter(Boolean).join(' · ')}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {filtered.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-noir/40">Aucune realisation dans cette categorie.</p>
+        <div className="text-center py-20">
+          <p className="font-display text-xl text-noir/60">Aucune réalisation dans cette catégorie pour le moment.</p>
+          <button onClick={() => setActiveCategory('all')} className="link-arrow mt-4">
+            Voir tous les projets
+          </button>
         </div>
       )}
 
@@ -160,6 +177,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
           {/* Close button */}
           <button
             onClick={closeLightbox}
+            aria-label="Fermer la galerie"
             className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,6 +194,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
           {galleryImages.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); prevImage(); }}
+              aria-label="Image précédente"
               className="absolute left-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -203,6 +222,7 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
           {galleryImages.length > 1 && (
             <button
               onClick={(e) => { e.stopPropagation(); nextImage(); }}
+              aria-label="Image suivante"
               className="absolute right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

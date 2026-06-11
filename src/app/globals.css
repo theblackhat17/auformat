@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@theme inline {
+@theme {
+  /* ── Palette de l'Atelier (DA Au Format — surchargée par les réglages admin via style inline sur <html>) ── */
   --color-bois-clair: #D4A574;
   --color-bois-fonce: #8B6F47;
   --color-vert-foret: #2C5F2D;
@@ -9,7 +10,28 @@
   --color-noir: #2B2B2B;
   --color-blanc: #FFFFFF;
 
+  /* ── Typographie : Young Serif (titres) + Hanken Grotesk (texte) via next/font ── */
+  --font-sans: var(--font-hanken), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-young-serif), Georgia, "Times New Roman", serif;
+
+  /* ── Motion : « Le Fil du Bois » ── */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── Ombres : plat au repos, réponse au geste ── */
+  --shadow-lift: 0 12px 32px -12px rgba(43, 43, 43, 0.18);
+  --shadow-modal: 0 24px 64px -16px rgba(43, 43, 43, 0.35);
+}
+
+/* Thème typographique « classique » (ancien site) — activable depuis l'admin (Paramètres → Apparence) */
+html[data-font-theme="classique"] {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* En classique, les titres (Young Serif 400 à l'origine) repassent en gras pour garder la hiérarchie */
+html[data-font-theme="classique"] .font-display {
+  font-weight: 700;
 }
 
 *,
@@ -26,8 +48,30 @@ body {
   background: var(--color-blanc);
   color: var(--color-noir);
   font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--color-bois-clair);
+  color: var(--color-noir);
+}
+
+/* Focus visible — WCAG AA, jamais supprimé */
+:focus-visible {
+  outline: 2px solid var(--color-vert-foret);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 /* Scrollbar styling */
@@ -48,7 +92,134 @@ body {
   background: var(--color-bois-fonce);
 }
 
-/* Animation keyframes */
+/* ───────────────────────── Boutons (hiérarchie unique du site) ───────────────────────── */
+
+@layer components {
+  .btn-primary,
+  .btn-secondary,
+  .btn-on-dark,
+  .btn-ghost-dark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: 0.01em;
+    transition: background-color 200ms var(--ease-out-quart), color 200ms var(--ease-out-quart),
+      border-color 200ms var(--ease-out-quart), transform 200ms var(--ease-out-quart);
+  }
+
+  .btn-primary {
+    background: var(--color-vert-foret);
+    color: var(--color-blanc);
+    padding: 0.875rem 2rem;
+  }
+  .btn-primary:hover {
+    background: var(--color-vert-foret-dark);
+    transform: translateY(-1px);
+  }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--color-noir);
+    border: 1.5px solid var(--color-noir);
+    padding: calc(0.875rem - 1.5px) calc(2rem - 1.5px);
+  }
+  .btn-secondary:hover {
+    background: var(--color-noir);
+    color: var(--color-blanc);
+  }
+
+  /* CTA des sections sombres : le bois clair vit sur le sombre */
+  .btn-on-dark {
+    background: var(--color-bois-clair);
+    color: var(--color-noir);
+    padding: 0.875rem 2rem;
+  }
+  .btn-on-dark:hover {
+    background: #E0BC93;
+    transform: translateY(-1px);
+  }
+
+  .btn-ghost-dark {
+    background: transparent;
+    color: var(--color-blanc);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    padding: calc(0.875rem - 1.5px) calc(2rem - 1.5px);
+  }
+  .btn-ghost-dark:hover {
+    border-color: var(--color-blanc);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Lien-flèche éditorial */
+  .link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--color-vert-foret);
+  }
+  .link-arrow svg,
+  .link-arrow .arrow {
+    transition: transform 250ms var(--ease-out-quart);
+  }
+  .link-arrow:hover svg,
+  .link-arrow:hover .arrow {
+    transform: translateX(4px);
+  }
+}
+
+/* ───────────────────────── Reveals au scroll : « le mouvement révèle, il ne décore pas » ─────────────────────────
+   Contenu visible par défaut (SSR, no-JS, crawlers). Le composant <Reveal> pose data-reveal-ready
+   au montage uniquement si l'élément est hors viewport ; l'état caché n'existe donc jamais sans JS. */
+
+[data-reveal][data-reveal-ready] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+[data-reveal][data-reveal-visible] {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 600ms var(--ease-out-quart), transform 600ms var(--ease-out-quart);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* Variante : découverte d'image par clip-path */
+[data-reveal="clip"][data-reveal-ready] {
+  opacity: 1;
+  transform: none;
+  clip-path: inset(8% 0 8% 0);
+}
+
+[data-reveal="clip"][data-reveal-visible] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 800ms var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+/* ───────────────────────── Animations d'entrée (CSS pures, non gardées par JS) ───────────────────────── */
+
+@keyframes heroRise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -71,16 +242,114 @@ body {
   }
 }
 
+@keyframes scaleInSoft {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
+/* Entrée orchestrée du héros : éléments décalés via --rise-delay */
+.animate-hero-rise {
+  animation: heroRise 700ms var(--ease-out-quart) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+.animate-fade-in {
+  animation: fadeIn 600ms var(--ease-out-quart) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
 .animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out forwards;
+  animation: fadeInUp 0.6s var(--ease-out-quart) forwards;
 }
 
 .animate-slide-down {
-  animation: slideDown 0.4s ease-out forwards;
+  animation: slideDown 0.4s var(--ease-out-quart) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleInSoft 350ms var(--ease-out-quart) both;
+}
+
+/* ───────────────────────── Cartes cliquables : plat au repos, lift au survol ───────────────────────── */
+
+@layer components {
+  .card-lift {
+    transition: transform 250ms var(--ease-out-quart), box-shadow 250ms var(--ease-out-quart);
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* ───────────────────────── Impression : récap configurateur uniquement ───────────────────────── */
+
+@media print {
+  body:has([data-print-recap]) * {
+    visibility: hidden;
+  }
+  body:has([data-print-recap]) [data-print-recap],
+  body:has([data-print-recap]) [data-print-recap] * {
+    visibility: visible;
+  }
+  body:has([data-print-recap]) [data-print-recap] {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+}
+
+/* ───────────────────────── Reduced motion : alternative pour chaque animation ───────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-reveal][data-reveal-ready] {
+    opacity: 1;
+    transform: none;
+    clip-path: none;
+  }
+
+  [data-reveal][data-reveal-visible] {
+    transition: none;
+  }
+
+  .animate-hero-rise,
+  .animate-fade-in,
+  .animate-fade-in-up,
+  .animate-slide-down,
+  .animate-scale-in {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms;
+  }
+
+  .card-lift,
+  .card-lift:hover {
+    transform: none;
+    transition: box-shadow 200ms ease;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

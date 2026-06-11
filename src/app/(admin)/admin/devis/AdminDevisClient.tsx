@@ -130,7 +130,10 @@ export function AdminDevisClient() {
                 <td className="px-4 py-3 text-right font-medium">{formatPrice(q.totalTtc)}</td>
                 <td className="px-4 py-3 text-noir/40 text-xs">{formatDate(q.createdAt)}</td>
                 <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                  {q.status === 'draft' && <Button variant="outline" size="sm" onClick={() => handleSend(q.id)}>Envoyer</Button>}
+                  <div className="flex items-center justify-end gap-2">
+                    <a href={`/admin/devis/${q.id}`} className="text-xs font-semibold text-vert-foret hover:underline whitespace-nowrap">Modifier</a>
+                    {q.status === 'draft' && <Button variant="outline" size="sm" onClick={() => handleSend(q.id)}>Envoyer</Button>}
+                  </div>
                 </td>
               </tr>
             ))}

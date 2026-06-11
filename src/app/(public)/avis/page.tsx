@@ -1,11 +1,12 @@
 export const revalidate = 60;
 
 import type { Metadata } from 'next';
-import { getAvis, getAvisStats } from '@/lib/content';
+import { getAvis, getAvisStats, getPageContent } from '@/lib/content';
 import { AvisClient } from './AvisClient';
 import { buildPageMetadata, SITE_URL, SITE_NAME } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
+import { PageHero } from '@/components/layout/PageHero';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/avis', {
@@ -16,7 +17,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AvisPage() {
-  const [avis, avisStats] = await Promise.all([getAvis(), getAvisStats()]);
+  const [avis, avisStats, sections] = await Promise.all([getAvis(), getAvisStats(), getPageContent('avis')]);
+
+  const hero = (sections.find((s) => s.sectionKey === 'hero')?.content || {}) as Record<string, string>;
 
   return (
     <>
@@ -36,14 +39,12 @@ export default async function AvisPage() {
           },
         }} />
       )}
-      <section className="bg-noir text-white py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">Témoignages</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Avis clients</h1>
-          <p className="text-white/80 text-lg max-w-2xl">La satisfaction de nos clients est notre meilleure carte de visite.</p>
-        </div>
-      </section>
-      <section className="py-16">
+      <PageHero
+        kicker={hero.subtitle_top || 'Témoignages'}
+        title={hero.title || 'Avis clients'}
+        intro={hero.description || 'La satisfaction de nos clients est notre meilleure carte de visite.'}
+      />
+      <section className="py-16 lg:py-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <AvisClient avis={avis} />
         </div>

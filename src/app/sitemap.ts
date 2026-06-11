@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getSettings, getServices, getRealisations, getMateriaux, getArticles } from '@/lib/content';
+import { getSettings, getServices, getRealisations, getMateriaux, getArticles, getBlogCategoriesWithCount } from '@/lib/content';
 import { queryOne } from '@/lib/db';
 
 const SITE_URL = 'https://auformat.com';
@@ -12,12 +12,13 @@ async function getLatestUpdate(table: string): Promise<Date> {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [settings, services, realisations, materiaux, articles, latestRealisation, latestAvis, latestMateriau, latestContent, latestArticle] = await Promise.all([
+  const [settings, services, realisations, materiaux, articles, blogCategories, latestRealisation, latestAvis, latestMateriau, latestContent, latestArticle] = await Promise.all([
     getSettings(),
     getServices(),
     getRealisations(),
     getMateriaux(),
     getArticles(),
+    getBlogCategoriesWithCount(),
     getLatestUpdate('realisations'),
     getLatestUpdate('avis'),
     getLatestUpdate('materiaux'),
@@ -46,6 +47,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Service pages
   for (const s of services) {
     entries.push({ url: `${SITE_URL}/services/${s.slug}`, lastModified: new Date(s.updatedAt || Date.now()) });
+  }
+
+  // Blog category pages
+  for (const c of blogCategories) {
+    if (c.articleCount > 0) {
+      entries.push({ url: `${SITE_URL}/blog/categorie/${c.slug}`, lastModified: latestArticle });
+    }
   }
 
   // Blog articles

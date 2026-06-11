@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-06-11T00:00:00.000Z",
+  "title": "Design System: Au Format",
+  "extensions": {
+    "colorMeta": {
+      "vert-foret": { "role": "primary", "displayName": "Vert Forêt", "canonical": "#2C5F2D", "tonalRamp": ["#11260F", "#1B3A1B", "#234A24", "#2C5F2D", "#467947", "#6F9D6F", "#A3C4A3", "#DCEADC"] },
+      "vert-foret-dark": { "role": "primary", "displayName": "Vert Forêt Profond", "canonical": "#234A24", "tonalRamp": ["#0D1F0C", "#163016", "#1C3D1D", "#234A24", "#3A663B", "#638D64", "#9BBC9C", "#D7E6D7"] },
+      "bois-clair": { "role": "secondary", "displayName": "Bois Clair", "canonical": "#D4A574", "tonalRamp": ["#3D2D1B", "#6B4F2F", "#9A7347", "#C0935F", "#D4A574", "#E0BC93", "#ECD4B8", "#F7EBDC"] },
+      "bois-fonce": { "role": "secondary", "displayName": "Bois Foncé", "canonical": "#8B6F47", "tonalRamp": ["#241D10", "#46371F", "#68532F", "#8B6F47", "#A68C62", "#C0AB88", "#DBCBB3", "#F1EAE0"] },
+      "noir": { "role": "neutral", "displayName": "Noir Atelier", "canonical": "#2B2B2B", "tonalRamp": ["#1A1A1A", "#2B2B2B", "#404040", "#5C5C5C", "#7A7A7A", "#A3A3A3", "#CFCFCF", "#F0F0F0"] },
+      "beige": { "role": "neutral", "displayName": "Beige", "canonical": "#F5F1E8", "tonalRamp": ["#3B362B", "#6B6353", "#9A8F7B", "#C2B8A4", "#DCD4C4", "#EAE4D7", "#F5F1E8", "#FBF9F4"] },
+      "blanc": { "role": "neutral", "displayName": "Blanc", "canonical": "#FFFFFF", "tonalRamp": ["#404040", "#5C5C5C", "#7A7A7A", "#A3A3A3", "#C2C2C2", "#E0E0E0", "#F5F5F5", "#FFFFFF"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Héros de page uniquement, Young Serif. Une seule par page." },
+      "headline": { "displayName": "Headline", "purpose": "Titres de section, Young Serif." },
+      "title": { "displayName": "Title", "purpose": "Sous-titres et titres de cartes, Hanken Grotesk 600." },
+      "body": { "displayName": "Body", "purpose": "Texte courant, max 70ch, Hanken Grotesk." },
+      "label": { "displayName": "Label", "purpose": "Métadonnées, boutons, navigation. Pas d'uppercase tracked systématique." }
+    },
+    "shadows": [
+      { "name": "hover-lift", "value": "0 12px 32px -12px rgba(43, 43, 43, 0.18)", "purpose": "Survol des cartes cliquables, avec translateY(-4px)." },
+      { "name": "modal", "value": "0 24px 64px -16px rgba(43, 43, 43, 0.35)", "purpose": "Lightbox et modales." },
+      { "name": "header", "value": "0 1px 0 rgba(43, 43, 43, 0.08)", "purpose": "Header sticky une fois scrollé." }
+    ],
+    "motion": [
+      { "name": "ease-out-quart", "value": "cubic-bezier(0.25, 1, 0.5, 1)", "purpose": "Easing par défaut des reveals et transitions." },
+      { "name": "duration-state", "value": "200ms", "purpose": "Hover, focus, états de boutons et liens." },
+      { "name": "duration-reveal", "value": "600ms", "purpose": "Reveals au scroll." },
+      { "name": "stagger-list", "value": "80ms", "purpose": "Décalage entre items d'une même liste." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Bouton Primary",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "CTA principal — un seul par viewport.",
+      "html": "<button class=\"ds-btn-primary\">Demander un devis</button>",
+      "css": ".ds-btn-primary { background: var(--color-vert-foret, #2C5F2D); color: #fff; padding: 14px 32px; border: none; border-radius: 9999px; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-weight: 600; font-size: 0.9375rem; letter-spacing: 0.02em; cursor: pointer; transition: background 200ms cubic-bezier(0.25,1,0.5,1), transform 200ms cubic-bezier(0.25,1,0.5,1); } .ds-btn-primary:hover { background: var(--color-vert-foret-dark, #234A24); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #2C5F2D; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton Secondary",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Action secondaire en bordure.",
+      "html": "<button class=\"ds-btn-secondary\">Voir nos réalisations</button>",
+      "css": ".ds-btn-secondary { background: transparent; color: #2B2B2B; padding: 13px 30px; border: 1.5px solid #2B2B2B; border-radius: 9999px; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-weight: 600; font-size: 0.9375rem; cursor: pointer; transition: background 200ms, color 200ms; } .ds-btn-secondary:hover { background: #2B2B2B; color: #fff; } .ds-btn-secondary:focus-visible { outline: 2px solid #2C5F2D; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bouton On-Dark",
+      "kind": "button",
+      "refersTo": "button-on-dark",
+      "description": "CTA des sections noires : bois clair sur noir atelier.",
+      "html": "<button class=\"ds-btn-ondark\">Prendre rendez-vous</button>",
+      "css": ".ds-btn-ondark { background: #D4A574; color: #2B2B2B; padding: 14px 32px; border: none; border-radius: 9999px; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-weight: 600; font-size: 0.9375rem; cursor: pointer; transition: background 200ms, transform 200ms; } .ds-btn-ondark:hover { background: #E0BC93; transform: translateY(-1px); } .ds-btn-ondark:focus-visible { outline: 2px solid #D4A574; outline-offset: 2px; }"
+    },
+    {
+      "name": "Chip Filtre",
+      "kind": "chip",
+      "refersTo": "chip-filter",
+      "description": "Filtres des réalisations et avis ; actif = noir plein.",
+      "html": "<div style=\"display:flex;gap:8px\"><button class=\"ds-chip ds-chip--active\">Tous</button><button class=\"ds-chip\">Dressing</button><button class=\"ds-chip\">Cuisine</button></div>",
+      "css": ".ds-chip { background: transparent; color: #2B2B2B; border: 1px solid rgba(43,43,43,0.2); border-radius: 9999px; padding: 8px 20px; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-weight: 500; font-size: 0.875rem; cursor: pointer; transition: background 200ms, color 200ms, border-color 200ms; } .ds-chip:hover { border-color: #2B2B2B; } .ds-chip--active { background: #2B2B2B; color: #fff; border-color: #2B2B2B; }"
+    },
+    {
+      "name": "Champ de formulaire",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Input du formulaire de contact/devis.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"Votre nom\" />",
+      "css": ".ds-input { background: #fff; color: #2B2B2B; border: 1px solid rgba(43,43,43,0.2); border-radius: 6px; padding: 12px 16px; font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 1rem; width: 280px; transition: border-color 200ms, box-shadow 200ms; } .ds-input::placeholder { color: rgba(43,43,43,0.55); } .ds-input:focus { outline: none; border-color: #2C5F2D; box-shadow: 0 0 0 3px rgba(44,95,45,0.15); }"
+    },
+    {
+      "name": "Carte réalisation",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Carte cliquable : plate au repos, lift au survol.",
+      "html": "<a href=\"#\" class=\"ds-card\"><div class=\"ds-card__img\"></div><div class=\"ds-card__body\"><span class=\"ds-card__meta\">Dressing · Chêne massif</span><h3 class=\"ds-card__title\">Dressing toute hauteur, Lille</h3></div></a>",
+      "css": ".ds-card { display: block; background: #fff; border-radius: 12px; overflow: hidden; text-decoration: none; color: #2B2B2B; transition: transform 250ms cubic-bezier(0.25,1,0.5,1), box-shadow 250ms cubic-bezier(0.25,1,0.5,1); } .ds-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px -12px rgba(43,43,43,0.18); } .ds-card__img { height: 140px; background: linear-gradient(135deg, #D4A574, #8B6F47); } .ds-card__body { padding: 24px; } .ds-card__meta { font-family: 'Hanken Grotesk', system-ui, sans-serif; font-size: 0.8125rem; font-weight: 600; color: #8B6F47; } .ds-card__title { font-family: 'Young Serif', Georgia, serif; font-weight: 400; font-size: 1.25rem; margin: 8px 0 0; }"
+    },
+    {
+      "name": "Navigation",
+      "kind": "nav",
+      "refersTo": "nav-header",
+      "description": "Lien de navigation avec soulignement animé Vert Forêt.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav__link ds-nav__link--active\">Accueil</a><a href=\"#\" class=\"ds-nav__link\">Réalisations</a><a href=\"#\" class=\"ds-nav__link\">Services</a><a href=\"#\" class=\"ds-nav__link\">Contact</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 28px; font-family: 'Hanken Grotesk', system-ui, sans-serif; } .ds-nav__link { position: relative; color: #2B2B2B; text-decoration: none; font-weight: 600; font-size: 0.9375rem; padding-bottom: 4px; } .ds-nav__link::after { content: ''; position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: #2C5F2D; transition: width 250ms cubic-bezier(0.25,1,0.5,1); } .ds-nav__link:hover::after, .ds-nav__link--active::after { width: 100%; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Le Fil du Bois",
+    "overview": "Tout suit le fil de la matière. Comme la main qui parcourt un plateau poncé, l'œil descend la page sans accroc : les sections s'enchaînent dans un rythme organique, les reveals accompagnent la lecture au lieu de l'interrompre, les photos de réalisations portent l'émotion. Le design est l'écrin — précis, calme, chaleureux — jamais le sujet.",
+    "keyCharacteristics": [
+      "Photos de réalisations en héros ; le bois et la matière portent la chaleur.",
+      "Young Serif pour les titres, Hanken Grotesk pour tout le reste.",
+      "Alternance de fonds blanc / beige / noir qui structure la page.",
+      "Motion riche mais maîtrisée, avec alternative prefers-reduced-motion.",
+      "WCAG AA non négociable."
+    ],
+    "rules": [
+      { "name": "La Règle du Bois-Clair", "body": "Le bois clair vit sur le sombre. Sur fond blanc ou beige, il n'existe qu'en filet, en fond décoratif ou en image — jamais en texte.", "section": "colors" },
+      { "name": "La Règle des Trois Fonds", "body": "Une page se construit en alternant blanc, beige et noir. Si deux sections adjacentes ont le même fond, l'une des deux doit gagner sa place autrement.", "section": "colors" },
+      { "name": "La Règle du Serif Rare", "body": "Young Serif n'apparaît que dans les titres. Dès qu'il sert à autre chose, il perd sa valeur.", "section": "typography" },
+      { "name": "La Règle de l'Eyebrow Unique", "body": "Le label uppercase au-dessus d'un titre est interdit comme grammaire de section.", "section": "typography" },
+      { "name": "La Règle du Plat au Repos", "body": "Aucune ombre au repos. Une ombre = une réponse à un geste de l'utilisateur.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do alterner les trois fonds (blanc, beige, noir) pour rythmer chaque page.",
+      "Do réserver Young Serif aux titres et garantir un contraste ≥ 4.5:1 pour tout texte courant.",
+      "Do donner une alternative prefers-reduced-motion à chaque animation.",
+      "Do varier les compositions : pleine largeur, asymétrie 7/5, listes éditoriales.",
+      "Do un seul CTA principal par viewport.",
+      "Do utiliser de vraies icônes SVG (trait 1.5px) — jamais d'emojis."
+    ],
+    "donts": [
+      "Don't reproduire le template générique d'artisan : grilles de cartes identiques, emojis, sections interchangeables.",
+      "Don't retomber dans le corporate froid : gris dominant, photos stock.",
+      "Don't introduire de surcharge marketing : pop-ups, urgence, badges promo.",
+      "Don't céder à l'effet démo tech : curseurs custom, particules, 3D décorative.",
+      "Don't utiliser Bois Clair comme texte sur fond clair (échec AA).",
+      "Don't mettre un eyebrow uppercase tracked au-dessus de chaque section.",
+      "Don't utiliser side-stripe, gradient text ou glassmorphism décoratif.",
+      "Don't animer des propriétés de layout ; transform/opacity uniquement, ease-out."
+    ]
+  }
+}

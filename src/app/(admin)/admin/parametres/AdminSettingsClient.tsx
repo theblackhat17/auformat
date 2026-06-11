@@ -21,6 +21,7 @@ interface Settings {
   facebook: string;
   heroBackground: string;
   configurateurEnabled: boolean;
+  fontTheme: string;
   colorBoisClair: string;
   colorBoisFonce: string;
   colorVertForet: string;
@@ -51,6 +52,7 @@ const EMPTY: Settings = {
   companyName: '', slogan: '', address: '', zipcode: '', city: '',
   phone: '', email: '', hoursWeekdays: '', hoursSaturday: '', hoursSunday: '',
   instagram: '', facebook: '', heroBackground: '', configurateurEnabled: false,
+  fontTheme: 'moderne',
   ...DEFAULT_THEME_COLORS,
 };
 
@@ -269,6 +271,40 @@ export function AdminSettingsClient() {
 
       {tab === 'appearance' && (
         <div className="space-y-6">
+          {/* Typographie */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-noir">Typographie</h2>
+            <p className="text-sm text-noir/50 mt-1 mb-4">
+              Choisissez les polices du site public. « Moderne » utilise Young Serif pour les titres et Hanken Grotesk pour le texte ; « Classique » revient aux polices d&apos;origine du site.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3" role="radiogroup" aria-label="Thème typographique">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={settings.fontTheme !== 'classique'}
+                onClick={() => update('fontTheme', 'moderne')}
+                className={`text-left p-4 rounded-lg border-2 transition-colors ${
+                  settings.fontTheme !== 'classique' ? 'border-vert-foret bg-vert-foret/5' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <span className="block text-xl text-noir mb-1" style={{ fontFamily: 'var(--font-young-serif), Georgia, serif' }}>Moderne</span>
+                <span className="block text-sm text-noir/60">Young Serif (titres) + Hanken Grotesk (texte) — le redesign actuel.</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={settings.fontTheme === 'classique'}
+                onClick={() => update('fontTheme', 'classique')}
+                className={`text-left p-4 rounded-lg border-2 transition-colors ${
+                  settings.fontTheme === 'classique' ? 'border-vert-foret bg-vert-foret/5' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <span className="block text-xl font-bold text-noir mb-1" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>Classique</span>
+                <span className="block text-sm text-noir/60">Polices système d&apos;origine, titres en gras — l&apos;ancien rendu du site.</span>
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between mb-2 gap-4 flex-wrap">
               <div>

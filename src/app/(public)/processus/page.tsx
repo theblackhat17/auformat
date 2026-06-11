@@ -1,10 +1,13 @@
 export const revalidate = 300;
 
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, faqJsonLd } from '@/lib/jsonld';
 import { SITE_URL, buildPageMetadata } from '@/lib/seo';
 import { getPageContent } from '@/lib/content';
+import { PageHero } from '@/components/layout/PageHero';
+import { Reveal } from '@/components/motion/Reveal';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/processus', {
@@ -37,6 +40,33 @@ const DEFAULT_FAQ = [
   { question: 'Quels sont les modes de paiement acceptés ?', answer: "Nous acceptons les virements bancaires, chèques et espèces. Un échéancier en 3 fois est possible pour les projets importants." },
 ];
 
+/* Icônes d'engagement : trait 1.5, mappées depuis l'emoji stocké en base (jamais d'emoji à l'écran) */
+function EngagementIcon({ icon }: { icon: string }) {
+  const cls = 'w-6 h-6';
+  const common = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };
+  if (icon.includes('⏱') || icon.includes('🕐')) {
+    return (
+      <svg className={cls} viewBox="0 0 24 24" {...common}>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 3" />
+      </svg>
+    );
+  }
+  if (icon.includes('🛡')) {
+    return (
+      <svg className={cls} viewBox="0 0 24 24" {...common}>
+        <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6l7-3z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={cls} viewBox="0 0 24 24" {...common}>
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
 export default async function ProcessusPage() {
   const sections = await getPageContent('processus');
 
@@ -60,76 +90,87 @@ export default async function ProcessusPage() {
       ])} />
       <JsonLd data={faqJsonLd(faqItems.map((f) => ({ question: f.question, answer: f.answer })))} />
 
-      {/* Hero */}
-      <section className="bg-noir text-white py-24">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <p className="text-bois-clair text-sm font-medium tracking-widest uppercase mb-3">{hero?.subtitle_top || 'Du projet à la réalisation'}</p>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">{hero?.title || 'Notre processus'}</h1>
-          <p className="text-white/80 text-lg max-w-2xl">{hero?.description || "Un accompagnement sur mesure, de la première idée à l'installation finale."}</p>
-        </div>
-      </section>
+      <PageHero
+        kicker={hero?.subtitle_top || 'Du projet à la réalisation'}
+        title={hero?.title || 'Notre processus'}
+        intro={hero?.description || "Un accompagnement sur mesure, de la première idée à l'installation finale."}
+      />
 
-      {/* Timeline */}
-      <section className="py-20">
+      {/* Timeline — une vraie séquence : les numéros portent l'information */}
+      <section className="py-24 lg:py-28">
         <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <div className="space-y-0">
+          <ol>
             {steps.map((step, i) => (
-              <div key={step.num} className="relative flex gap-6 pb-12 last:pb-0">
-                {/* Line */}
+              <Reveal as="li" key={step.num} delay={i * 60} className="relative grid grid-cols-[auto_1fr] gap-x-7 lg:gap-x-10 pb-14 last:pb-0">
+                {/* Fil conducteur */}
                 {i < steps.length - 1 && (
-                  <div className="absolute left-[23px] top-12 w-0.5 h-[calc(100%-48px)] bg-beige" />
+                  <span className="absolute left-[27px] lg:left-[34px] top-16 bottom-2 w-px bg-noir/12" aria-hidden="true" />
                 )}
-                {/* Number circle */}
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-vert-foret text-white flex items-center justify-center text-sm font-bold shadow-lg shadow-vert-foret/20">
+                <span className="font-display text-[2rem] lg:text-[2.5rem] leading-none text-vert-foret w-14 lg:w-[4.25rem] pt-1" aria-hidden="true">
                   {step.num}
-                </div>
-                {/* Content */}
-                <div className="flex-1 pt-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-noir">{step.title}</h3>
-                    <span className="text-xs font-medium text-noir/70 bg-beige px-2.5 py-0.5 rounded-full">{step.delay}</span>
+                </span>
+                <div>
+                  <div className="flex flex-wrap items-center gap-3 mb-2.5">
+                    <h3 className="font-display text-xl lg:text-2xl text-noir">{step.title}</h3>
+                    <span className="text-xs font-semibold text-bois-fonce bg-beige px-3 py-1 rounded-full">{step.delay}</span>
                   </div>
-                  <p className="text-sm text-noir/70 leading-relaxed">{step.desc}</p>
+                  <p className="text-[0.9375rem] text-noir/70 leading-relaxed max-w-xl">{step.desc}</p>
                 </div>
-              </div>
+              </Reveal>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 
-      {/* Engagements */}
-      <section className="py-20 bg-beige/50">
+      {/* Engagements — trois colonnes au filet, pas de cartes */}
+      <section className="py-20 lg:py-24 bg-beige">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-noir text-center mb-12">{engagements.title || 'Nos engagements'}</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            {(engagements.items || DEFAULT_ENGAGEMENTS).map((e) => (
-              <div key={e.title} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm text-center">
-                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vert-foret/10 text-vert-foret text-xl mb-4">{e.icon}</span>
-                <h3 className="text-lg font-semibold text-noir mb-2">{e.title}</h3>
-                <p className="text-sm text-noir/70">{e.desc}</p>
-              </div>
+          <Reveal>
+            <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-noir text-center mb-14">
+              {engagements.title || 'Nos engagements'}
+            </h2>
+          </Reveal>
+          <div className="grid md:grid-cols-3 gap-10 md:gap-0 md:divide-x md:divide-noir/10">
+            {(engagements.items || DEFAULT_ENGAGEMENTS).map((e, i) => (
+              <Reveal key={e.title} delay={i * 100} className="md:px-10 first:md:pl-0 last:md:pr-0 text-center md:text-left">
+                <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-vert-foret text-white mb-5">
+                  <EngagementIcon icon={e.icon} />
+                </span>
+                <h3 className="font-display text-xl text-noir mb-2.5">{e.title}</h3>
+                <p className="text-[0.9375rem] text-noir/70 leading-relaxed">{e.desc}</p>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section className="py-20">
+      {/* FAQ — liste au filet, réponse aérée */}
+      <section className="py-24 lg:py-28">
         <div className="max-w-3xl mx-auto px-6 lg:px-8">
-          <h2 className="text-2xl font-bold text-noir text-center mb-12">{faq.title || 'Questions fréquentes'}</h2>
-          <div className="space-y-3">
+          <Reveal>
+            <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-noir text-center mb-14">
+              {faq.title || 'Questions fréquentes'}
+            </h2>
+          </Reveal>
+          <div className="border-t border-noir/10">
             {faqItems.map((item, i) => (
-              <details key={i} className="group bg-white rounded-xl border border-gray-100 shadow-sm">
-                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer text-sm font-medium text-noir hover:text-vert-foret transition-colors">
-                  {item.question}
-                  <svg className="w-4 h-4 text-noir/30 group-open:rotate-180 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </summary>
-                <div className="px-6 pb-4 text-sm text-noir/70 leading-relaxed">{item.answer}</div>
-              </details>
+              <Reveal key={i} delay={Math.min(i * 60, 240)}>
+                <details className="group border-b border-noir/10">
+                  <summary className="flex items-center justify-between gap-6 py-5 cursor-pointer list-none [&::-webkit-details-marker]:hidden text-[1.0625rem] font-semibold text-noir hover:text-vert-foret transition-colors">
+                    {item.question}
+                    <svg className="w-4 h-4 flex-shrink-0 text-noir/40 group-open:rotate-180 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </summary>
+                  <p className="pb-6 text-[0.9375rem] text-noir/70 leading-relaxed max-w-[65ch]">{item.answer}</p>
+                </details>
+              </Reveal>
             ))}
           </div>
+          <Reveal className="text-center mt-12">
+            <p className="text-noir/70 mb-4">Une autre question&nbsp;?</p>
+            <Link href="/contact" className="btn-primary">Contactez-nous</Link>
+          </Reveal>
         </div>
       </section>
     </>

@@ -25,11 +25,12 @@ export async function getAvis(): Promise<Avis[]> {
 }
 
 export async function getMateriaux(): Promise<Materiau[]> {
+  // configurateur_only : panneaux du configurateur, absents de la page publique /materiaux
   const rows = await query<Materiau & { categorySlug: string; categoryLabel: string }>(
     `SELECT m.*, c.slug as category_slug, c.label as category_label
      FROM materiaux m
      LEFT JOIN categories c ON m.category_id = c.id
-     WHERE m.published = true
+     WHERE m.published = true AND COALESCE(m.configurateur_only, false) = false
      ORDER BY m.sort_order`
   );
   return rows.map((m) => ({
@@ -80,6 +81,34 @@ export async function getCategories(type?: string): Promise<Category[]> {
     return query<Category>('SELECT * FROM categories WHERE type = $1 AND published = true ORDER BY sort_order', [type]);
   }
   return query<Category>('SELECT * FROM categories WHERE published = true ORDER BY type, sort_order');
+}
+
+export interface CategoryWithCount extends Category {
+  articleCount: number;
+}
+
+export async function getBlogCategoriesWithCount(): Promise<CategoryWithCount[]> {
+  return query<CategoryWithCount>(
+    `SELECT c.*, COUNT(a.id)::int AS article_count
+     FROM categories c
+     LEFT JOIN articles a ON a.category_id = c.id AND a.published = true
+     WHERE c.type = 'blog' AND c.published = true
+     GROUP BY c.id
+     ORDER BY c.sort_order`
+  );
+}
+
+export async function getArticlesByCategorySlug(slug: string): Promise<Article[]> {
+  return query<Article>(
+    `SELECT a.*, c.slug as category_slug, c.label as category_label, c.icon as category_icon,
+            p.full_name as author_name
+     FROM articles a
+     LEFT JOIN categories c ON a.category_id = c.id
+     LEFT JOIN profiles p ON a.author_id = p.id
+     WHERE a.published = true AND c.slug = $1
+     ORDER BY a.published_at DESC NULLS LAST, a.created_at DESC`,
+    [slug]
+  );
 }
 
 export async function getServices(): Promise<Service[]> {

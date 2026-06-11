@@ -466,6 +466,8 @@ export interface SiteSettings {
   facebook: string | null;
   heroBackground: string | null;
   configurateurEnabled: boolean;
+  /** 'moderne' (Young Serif + Hanken Grotesk) ou 'classique' (polices système, ancien site) */
+  fontTheme: string;
   colorBoisClair: string;
   colorBoisFonce: string;
   colorVertForet: string;
@@ -597,6 +599,12 @@ export interface ConfigurateurMaterial {
   colorHex: string;
   prixM2: number;
   sortOrder: number;
+  /** Photo de l'essence (table materiaux) pour la sélection visuelle */
+  image?: string | null;
+  /** Rendu 3D : texture procédurale 'uni' (panneau teinté) ou 'bois' (veinage) — prime sur la photo */
+  renderType?: 'uni' | 'bois' | null;
+  /** Couleur du veinage pour le rendu 'bois' */
+  grainHex?: string | null;
 }
 
 export interface ConfigurateurProductType {
@@ -656,6 +664,105 @@ export interface ConfigurateurSettings {
   option_prices: ConfigurateurOptionPrices;
   options: ConfigurateurOption[];
   labels: ConfigurateurLabels;
+  univers?: ConfigurateurUnivers[];
+  module_types?: ConfigurateurModuleType[];
+  /** true si l'assistant IA est configuré côté serveur (ANTHROPIC_API_KEY) */
+  ai_enabled?: boolean;
+  /** 'masque' (défaut) : le client ne voit aucun prix, chiffrage par devis · 'estimation' : prix indicatifs affichés */
+  pricing_mode?: 'masque' | 'estimation';
+}
+
+/* ── Configurateur v2 : composition multi-modules (cuisine, dressing, salle de bain) ── */
+
+export interface ConfigurateurUnivers {
+  slug: string;                  // 'cuisine' | 'dressing' | 'salle_de_bain'
+  nom: string;
+  description: string;
+  actif: boolean;
+  sortOrder: number;
+  /** Modules pré-posés au démarrage (slugs de module_types) */
+  starterModules: string[];
+  /** Plan de travail automatique au-dessus des modules bas (cuisine/sdb), prix HT au mètre linéaire */
+  planTravail?: { disponible: boolean; prixMl: number };
+  /** Façade coulissante couvrant toute la composition (dressing), prix HT au mètre linéaire */
+  facadeCoulissante?: { disponible: boolean; prixMl: number };
+}
+
+export type ModuleZone = 'bas' | 'haut' | 'colonne' | 'ilot';
+
+export interface ConfigurateurModuleOption {
+  slug: string;                  // 'porte', 'tiroir', 'etagere', 'tringle', 'vasque', ...
+  nom: string;
+  /** 'choix' = sélection exclusive au sein d'un même groupe (ex. style de poignée) */
+  type: 'compteur' | 'toggle' | 'choix';
+  /** Groupe d'exclusivité pour les options 'choix' (ex. 'poignee') */
+  groupe?: string;
+  prix: number;                  // € HT unitaire
+  max?: number;                  // borne haute des compteurs
+  defaut: number;                // quantité par défaut à l'ajout du module
+}
+
+export interface ConfigurateurModuleType {
+  slug: string;
+  nom: string;
+  univers: string[];             // univers où ce module est proposé
+  zone: ModuleZone;              // position en élévation : posé au sol, suspendu, ou toute hauteur
+  description?: string;
+  dimensionsDefault: { largeur: number; hauteur: number; profondeur: number };
+  dimensionsMin: { largeur: number; hauteur: number; profondeur: number };
+  dimensionsMax: { largeur: number; hauteur: number; profondeur: number };
+  prixBase: number;              // € HT : caisson + quincaillerie de base
+  options: ConfigurateurModuleOption[];
+  actif: boolean;
+  sortOrder: number;
+}
+
+export interface CompositionModule {
+  id: string;                    // identifiant client (croissant)
+  typeSlug: string;
+  largeur: number;               // mm
+  hauteur: number;
+  profondeur: number;
+  /** null = matériau principal de la composition */
+  materialIndex: number | null;
+  options: Record<string, number>;
+  /** Modules suspendus (zone 'haut') : position libre. null = placement automatique. */
+  posX?: number | null;          // mm depuis la gauche de la composition
+  posY?: number | null;          // mm du sol au bas du module
+}
+
+export interface CompositionConfig {
+  version: 2;
+  univers: string;
+  materialIndex: number;         // matériau principal
+  planTravail: boolean;
+  /** Façade coulissante sur toute la composition (dressing) */
+  facadeCoulissante?: boolean;
+  /** Nombre de vantaux de la façade coulissante (2 à 4, défaut 2) */
+  facadeVantaux?: number;
+  /** Matériau du plan de travail (null = teinte foncée du matériau principal) */
+  planMaterialIndex?: number | null;
+  /** Matériau des plinthes (null = teinte foncée du matériau de chaque module) */
+  plintheMaterialIndex?: number | null;
+  /** Largeur de mur disponible (mm) — alerte si la composition dépasse. null = libre. */
+  lineaireMax?: number | null;
+  modules: CompositionModule[];
+}
+
+export interface CompositionPriceModuleLine {
+  moduleId: string;
+  label: string;
+  total: number;
+  details: Configurateur2DLineItem[];
+}
+
+export interface CompositionPriceBreakdown {
+  moduleLines: CompositionPriceModuleLine[];
+  planTravailLine: Configurateur2DLineItem | null;
+  subtotalHt: number;
+  tva: number;
+  totalTtc: number;
+  lineItems: Configurateur2DLineItem[];
 }
 
 export interface ConfigurateurSettingsRow {

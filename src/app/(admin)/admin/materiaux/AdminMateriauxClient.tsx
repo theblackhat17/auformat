@@ -21,6 +21,9 @@ interface MateriauItem {
   color: string;
   colorHex: string | null;
   prixM2: number | null;
+  renderType: 'uni' | 'bois' | null;
+  grainHex: string | null;
+  configurateurOnly: boolean;
   features: { feature: string }[];
   usages: { usage: string }[];
   published: boolean;
@@ -33,6 +36,7 @@ const EMPTY: Omit<MateriauItem, 'id'> = {
   name: '', latinName: null, image: null, categoryId: null, tag: null,
   description: '', hardness: 0, stability: 0, origin: '', color: '',
   colorHex: null, prixM2: null,
+  renderType: null, grainHex: null, configurateurOnly: false,
   features: [], usages: [], published: false, sortOrder: 0,
 };
 
@@ -74,6 +78,8 @@ export function AdminMateriauxClient() {
       categoryId: item.categoryId, tag: item.tag, description: item.description,
       hardness: item.hardness, stability: item.stability, origin: item.origin,
       color: item.color, colorHex: item.colorHex, prixM2: item.prixM2,
+      renderType: item.renderType ?? null, grainHex: item.grainHex ?? null,
+      configurateurOnly: item.configurateurOnly ?? false,
       features: Array.isArray(item.features) ? item.features : [],
       usages: Array.isArray(item.usages) ? item.usages : [], published: item.published,
       sortOrder: item.sortOrder,
@@ -215,6 +221,36 @@ export function AdminMateriauxClient() {
                 <span className="text-sm text-gray-400">EUR/m2</span>
               </div>
             </div>
+          </div>
+
+          {/* Rendu 3D du configurateur */}
+          <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rendu 3D</label>
+              <select
+                value={form.renderType || ''}
+                onChange={(e) => setForm({ ...form, renderType: (e.target.value || null) as 'uni' | 'bois' | null })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-vert-foret/20 focus:border-vert-foret text-sm"
+              >
+                <option value="">Photo / couleur unie (par défaut)</option>
+                <option value="uni">Panneau uni (mélaminé, laqué…)</option>
+                <option value="bois">Décor bois (veinage généré)</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Texture générée à partir de la couleur hex ci-dessus.</p>
+            </div>
+            {form.renderType === 'bois' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Couleur du veinage</label>
+                <div className="flex gap-2 items-center">
+                  <input type="color" value={form.grainHex || '#8B6F47'} onChange={(e) => setForm({ ...form, grainHex: e.target.value })} className="w-10 h-10 rounded cursor-pointer border border-gray-300" />
+                  <input type="text" value={form.grainHex || ''} onChange={(e) => setForm({ ...form, grainHex: e.target.value })} className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm" placeholder="#8B6F47" />
+                </div>
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-sm text-gray-700 col-span-2">
+              <input type="checkbox" checked={form.configurateurOnly} onChange={(e) => setForm({ ...form, configurateurOnly: e.target.checked })} className="accent-vert-foret w-4 h-4" />
+              Réservé au configurateur (absent de la page publique Matériaux)
+            </label>
           </div>
 
           <ImageUpload value={form.image || ''} onChange={(path) => setForm({ ...form, image: path || null })} />

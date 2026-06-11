@@ -65,13 +65,31 @@ export async function Footer() {
 
   return (
     <footer className="bg-noir text-white/80">
-      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-16">
+      {/* Moment de marque : le slogan comme signature */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 lg:pt-20 pb-12">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8 border-b border-white/10 pb-12">
+          <p className="font-display text-3xl md:text-4xl lg:text-[2.75rem] leading-[1.15] text-white max-w-2xl">
+            {slogan.includes(',') ? (
+              <>
+                {slogan.split(',')[0]},<br />
+                <span className="text-bois-clair">{slogan.split(',').slice(1).join(',').trim()}</span>
+              </>
+            ) : (
+              slogan
+            )}
+          </p>
+          <Link href="/contact" className="btn-on-dark flex-shrink-0 self-start lg:self-auto">
+            Parlons de votre projet
+          </Link>
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 pb-12 lg:pb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Company */}
           <div className="lg:col-span-1">
             <h3 className="text-lg font-bold text-white mb-4">{companyName}</h3>
             <p className="text-sm leading-relaxed text-white/80">
-              {slogan}. Menuiserie et agencement sur mesure pour particuliers et professionnels.
+              Menuiserie et agencement sur mesure pour particuliers et professionnels.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 mt-4">
@@ -86,7 +104,7 @@ export async function Footer() {
           {/* Addresses */}
           {addresses.map((addr) => (
             <div key={addr.title}>
-              <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">{addr.title}</h4>
+              <h4 className="text-[0.9375rem] font-semibold text-white mb-4">{addr.title}</h4>
               <address className="not-italic space-y-2 text-sm text-white/80">
                 <p>{addr.line1}</p>
                 <p>{addr.line2}</p>
@@ -99,7 +117,7 @@ export async function Footer() {
 
           {/* Hours */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Horaires</h4>
+            <h4 className="text-[0.9375rem] font-semibold text-white mb-4">Horaires</h4>
             <ul className="space-y-2 text-sm">
               <li className="flex justify-between">
                 <span className="text-white/80">Lun - Ven</span>
@@ -118,7 +136,7 @@ export async function Footer() {
 
           {/* Quick links */}
           <div>
-            <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Liens rapides</h4>
+            <h4 className="text-[0.9375rem] font-semibold text-white mb-4">Liens rapides</h4>
             <ul className="space-y-2 text-sm">
               {links.map((link) => (
                 <li key={link.href}><Link href={link.href} className="hover:text-bois-clair transition-colors">{link.label}</Link></li>

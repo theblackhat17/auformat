@@ -8,6 +8,9 @@ import { ratingStars } from '@/lib/utils';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { localBusinessCysoingJsonLd, localBusinessCalotterieJsonLd, serviceJsonLd } from '@/lib/jsonld';
 import { buildPageMetadata, SITE_URL } from '@/lib/seo';
+import { Reveal } from '@/components/motion/Reveal';
+import { AnimatedCounter } from '@/components/motion/AnimatedCounter';
+import { Parallax } from '@/components/motion/Parallax';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/', {
@@ -16,6 +19,12 @@ export async function generateMetadata(): Promise<Metadata> {
     keywords: ['menuiserie sur mesure', 'Au Format', 'menuiserie Lille', 'menuiserie Cysoing', 'menuiserie Le Touquet', 'ébénisterie Nord', 'meuble sur mesure'],
   });
 }
+
+const ArrowIcon = ({ className = 'w-5 h-5' }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);
 
 export default async function HomePage() {
   const [realisations, avis, avisStats, sections, siteSettings, dbServices] = await Promise.all([
@@ -40,6 +49,20 @@ export default async function HomePage() {
   const testimonials = getSection('testimonials') as { title?: string; subtitle?: string };
   const cta = getSection('cta') as Record<string, string>;
 
+  const [featuredAvis, ...otherAvis] = topAvis;
+  const [featuredRea, ...otherReas] = topRealisations;
+
+  const serviceRows = (dbServices.length > 0 ? dbServices : services.items || []).map((service) => {
+    const isDb = 'slug' in service;
+    return {
+      href: isDb ? `/services/${(service as { slug: string }).slug}` : '/realisations',
+      title: (service as { title: string }).title,
+      desc: isDb
+        ? (service as { shortDescription: string | null }).shortDescription
+        : (service as { desc: string }).desc,
+    };
+  });
+
   return (
     <>
       <JsonLd data={localBusinessCysoingJsonLd(avisStats)} />
@@ -51,179 +74,273 @@ export default async function HomePage() {
           url: `${SITE_URL}/services/${s.slug}`,
         })))} />
       )}
-      {/* Hero Section */}
-        <section className="relative min-h-[85vh] flex items-center bg-noir overflow-hidden">
-          {siteSettings?.heroBackground ? (
-            <>
+
+      {/* Hero — entrée orchestrée, parallaxe légère sur l'image */}
+      <section className="relative min-h-[88vh] flex items-center bg-noir overflow-hidden">
+        {siteSettings?.heroBackground ? (
+          <>
+            <Parallax className="absolute inset-0" factor={0.1}>
               <Image
                 src={siteSettings.heroBackground}
                 alt="Atelier Au Format — menuiserie sur mesure en bois massif"
                 fill
                 priority
-                className="object-cover"
+                className="object-cover scale-110"
                 sizes="100vw"
               />
-              <div className="absolute inset-0 bg-noir/60" />
-            </>
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-noir via-noir/95 to-bois-fonce/30" />
-          )}
-          <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-20">
-            <div className="max-w-2xl">
-              <p className="text-bois-clair font-medium tracking-widest uppercase text-sm mb-4">{hero.subtitle_top || 'Menuiserie sur mesure'}</p>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
-                {hero.title_line1 || 'Franchissons ensemble,'}<br />
-                <span className="text-bois-clair">{hero.title_line2 || 'le pas vers le bois'}</span>
-              </h1>
-              <p className="text-lg text-white/80 leading-relaxed mb-10 max-w-xl">
-                {hero.description || 'Conception et fabrication de meubles sur mesure, dressings, cuisines et agencements pour particuliers et professionnels dans la région lilloise.'}
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href={hero.cta_primary_link || '/contact'}
-                  className="inline-flex items-center px-8 py-3.5 bg-vert-foret text-white font-semibold rounded-lg hover:bg-vert-foret-dark transition-all duration-200 shadow-lg shadow-vert-foret/20"
-                >
-                  {hero.cta_primary || 'Demander un devis'}
+            </Parallax>
+            <div className="absolute inset-0 bg-gradient-to-r from-noir/80 via-noir/55 to-noir/25" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-noir via-noir/95 to-bois-fonce/30" />
+        )}
+        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 w-full">
+          <div className="max-w-2xl">
+            <p className="animate-hero-rise text-bois-clair font-semibold uppercase tracking-[0.25em] text-lg md:text-xl mb-4" style={{ ['--rise-delay' as string]: '80ms' }}>
+              {hero.subtitle_top || 'Au Format'}
+            </p>
+            <h1 className="animate-hero-rise font-display text-[clamp(2.5rem,4.5vw+1rem,4.25rem)] leading-[1.02] text-white mb-7" style={{ ['--rise-delay' as string]: '180ms' }}>
+              {hero.title_line1 || 'Franchissons ensemble,'}<br />
+              {hero.title_line2 || 'le pas vers le bois'}
+            </h1>
+            <p className="animate-hero-rise text-lg text-white/85 leading-relaxed mb-10 max-w-xl" style={{ ['--rise-delay' as string]: '300ms' }}>
+              {hero.description || 'Conception et fabrication de meubles sur mesure, dressings, cuisines et agencements pour particuliers et professionnels dans la région lilloise.'}
+            </p>
+            <div className="animate-hero-rise flex flex-wrap gap-4" style={{ ['--rise-delay' as string]: '420ms' }}>
+              <Link href={hero.cta_primary_link || '/contact'} className="btn-on-dark">
+                {hero.cta_primary || 'Demander un devis'}
+                <ArrowIcon className="w-4 h-4" />
+              </Link>
+              {(siteSettings?.configurateurEnabled || (hero.cta_secondary_link && hero.cta_secondary_link !== '/configurateur')) && (
+                <Link href={hero.cta_secondary_link || '/configurateur'} className="btn-ghost-dark">
+                  {hero.cta_secondary || 'Configurateur 3D'}
                 </Link>
-                {(siteSettings?.configurateurEnabled || (hero.cta_secondary_link && hero.cta_secondary_link !== '/configurateur')) && (
-                  <Link
-                    href={hero.cta_secondary_link || '/configurateur'}
-                    className="inline-flex items-center px-8 py-3.5 border-2 border-white/20 text-white font-semibold rounded-lg hover:bg-white/10 transition-all duration-200"
-                  >
-                    {hero.cta_secondary || 'Configurateur 3D'}
-                  </Link>
-                )}
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Chiffres — compteurs animés au passage */}
+      {stats.items && (
+        <section className="bg-beige py-16 lg:py-20">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12">
+              {stats.items.map((stat, i) => (
+                <Reveal key={stat.label} delay={i * 80} className="text-center lg:text-left lg:border-l lg:border-noir/10 lg:pl-8 first:border-l-0 first:pl-0">
+                  <p className="font-display text-4xl lg:text-5xl text-vert-foret">
+                    <AnimatedCounter value={stat.value} />
+                  </p>
+                  <p className="text-[0.9375rem] text-noir/70 mt-2">{stat.label}</p>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Savoir-faire — liste éditoriale, le titre accompagne la lecture */}
+      {serviceRows.length > 0 && (
+        <section className="py-24 lg:py-32">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-16">
+              <div className="lg:col-span-4">
+                <div className="lg:sticky lg:top-32">
+                  <Reveal>
+                    <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-noir mb-5">
+                      {services.title || 'Nos savoir-faire'}
+                    </h2>
+                    {services.subtitle && <p className="text-noir/70 leading-relaxed mb-8">{services.subtitle}</p>}
+                    <Link href="/savoir-faire" className="btn-secondary">
+                      Voir plus
+                      <ArrowIcon className="w-4 h-4" />
+                    </Link>
+                  </Reveal>
+                </div>
+              </div>
+              <div className="lg:col-span-8">
+                <ul className="border-t border-noir/10">
+                  {serviceRows.map((service, i) => (
+                    <Reveal as="li" key={service.title} delay={i * 60}>
+                      <Link
+                        href={service.href}
+                        className="group flex items-center justify-between gap-6 py-6 border-b border-noir/10 transition-colors duration-300 hover:bg-beige/40 -mx-4 px-4 rounded-lg"
+                      >
+                        <h3 className="font-display text-xl lg:text-2xl text-noir group-hover:text-vert-foret transition-colors duration-300">
+                          {service.title}
+                        </h3>
+                        <span className="flex-shrink-0 w-11 h-11 rounded-full border border-noir/15 flex items-center justify-center text-noir/60 transition-all duration-300 group-hover:bg-vert-foret group-hover:border-vert-foret group-hover:text-white">
+                          <ArrowIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        </span>
+                      </Link>
+                    </Reveal>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
-          {!siteSettings?.heroBackground && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1/3 h-2/3 bg-gradient-to-l from-bois-fonce/10 to-transparent rounded-l-full hidden lg:block" />
-          )}
         </section>
+      )}
 
-        {/* Stats section */}
-        {stats.items && (
-          <section className="bg-beige py-16">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-                {stats.items.map((stat) => (
-                  <div key={stat.label}>
-                    <p className="text-3xl lg:text-4xl font-bold text-vert-foret">{stat.value}</p>
-                    <p className="text-sm text-noir/70 mt-1">{stat.label}</p>
-                  </div>
-                ))}
+      {/* Réalisations — galerie asymétrique, les images en héros */}
+      {topRealisations.length > 0 && (
+        <section className="py-24 lg:py-32 bg-beige">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <Reveal className="flex flex-wrap items-end justify-between gap-4 mb-12">
+              <div>
+                <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-noir mb-3">
+                  {realisationsPreview.title || 'Nos dernières réalisations'}
+                </h2>
+                <p className="text-noir/70">{realisationsPreview.subtitle || 'Découvrez nos créations récentes'}</p>
               </div>
-            </div>
-          </section>
-        )}
-
-        {/* Services */}
-        {services.items && (
-          <section className="py-20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="text-center mb-14">
-                <h2 className="text-3xl font-bold text-noir mb-3">{services.title || 'Nos savoir-faire'}</h2>
-                <p className="text-noir/70 max-w-xl mx-auto">{services.subtitle || ''}</p>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {(dbServices.length > 0 ? dbServices : services.items || []).map((service) => {
-                  const isDb = 'slug' in service;
-                  const href = isDb ? `/services/${(service as { slug: string }).slug}` : '/realisations';
-                  const icon = isDb ? (service as { icon: string | null }).icon : (service as { icon: string }).icon;
-                  const title = isDb ? (service as { title: string }).title : (service as { title: string }).title;
-                  const desc = isDb ? (service as { shortDescription: string | null }).shortDescription : (service as { desc: string }).desc;
-                  return (
-                    <Link key={title} href={href} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 block">
-                      <span className="text-3xl mb-4 block">{icon}</span>
-                      <h3 className="text-lg font-semibold text-noir mb-2">{title}</h3>
-                      <p className="text-sm text-noir/70 leading-relaxed">{desc}</p>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Realisations preview */}
-        {topRealisations.length > 0 && (
-          <section className="py-20 bg-beige/50">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="flex items-end justify-between mb-10">
-                <div>
-                  <h2 className="text-3xl font-bold text-noir mb-2">{realisationsPreview.title || 'Nos dernières réalisations'}</h2>
-                  <p className="text-noir/70">{realisationsPreview.subtitle || 'Découvrez nos créations récentes'}</p>
-                </div>
-                <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline hidden md:block">
-                  {realisationsPreview.link_text || 'Voir tout'} &rarr;
-                </Link>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6">
-                {topRealisations.map((r) => (
-                  <div key={r.id} className="group bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-                    <div className="aspect-[4/3] bg-beige overflow-hidden relative">
-                      {r.image && <Image src={r.image} alt={r.title} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover group-hover:scale-105 transition-transform duration-500" />}
-                    </div>
-                    <div className="p-5">
-                      <span className="text-xs font-medium text-noir/70 uppercase tracking-wider">{r.categoryLabel || r.category}</span>
-                      <h3 className="text-lg font-semibold text-noir mt-1 mb-2">{r.title}</h3>
-                      <p className="text-sm text-noir/70 line-clamp-2">{r.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="text-center mt-8 md:hidden">
-                <Link href="/realisations" className="text-sm font-medium text-vert-foret hover:underline">Voir toutes nos réalisations &rarr;</Link>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Testimonials */}
-        {topAvis.length > 0 && (
-          <section className="py-20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-noir mb-3">{testimonials.title || 'Ce que disent nos clients'}</h2>
-                <p className="text-noir/70">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure récompense'}</p>
-              </div>
-              <div className="grid md:grid-cols-3 gap-6">
-                {topAvis.map((a) => (
-                  <div key={a.id} className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
-                    <div className="text-bois-clair text-lg mb-3">{ratingStars(a.rating)}</div>
-                    <p className="text-sm text-noir/70 leading-relaxed mb-4 italic">&ldquo;{a.testimonial}&rdquo;</p>
-                    <div className="flex items-center gap-3 pt-3 border-t border-gray-50">
-                      <div className="w-9 h-9 rounded-full bg-vert-foret/10 text-vert-foret flex items-center justify-center text-xs font-bold">
-                        {a.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-noir">{a.name}</p>
-                        <p className="text-xs text-noir/40">{a.location} &middot; {a.clientType}</p>
-                      </div>
-                      {a.verified && <span className="ml-auto text-xs text-vert-foret font-medium bg-vert-foret/10 px-2 py-0.5 rounded-full">Vérifié</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* CTA */}
-        <section className="bg-vert-foret py-20">
-          <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
-            <h2 className="text-3xl font-bold text-white mb-4">{cta.title || 'Votre projet commence ici'}</h2>
-            <p className="text-white/70 mb-8 text-lg">{cta.subtitle || 'Contactez-nous pour discuter de votre projet. Devis gratuit et sans engagement.'}</p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link href={cta.cta_primary_link || '/contact'} className="inline-flex items-center px-8 py-3.5 bg-white text-vert-foret font-semibold rounded-lg hover:bg-beige transition-colors shadow-lg">
-                {cta.cta_primary || 'Demander un devis gratuit'}
+              <Link href="/realisations" className="link-arrow hidden md:inline-flex">
+                {realisationsPreview.link_text || 'Voir tout'}
+                <ArrowIcon className="w-4 h-4" />
               </Link>
-              <Link href={cta.cta_secondary_link || '/processus'} className="inline-flex items-center px-8 py-3.5 border-2 border-white/30 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors">
+            </Reveal>
+            <div className="grid lg:grid-cols-12 gap-5">
+              {featuredRea && (
+                <Reveal variant="clip" className="lg:col-span-7">
+                  <Link href="/realisations" className="group relative block aspect-[4/3] lg:aspect-auto lg:h-full lg:min-h-[480px] rounded-xl overflow-hidden">
+                    {featuredRea.image && (
+                      <Image
+                        src={featuredRea.image}
+                        alt={featuredRea.title}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 58vw"
+                        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-noir/75 via-noir/10 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-7">
+                      <p className="text-bois-clair text-sm font-semibold mb-2">{featuredRea.categoryLabel || featuredRea.category}</p>
+                      <h3 className="font-display text-2xl text-white">{featuredRea.title}</h3>
+                    </div>
+                  </Link>
+                </Reveal>
+              )}
+              <div className="lg:col-span-5 grid gap-5">
+                {otherReas.map((r, i) => (
+                  <Reveal variant="clip" key={r.id} delay={120 + i * 120}>
+                    <Link href="/realisations" className="group relative block aspect-[16/10] rounded-xl overflow-hidden">
+                      {r.image && (
+                        <Image
+                          src={r.image}
+                          alt={r.title}
+                          fill
+                          sizes="(max-width: 1024px) 100vw, 42vw"
+                          className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-noir/75 via-noir/10 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-6">
+                        <p className="text-bois-clair text-sm font-semibold mb-1.5">{r.categoryLabel || r.category}</p>
+                        <h3 className="font-display text-xl text-white">{r.title}</h3>
+                      </div>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+            <div className="text-center mt-10 md:hidden">
+              <Link href="/realisations" className="link-arrow">
+                Voir toutes nos réalisations
+                <ArrowIcon className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Avis — une parole vedette plutôt que trois cartes identiques */}
+      {topAvis.length > 0 && (
+        <section className="py-24 lg:py-32">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <Reveal className="flex flex-wrap items-end justify-between gap-4 mb-14">
+              <div>
+                <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-noir mb-3">
+                  {testimonials.title || 'Ce que disent nos clients'}
+                </h2>
+                <p className="text-noir/70 max-w-xl">{testimonials.subtitle || 'La satisfaction de nos clients est notre meilleure récompense'}</p>
+              </div>
+              <Link href="/avis" className="link-arrow hidden md:inline-flex">
+                Voir tout
+                <ArrowIcon className="w-4 h-4" />
+              </Link>
+            </Reveal>
+
+            {featuredAvis && (
+              <Reveal className="max-w-3xl mx-auto text-center">
+                <p className="text-bois-fonce text-lg tracking-[0.2em]" aria-label={`Note : ${featuredAvis.rating} sur 5`}>
+                  {ratingStars(featuredAvis.rating)}
+                </p>
+                <blockquote className="font-display text-2xl lg:text-[1.75rem] leading-[1.4] text-noir mt-6">
+                  «&nbsp;{featuredAvis.testimonial}&nbsp;»
+                </blockquote>
+                <footer className="mt-7 flex items-center justify-center gap-3">
+                  <span className="w-10 h-10 rounded-full bg-vert-foret/10 text-vert-foret flex items-center justify-center text-sm font-bold" aria-hidden="true">
+                    {featuredAvis.name.charAt(0)}
+                  </span>
+                  <span className="text-left">
+                    <span className="block text-sm font-semibold text-noir">{featuredAvis.name}</span>
+                    <span className="block text-xs text-noir/55">{featuredAvis.location} &middot; {featuredAvis.clientType}</span>
+                  </span>
+                  {featuredAvis.verified && (
+                    <span className="text-xs text-vert-foret font-semibold bg-vert-foret/10 px-2.5 py-1 rounded-full">Vérifié</span>
+                  )}
+                </footer>
+              </Reveal>
+            )}
+
+            {otherAvis.length > 0 && (
+              <div className="grid md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl mx-auto mt-16 pt-12 border-t border-noir/10">
+                {otherAvis.map((a, i) => (
+                  <Reveal key={a.id} delay={i * 100}>
+                    <p className="text-bois-fonce text-sm tracking-[0.2em]" aria-label={`Note : ${a.rating} sur 5`}>{ratingStars(a.rating)}</p>
+                    <blockquote className="text-[0.9375rem] text-noir/80 leading-relaxed mt-3">
+                      «&nbsp;{a.testimonial}&nbsp;»
+                    </blockquote>
+                    <footer className="mt-4 text-sm">
+                      <span className="font-semibold text-noir">{a.name}</span>
+                      <span className="text-noir/55"> &middot; {a.location}</span>
+                    </footer>
+                  </Reveal>
+                ))}
+              </div>
+            )}
+
+            <Reveal className="text-center mt-14 md:hidden">
+              <Link href="/avis" className="link-arrow">
+                Voir tous les avis
+                <ArrowIcon className="w-4 h-4" />
+              </Link>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* CTA */}
+      <section className="bg-vert-foret py-24 lg:py-28">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8 text-center">
+          <Reveal>
+            <h2 className="font-display text-[clamp(1.75rem,2.5vw+0.5rem,2.5rem)] leading-[1.15] text-white mb-5">
+              {cta.title || 'Votre projet commence ici'}
+            </h2>
+            <p className="text-white/85 mb-10 text-lg leading-relaxed">
+              {cta.subtitle || 'Contactez-nous pour discuter de votre projet. Devis gratuit et sans engagement.'}
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href={cta.cta_primary_link || '/contact'} className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-vert-foret font-semibold rounded-full hover:bg-beige transition-colors duration-200">
+                {cta.cta_primary || 'Demander un devis gratuit'}
+                <ArrowIcon className="w-4 h-4" />
+              </Link>
+              <Link href={cta.cta_secondary_link || '/processus'} className="btn-ghost-dark">
                 {cta.cta_secondary || 'Découvrir notre processus'}
               </Link>
             </div>
-          </div>
-        </section>
+          </Reveal>
+        </div>
+      </section>
     </>
   );
 }
