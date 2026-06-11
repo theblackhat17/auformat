@@ -1,11 +1,38 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { CompositionConfig, CompositionModule, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
-import { HAUT_BOTTOM_DEFAULT } from './CompoCanvas';
+import { HAUT_BOTTOM_DEFAULT, shelfPositions } from './CompoCanvas';
 
 type DimField = 'largeur' | 'hauteur' | 'profondeur';
 const DIM_LABELS: Record<DimField, string> = { largeur: 'Largeur', hauteur: 'Hauteur', profondeur: 'Profondeur' };
+
+/** Champ numérique saisissable au clavier : on tape librement, la valeur est bornée à la validation (Entrée ou sortie du champ). */
+function NumField({ value, min, max, onCommit, ariaLabel, className }: { value: number; min: number; max: number; onCommit: (v: number) => void; ariaLabel: string; className?: string }) {
+  const [text, setText] = useState(String(value));
+  const [editing, setEditing] = useState(false);
+  useEffect(() => { if (!editing) setText(String(value)); }, [value, editing]);
+  const commit = () => {
+    setEditing(false);
+    const n = Number(text.replace(',', '.'));
+    if (isFinite(n)) onCommit(Math.min(max, Math.max(min, Math.round(n))));
+    else setText(String(value));
+  };
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={ariaLabel}
+      value={text}
+      onFocus={() => setEditing(true)}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+      className={className || 'w-20 px-2 py-1 text-right border border-noir/20 rounded-md text-sm focus:outline-none focus:border-vert-foret'}
+    />
+  );
+}
 
 function MaterialSwatches({
   materials,
@@ -36,22 +63,32 @@ function MaterialSwatches({
         </button>
       )}
       {materials.map((m, i) => (
-        <button
-          key={m.name}
-          type="button"
-          onClick={() => onChange(i)}
-          aria-pressed={value === i}
-          title={showPrices ? `${m.name} — ${m.prixM2} €/m²` : m.name}
-          className={`relative w-11 h-11 rounded-lg border-2 overflow-hidden transition-transform ${
-            value === i ? 'border-vert-foret scale-110 shadow-md' : 'border-noir/15 hover:scale-105'
-          }`}
-          style={{ backgroundColor: m.colorHex }}
-        >
-          {m.image && (
-            <Image src={m.image} alt="" fill sizes="44px" className="object-cover" />
-          )}
-          <span className="sr-only">{m.name}</span>
-        </button>
+        <span key={m.name} className="relative group/swatch">
+          <button
+            type="button"
+            onClick={() => onChange(i)}
+            aria-pressed={value === i}
+            aria-label={m.name}
+            className={`relative block w-11 h-11 rounded-lg border-2 overflow-hidden transition-transform ${
+              value === i ? 'border-vert-foret scale-110 shadow-md' : 'border-noir/15 hover:scale-105'
+            }`}
+            style={{ backgroundColor: m.colorHex }}
+          >
+            {/* Veinage suggéré pour les décors bois */}
+            {m.renderType === 'bois' && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-0"
+                style={{ background: `repeating-linear-gradient(100deg, transparent 0 3px, ${m.grainHex || '#8B6F47'}33 3px 4px, transparent 4px 9px)` }}
+              />
+            )}
+            {!m.renderType && m.image && <Image src={m.image} alt="" fill sizes="44px" className="object-cover" />}
+          </button>
+          {/* Nom au survol */}
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-2 py-1 rounded-md bg-noir text-white text-[11px] whitespace-nowrap opacity-0 group-hover/swatch:opacity-100 transition-opacity z-20">
+            {m.name}{showPrices ? ` · ${m.prixM2} €/m²` : ''}
+          </span>
+        </span>
       ))}
     </div>
   );
@@ -125,6 +162,9 @@ export function ModulePanel({
   onDuplicate,
   onRemove,
   onPos,
+  onEcart,
+  onTiroirsHauteur,
+  onEtagerePos,
 }: {
   module: CompositionModule;
   type: ConfigurateurModuleType;
@@ -140,10 +180,16 @@ export function ModulePanel({
   onDuplicate: () => void;
   onRemove: () => void;
   onPos: (posX: number | null, posY: number | null) => void;
+  onEcart: (value: number) => void;
+  onTiroirsHauteur: (value: number | null) => void;
+  onEtagerePos: (index: number, value: number | null) => void;
 }) {
   const isFree = type.zone === 'haut';
   const posX = mod.posX ?? 0;
   const posY = mod.posY ?? HAUT_BOTTOM_DEFAULT;
+  const nbTiroirs = mod.options['tiroir'] ?? 0;
+  const nbEtageres = mod.options['etagere'] ?? 0;
+  const shelfYs = shelfPositions(mod, mod.hauteur);
   return (
     <div>
       <div className="flex items-start justify-between gap-3 mb-1">
@@ -179,17 +225,14 @@ export function ModulePanel({
         {(['largeur', 'hauteur', 'profondeur'] as DimField[]).map((field) => (
           <div key={field}>
             <div className="flex items-center justify-between mb-1">
-              <label htmlFor={`dim-${field}`} className="text-sm font-medium text-noir">{DIM_LABELS[field]}</label>
+              <label className="text-sm font-medium text-noir">{DIM_LABELS[field]}</label>
               <span className="text-sm tabular-nums text-noir/70">
-                <input
-                  id={`dim-${field}`}
-                  type="number"
+                <NumField
                   value={mod[field]}
                   min={type.dimensionsMin[field]}
                   max={type.dimensionsMax[field]}
-                  step={10}
-                  onChange={(e) => onDim(field, Math.min(type.dimensionsMax[field], Math.max(type.dimensionsMin[field], Number(e.target.value) || 0)))}
-                  className="w-20 px-2 py-1 text-right border border-noir/20 rounded-md text-sm focus:outline-none focus:border-vert-foret"
+                  onCommit={(v) => onDim(field, v)}
+                  ariaLabel={`${DIM_LABELS[field]} en millimètres`}
                 /> mm
               </span>
             </div>
@@ -249,6 +292,70 @@ export function ModulePanel({
         </div>
       )}
 
+      {/* Décalage dans la rangée (modules posés) */}
+      {!isFree && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-noir">Écart à gauche</label>
+            <span className="text-sm tabular-nums text-noir/70">
+              <NumField value={mod.ecartGauche || 0} min={0} max={3000} onCommit={onEcart} ariaLabel="Écart à gauche en millimètres" /> mm
+            </span>
+          </div>
+          <input type="range" min={0} max={1500} step={10} value={mod.ecartGauche || 0} onChange={(e) => onEcart(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Écart à gauche" />
+          <p className="text-xs text-noir/55 mt-0.5">Décale ce module dans la rangée — glissez-le aussi directement sur le dessin.</p>
+        </div>
+      )}
+
+      {/* Hauteur de la zone tiroirs */}
+      {nbTiroirs > 0 && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium text-noir">Hauteur de la zone tiroirs</label>
+            <span className="text-sm tabular-nums text-noir/70">
+              {mod.tiroirsHauteur != null ? (
+                <NumField value={mod.tiroirsHauteur} min={120} max={mod.hauteur} onCommit={(v) => onTiroirsHauteur(v)} ariaLabel="Hauteur de la zone tiroirs" />
+              ) : (
+                <button type="button" onClick={() => onTiroirsHauteur(Math.round(mod.hauteur * 0.4))} className="text-xs font-semibold text-vert-foret hover:underline">Auto — régler</button>
+              )}
+              {mod.tiroirsHauteur != null && ' mm'}
+            </span>
+          </div>
+          {mod.tiroirsHauteur != null && (
+            <>
+              <input type="range" min={120} max={mod.hauteur} step={10} value={mod.tiroirsHauteur} onChange={(e) => onTiroirsHauteur(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Hauteur de la zone tiroirs" />
+              <button type="button" onClick={() => onTiroirsHauteur(null)} className="text-xs text-noir/55 hover:text-noir underline">Revenir en automatique</button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Position des étagères */}
+      {nbEtageres > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-medium text-noir mb-1.5">Position des étagères <span className="text-xs text-noir/55 font-normal">(mm depuis le bas)</span></p>
+          <div className="flex flex-wrap gap-2">
+            {shelfYs.map((y, i) => (
+              <span key={i} className="inline-flex items-center gap-1 text-xs text-noir/70">
+                n°{i + 1}
+                <NumField
+                  value={Math.round(y)}
+                  min={80}
+                  max={mod.hauteur - 80}
+                  onCommit={(v) => onEtagerePos(i, v)}
+                  ariaLabel={`Position de l'étagère ${i + 1}`}
+                  className="w-16 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret"
+                />
+              </span>
+            ))}
+            {mod.etageresPos?.some((p) => p != null) && (
+              <button type="button" onClick={() => shelfYs.forEach((_, i) => onEtagerePos(i, null))} className="text-xs text-noir/55 hover:text-noir underline">
+                Répartir automatiquement
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Matériau du module */}
       <div className="mt-5">
         <p className="text-sm font-medium text-noir mb-2">Matériau de ce module</p>
@@ -289,7 +396,7 @@ export function ModulePanel({
           {/* Groupes de choix exclusifs (ex. style de poignée) */}
           {Array.from(new Set(type.options.filter((o) => o.type === 'choix').map((o) => o.groupe || 'choix'))).map((groupe) => {
             const members = type.options.filter((o) => o.type === 'choix' && (o.groupe || 'choix') === groupe);
-            const groupLabels: Record<string, string> = { poignee: 'Style de poignées' };
+            const groupLabels: Record<string, string> = { poignee: 'Style de poignées', sens_ouverture: "Sens d'ouverture (porte seule)" };
             return (
               <div key={groupe} className="py-2.5">
                 <p className="text-sm font-medium text-noir mb-2">{groupLabels[groupe] || 'Finition'}</p>
@@ -336,6 +443,7 @@ export function GlobalPanel({
   onPlanMaterial,
   onPlintheMaterial,
   onLineaireMax,
+  onPlanDims,
 }: {
   config: CompositionConfig;
   univers?: ConfigurateurUnivers;
@@ -349,6 +457,7 @@ export function GlobalPanel({
   onPlanMaterial: (index: number | null) => void;
   onPlintheMaterial: (index: number | null) => void;
   onLineaireMax: (value: number | null) => void;
+  onPlanDims: (dims: { debord?: number; epaisseur?: number }) => void;
 }) {
   const overMax = config.lineaireMax ? totalWidth > config.lineaireMax : false;
   const hasBas = true; // les plinthes concernent les modules posés ; le sélecteur reste simple
@@ -415,9 +524,29 @@ export function GlobalPanel({
                 <div className="py-3">
                   <p className="text-sm font-medium text-noir mb-2">Matériau du plan de travail</p>
                   <MaterialSwatches materials={materials} value={config.planMaterialIndex ?? null} onChange={onPlanMaterial} allowInherit />
-                  <p className="text-xs text-noir/55 mt-1.5">
+                  <p className="text-xs text-noir/55 mt-1.5 mb-3">
                     {config.planMaterialIndex != null ? materials[config.planMaterialIndex]?.name : 'Assorti au matériau principal (teinte foncée)'}
                   </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-noir/80">Débord</label>
+                        <span className="text-xs tabular-nums text-noir/70">
+                          <NumField value={config.planDebord ?? 20} min={0} max={400} onCommit={(v) => onPlanDims({ debord: v })} ariaLabel="Débord du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> mm
+                        </span>
+                      </div>
+                      <input type="range" min={0} max={400} step={10} value={config.planDebord ?? 20} onChange={(e) => onPlanDims({ debord: Number(e.target.value) })} className="w-full accent-vert-foret" aria-label="Débord du plan de travail" />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-noir/80">Épaisseur</label>
+                        <span className="text-xs tabular-nums text-noir/70">
+                          <NumField value={config.planEpaisseur ?? 40} min={20} max={100} onCommit={(v) => onPlanDims({ epaisseur: v })} ariaLabel="Épaisseur du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> mm
+                        </span>
+                      </div>
+                      <input type="range" min={20} max={100} step={5} value={config.planEpaisseur ?? 40} onChange={(e) => onPlanDims({ epaisseur: Number(e.target.value) })} className="w-full accent-vert-foret" aria-label="Épaisseur du plan de travail" />
+                    </div>
+                  </div>
                 </div>
               )}
             </>

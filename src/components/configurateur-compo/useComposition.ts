@@ -72,6 +72,10 @@ type Action =
   | { type: 'SET_FACADE_COULISSANTE'; value: boolean }
   | { type: 'SET_FACADE_VANTAUX'; value: number }
   | { type: 'SET_PLAN_MATERIAL'; index: number | null }
+  | { type: 'SET_PLAN_DIMS'; debord?: number; epaisseur?: number }
+  | { type: 'SET_MODULE_ECART'; id: string; value: number }
+  | { type: 'SET_TIROIRS_HAUTEUR'; id: string; value: number | null }
+  | { type: 'SET_ETAGERE_POS'; id: string; index: number; value: number | null }
   | { type: 'SET_PLINTHE_MATERIAL'; index: number | null }
   | { type: 'SET_LINEAIRE_MAX'; value: number | null };
 
@@ -145,6 +149,27 @@ function reducer(state: State, action: Action): State {
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, facadeVantaux: Math.min(4, Math.max(2, action.value)) } };
     case 'SET_PLAN_MATERIAL':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, planMaterialIndex: action.index } };
+    case 'SET_PLAN_DIMS':
+      return {
+        ...state,
+        dirty: state.dirty + 1,
+        config: {
+          ...state.config,
+          ...(action.debord !== undefined ? { planDebord: Math.min(400, Math.max(0, action.debord)) } : {}),
+          ...(action.epaisseur !== undefined ? { planEpaisseur: Math.min(100, Math.max(20, action.epaisseur)) } : {}),
+        },
+      };
+    case 'SET_MODULE_ECART':
+      return patchModule(state, action.id, { ecartGauche: Math.min(3000, Math.max(0, Math.round(action.value))) });
+    case 'SET_TIROIRS_HAUTEUR':
+      return patchModule(state, action.id, { tiroirsHauteur: action.value });
+    case 'SET_ETAGERE_POS': {
+      const mod = state.config.modules.find((m) => m.id === action.id);
+      if (!mod) return state;
+      const pos = [...(mod.etageresPos || [])];
+      pos[action.index] = action.value;
+      return patchModule(state, action.id, { etageresPos: pos });
+    }
     case 'SET_PLINTHE_MATERIAL':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, plintheMaterialIndex: action.index } };
     case 'SET_LINEAIRE_MAX':
@@ -175,6 +200,10 @@ export function useComposition(initial: CompositionConfig) {
   const setFacadeCoulissante = useCallback((value: boolean) => dispatch({ type: 'SET_FACADE_COULISSANTE', value }), []);
   const setFacadeVantaux = useCallback((value: number) => dispatch({ type: 'SET_FACADE_VANTAUX', value }), []);
   const setPlanMaterial = useCallback((index: number | null) => dispatch({ type: 'SET_PLAN_MATERIAL', index }), []);
+  const setPlanDims = useCallback((dims: { debord?: number; epaisseur?: number }) => dispatch({ type: 'SET_PLAN_DIMS', ...dims }), []);
+  const setModuleEcart = useCallback((id: string, value: number) => dispatch({ type: 'SET_MODULE_ECART', id, value }), []);
+  const setTiroirsHauteur = useCallback((id: string, value: number | null) => dispatch({ type: 'SET_TIROIRS_HAUTEUR', id, value }), []);
+  const setEtagerePos = useCallback((id: string, index: number, value: number | null) => dispatch({ type: 'SET_ETAGERE_POS', id, index, value }), []);
   const setPlintheMaterial = useCallback((index: number | null) => dispatch({ type: 'SET_PLINTHE_MATERIAL', index }), []);
   const setLineaireMax = useCallback((value: number | null) => dispatch({ type: 'SET_LINEAIRE_MAX', value }), []);
   const load = useCallback((config: CompositionConfig) => dispatch({ type: 'LOAD', config }), []);
@@ -197,6 +226,10 @@ export function useComposition(initial: CompositionConfig) {
     setFacadeCoulissante,
     setFacadeVantaux,
     setPlanMaterial,
+    setPlanDims,
+    setModuleEcart,
+    setTiroirsHauteur,
+    setEtagerePos,
     setPlintheMaterial,
     setLineaireMax,
     load,

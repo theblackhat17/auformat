@@ -221,26 +221,37 @@ export function UniversModulesTab({
 
                   {/* Dimensions */}
                   <div>
-                    <p className="text-xs font-medium text-gray-500 mb-2">Dimensions (mm) — défaut / min / max</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {(['largeur', 'hauteur', 'profondeur'] as const).map((field) => (
-                        <div key={field}>
-                          <p className="text-xs text-gray-400 capitalize mb-1">{field}</p>
-                          <div className="flex flex-col gap-1.5">
-                            {(['dimensionsDefault', 'dimensionsMin', 'dimensionsMax'] as const).map((group) => (
-                              <input
-                                key={group}
-                                type="number"
-                                title={`${field} — ${group.replace('dimensions', '').toLowerCase()}`}
-                                value={mod[group][field]}
-                                onChange={(e) => patchModule(mod.slug, { [group]: { ...mod[group], [field]: Number(e.target.value) || 0 } })}
-                                className={`${numCls} w-full`}
-                              />
+                    <p className="text-xs font-medium text-gray-500 mb-2">
+                      Dimensions en mm — <strong>Défaut</strong> à l&apos;ajout du module, <strong>Min/Max</strong> = limites des curseurs côté client
+                    </p>
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="text-gray-400">
+                          <th className="text-left font-medium py-1 w-20"></th>
+                          <th className="font-medium py-1">Largeur</th>
+                          <th className="font-medium py-1">Hauteur</th>
+                          <th className="font-medium py-1">Profondeur</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {([['dimensionsDefault', 'Défaut'], ['dimensionsMin', 'Minimum'], ['dimensionsMax', 'Maximum']] as const).map(([group, label]) => (
+                          <tr key={group}>
+                            <td className="py-1 pr-2 text-gray-600 font-medium">{label}</td>
+                            {(['largeur', 'hauteur', 'profondeur'] as const).map((field) => (
+                              <td key={field} className="py-1 px-1">
+                                <input
+                                  type="number"
+                                  aria-label={`${label} ${field}`}
+                                  value={mod[group][field]}
+                                  onChange={(e) => patchModule(mod.slug, { [group]: { ...mod[group], [field]: Number(e.target.value) || 0 } })}
+                                  className={`${numCls} w-full`}
+                                />
+                              </td>
                             ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
 
                   {/* Options */}

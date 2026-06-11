@@ -41,11 +41,14 @@ export async function getMateriaux(): Promise<Materiau[]> {
 }
 
 export async function getMateriauxForConfigurateur(): Promise<Materiau[]> {
+  // Seuls les matériaux « panneaux » entrent dans le configurateur : rendu 3D défini
+  // (uni/bois) ou marqués configurateur_only. Les essences de la page publique restent dehors.
   const rows = await query<Materiau & { categorySlug: string; categoryLabel: string }>(
     `SELECT m.*, c.slug as category_slug, c.label as category_label
      FROM materiaux m
      LEFT JOIN categories c ON m.category_id = c.id
      WHERE m.published = true AND m.prix_m2 IS NOT NULL
+       AND (m.render_type IS NOT NULL OR COALESCE(m.configurateur_only, false) = true)
      ORDER BY m.sort_order`
   );
   return rows.map((m) => ({

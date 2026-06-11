@@ -56,7 +56,12 @@ export function ConfigurateurCompo({
   onBackToUnivers: () => void;
 }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, profile } = useAuth();
+  const isAdmin = profile?.role === 'admin';
+  /* Attribution du projet à un client (commercial en RDV) */
+  const [clients, setClients] = useState<{ id: string; email: string; fullName: string | null }[]>([]);
+  const [clientSearch, setClientSearch] = useState('');
+  const [clientUserId, setClientUserId] = useState<string | null>(null);
   const moduleTypes = useMemo(() => settings.module_types || [], [settings.module_types]);
   const materials = settings.materials || [];
 
@@ -149,7 +154,12 @@ export function ConfigurateurCompo({
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: nameInput.trim() || 'Projet sur mesure', type: compo.config.univers, config: compo.config }),
+        body: JSON.stringify({
+          name: nameInput.trim() || 'Projet sur mesure',
+          type: compo.config.univers,
+          config: compo.config,
+          ...(isAdmin && clientUserId ? { clientUserId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error();
@@ -279,6 +289,7 @@ export function ConfigurateurCompo({
                 selectedId={compo.selectedId}
                 onSelect={(id) => compo.select(id === compo.selectedId ? null : id)}
                 onMoveFree={(id, posX, posY) => compo.setModulePos(id, posX, posY)}
+                onEcart={(id, value) => compo.setModuleEcart(id, value)}
               />
             ) : (
               <Compo3D
@@ -338,6 +349,9 @@ export function ConfigurateurCompo({
                   onDuplicate={() => compo.duplicateModule(selectedModule.id)}
                   onRemove={() => compo.removeModule(selectedModule.id)}
                   onPos={(posX, posY) => compo.setModulePos(selectedModule.id, posX, posY)}
+                  onEcart={(value) => compo.setModuleEcart(selectedModule.id, value)}
+                  onTiroirsHauteur={(value) => compo.setTiroirsHauteur(selectedModule.id, value)}
+                  onEtagerePos={(index, value) => compo.setEtagerePos(selectedModule.id, index, value)}
                 />
               ) : (
                 <GlobalPanel
@@ -353,6 +367,7 @@ export function ConfigurateurCompo({
                   onPlanMaterial={compo.setPlanMaterial}
                   onPlintheMaterial={compo.setPlintheMaterial}
                   onLineaireMax={compo.setLineaireMax}
+                  onPlanDims={compo.setPlanDims}
                 />
               )}
             </div>
@@ -430,6 +445,7 @@ export function ConfigurateurCompo({
       {pickerOpen && (
         <ModulePicker
           moduleTypes={moduleTypes}
+          universList={settings.univers || []}
           universSlug={compo.config.univers}
           showPrices={showPrices}
           onAdd={compo.addModule}
@@ -486,6 +502,56 @@ export function ConfigurateurCompo({
               aria-label="Nom du projet"
               className="w-full px-3.5 py-2.5 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:ring-[3px] focus:ring-vert-foret/15"
             />
+
+            {/* Commercial : attribuer le projet au compte d'un client */}
+            {isAdmin && (
+              <div className="mt-4 p-3.5 bg-beige/60 rounded-xl">
+                <p className="text-sm font-semibold text-noir mb-0.5">Attribuer à un client</p>
+                <p className="text-xs text-noir/60 mb-2.5">Le projet apparaîtra dans « Mes projets » du client, qui pourra le modifier. Laissez vide pour le garder sur votre compte.</p>
+                <input
+                  value={clientSearch}
+                  onChange={async (e) => {
+                    setClientSearch(e.target.value);
+                    setClientUserId(null);
+                    if (clients.length === 0) {
+                      try {
+                        const res = await fetch('/api/admin/clients');
+                        const data = await res.json();
+                        setClients(Array.isArray(data) ? data : data.clients || []);
+                      } catch { /* liste indisponible */ }
+                    }
+                  }}
+                  placeholder="Rechercher par nom ou email…"
+                  aria-label="Rechercher un client"
+                  className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+                />
+                {clientSearch.length >= 2 && !clientUserId && (
+                  <ul className="mt-1.5 max-h-36 overflow-y-auto bg-white rounded-lg ring-1 ring-noir/10 divide-y divide-noir/5">
+                    {clients
+                      .filter((c) => `${c.fullName || ''} ${c.email}`.toLowerCase().includes(clientSearch.toLowerCase()))
+                      .slice(0, 8)
+                      .map((c) => (
+                        <li key={c.id}>
+                          <button
+                            type="button"
+                            onClick={() => { setClientUserId(c.id); setClientSearch(`${c.fullName || c.email}`); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-beige/60 transition-colors"
+                          >
+                            <span className="font-medium text-noir">{c.fullName || '—'}</span>
+                            <span className="block text-xs text-noir/55">{c.email}</span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                {clientUserId && (
+                  <p className="mt-1.5 text-xs text-vert-foret font-semibold flex items-center gap-1.5">
+                    ✓ Sera enregistré sur le compte de {clientSearch}
+                    <button type="button" onClick={() => { setClientUserId(null); setClientSearch(''); }} className="text-noir/55 underline font-normal">annuler</button>
+                  </p>
+                )}
+              </div>
+            )}
             <div className="flex justify-end gap-2.5 mt-5">
               <button type="button" onClick={() => setSaveState('idle')} className="btn-secondary !py-2 !px-5 text-sm">Annuler</button>
               <button type="submit" className="btn-primary !py-2 !px-5 text-sm">Enregistrer</button>

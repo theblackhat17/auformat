@@ -4,26 +4,27 @@ import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { CompositionConfig, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
-import { layoutModules } from './CompoCanvas';
+import { layoutModules, shelfPositions } from './CompoCanvas';
 import { moduleMaterial } from './pricingCompo';
 import { uniTexture, woodTexture } from './textures3d';
 
-/* Aperçu 3D de la composition. Conçu pour un public non technique :
-   rotation au doigt/à la souris, molette/pincement pour zoomer, boutons de vue prédéfinis.
-   Les matériaux utilisent les photos réelles de l'onglet Matériaux comme textures. */
+/* Aperçu 3D interactif :
+   - caissons creux : l'intérieur (étagères, tringles, LED) est visible
+   - cliquer une porte l'ouvre/la ferme (sens d'ouverture configurable), un tiroir coulisse
+   - cliquer le caisson sélectionne le module
+   - textures générées depuis les matériaux de l'admin (uni / décor bois) */
 
 const S = 0.001; // mm → mètres
+const PANEL = 0.018;
 const FACADE = 0.018;
 const PLINTH = 0.1;
-const ILOT_Z = 1.5; // distance îlot ↔ mur
+const ILOT_Z = 1.5;
 
-/* Cache global de textures (les photos matériaux reviennent souvent) */
 const textureCache = new Map<string, THREE.Texture>();
 const texLoader = new THREE.TextureLoader();
 texLoader.setCrossOrigin('anonymous');
 
-function woodMaterial(mat: ConfigurateurMaterial | undefined, onLoad: () => void): THREE.MeshStandardMaterial {
-  // Texture procédurale (mélaminé uni / décor bois) : prioritaire, pilotée par l'admin
+function woodMaterial(mat: ConfigurateurMaterial | undefined): THREE.MeshStandardMaterial {
   if (mat?.renderType === 'uni') {
     return new THREE.MeshStandardMaterial({ map: uniTexture(mat.colorHex || '#D4D4D4'), roughness: 0.45, metalness: 0.04 });
   }
@@ -45,20 +46,14 @@ function woodMaterial(mat: ConfigurateurMaterial | undefined, onLoad: () => void
       base.map = cached;
       base.color.set('#ffffff');
     } else {
-      texLoader.load(
-        mat.image,
-        (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-          textureCache.set(mat.image!, tex);
-          base.map = tex;
-          base.color.set('#ffffff');
-          base.needsUpdate = true;
-          onLoad();
-        },
-        undefined,
-        () => { /* photo indisponible : la teinte du matériau reste */ }
-      );
+      texLoader.load(mat.image, (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+        textureCache.set(mat.image!, tex);
+        base.map = tex;
+        base.color.set('#ffffff');
+        base.needsUpdate = true;
+      }, undefined, () => {});
     }
   }
   return base;
@@ -79,6 +74,10 @@ function box(w: number, h: number, d: number, material: THREE.Material): THREE.M
   return m;
 }
 
+type Interactive = THREE.Object3D & {
+  userData: { action: 'door' | 'drawer'; key: string; openRot?: number; openZ?: number };
+};
+
 type Props = {
   config: CompositionConfig;
   moduleTypes: ConfigurateurModuleType[];
@@ -96,9 +95,15 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
     group: THREE.Group | null;
+    interactives: Interactive[];
     raf: number;
+    cameraInit: boolean;
   } | null>(null);
   const fitRef = useRef<{ center: THREE.Vector3; radius: number }>({ center: new THREE.Vector3(), radius: 3 });
+  /** État ouvert/fermé des portes et tiroirs, conservé entre les reconstructions */
+  const openMapRef = useRef(new Map<string, boolean>());
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   /* Scène persistante */
   useEffect(() => {
@@ -121,11 +126,10 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     controls.dampingFactor = 0.08;
     controls.enablePan = false;
     controls.minDistance = 1.2;
-    controls.maxDistance = 14;
+    controls.maxDistance = 16;
     controls.maxPolarAngle = Math.PI / 2.02;
     controls.minPolarAngle = 0.12;
 
-    // Lumière douce d'intérieur
     scene.add(new THREE.HemisphereLight('#ffffff', '#d8d2c4', 1.05));
     const sun = new THREE.DirectionalLight('#fff6e8', 1.6);
     sun.position.set(3, 5, 5);
@@ -136,28 +140,26 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     scene.add(sun);
     scene.add(new THREE.AmbientLight('#ffffff', 0.25));
 
-    // Sol + mur
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(40, 40),
-      new THREE.MeshStandardMaterial({ color: '#e9e2d2', roughness: 0.9 })
-    );
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: '#e9e2d2', roughness: 0.9 }));
     floor.rotation.x = -Math.PI / 2;
     floor.receiveShadow = true;
     scene.add(floor);
-    const wall = new THREE.Mesh(
-      new THREE.PlaneGeometry(40, 12),
-      new THREE.MeshStandardMaterial({ color: '#f7f3ea', roughness: 0.95 })
-    );
+    const wall = new THREE.Mesh(new THREE.PlaneGeometry(40, 12), new THREE.MeshStandardMaterial({ color: '#f7f3ea', roughness: 0.95 }));
     wall.position.set(0, 6, -0.005);
     wall.receiveShadow = true;
     scene.add(wall);
 
-    const state = { renderer, scene, camera, controls, group: null as THREE.Group | null, raf: 0 };
+    const state = {
+      renderer, scene, camera, controls,
+      group: null as THREE.Group | null,
+      interactives: [] as Interactive[],
+      raf: 0,
+      cameraInit: false,
+    };
     stateRef.current = state;
 
     const resize = () => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
+      const w = container.clientWidth, h = container.clientHeight;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
@@ -169,11 +171,22 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     const animate = () => {
       state.raf = requestAnimationFrame(animate);
       controls.update();
+      // Animation douce des portes/tiroirs vers leur cible
+      for (const it of state.interactives) {
+        const open = openMapRef.current.get(it.userData.key) || false;
+        if (it.userData.action === 'door') {
+          const target = open ? (it.userData.openRot || 0) : 0;
+          it.rotation.y += (target - it.rotation.y) * 0.14;
+        } else {
+          const target = open ? (it.userData.openZ || 0) : 0;
+          it.position.z += (target - it.position.z) * 0.14;
+        }
+      }
       renderer.render(scene, camera);
     };
     animate();
 
-    // Sélection au clic (sans confondre avec la rotation)
+    // Clic : porte/tiroir d'abord, sinon sélection du module
     let downX = 0, downY = 0;
     const onDown = (e: PointerEvent) => { downX = e.clientX; downY = e.clientY; };
     const onUp = (e: PointerEvent) => {
@@ -187,6 +200,17 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       ray.setFromCamera(ndc, camera);
       if (!state.group) return;
       const hits = ray.intersectObjects(state.group.children, true);
+      for (const hit of hits) {
+        let obj: THREE.Object3D | null = hit.object;
+        while (obj) {
+          if (obj.userData.action && obj.userData.key) {
+            const key = obj.userData.key as string;
+            openMapRef.current.set(key, !openMapRef.current.get(key));
+            return;
+          }
+          obj = obj.parent;
+        }
+      }
       for (const hit of hits) {
         let obj: THREE.Object3D | null = hit.object;
         while (obj) {
@@ -211,10 +235,7 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
-
-  /* (Re)construction de la composition à chaque changement */
+  /* (Re)construction de la composition */
   useEffect(() => {
     const state = stateRef.current;
     if (!state) return;
@@ -229,11 +250,10 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         }
       });
     }
+    state.interactives = [];
 
     const group = new THREE.Group();
     const { placed, totalWidth, linearWidth, maxTop } = layoutModules(config, moduleTypes);
-    const refresh = () => { /* textures chargées en différé : la boucle de rendu rafraîchit en continu */ };
-
     let maxDepth = 0.6;
 
     for (const p of placed) {
@@ -262,98 +282,165 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       const etageres = mod.options['etagere'] ?? 0;
       const tringles = mod.options['tringle'] ?? 0;
       const vasques = mod.options['vasque'] ?? 0;
+      const ledInterieur = (mod.options['led_interieur'] ?? 0) > 0;
       const handleStyle = (mod.options['poignee_invisible'] ?? 0) > 0 ? 'invisible' : (mod.options['poignee_bouton'] ?? 0) > 0 ? 'bouton' : 'barre';
+      const hingeSide: 'gauche' | 'droite' = (mod.options['ouverture_gauche'] ?? 0) > 0 ? 'gauche' : 'droite';
 
-      const bodyMat = isFrigo && portes === 0 ? INOX() : isLV && !habillage ? INOX() : woodMaterial(mat, refresh);
-
-      // Caisson
-      const caisson = box(w, h, d, bodyMat);
-      caisson.position.set(w / 2, h / 2, d / 2);
-      mg.add(caisson);
-
-      // Plinthe (matériau dédié si choisi)
-      if ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || isIlot) {
-        const plMat = config.plintheMaterialIndex != null && materials[config.plintheMaterialIndex]
-          ? woodMaterial(materials[config.plintheMaterialIndex], refresh)
-          : DARK(mat?.colorHex || '#8B6F47');
-        const pl = box(w - 0.04, PLINTH, d - 0.06, plMat);
-        pl.position.set(w / 2, -PLINTH / 2, d / 2 - 0.02);
-        mg.add(pl);
-      }
-
-      const facadeMat = isMiroir ? MIRROR() : woodMaterial(mat, refresh);
+      const bodyMat = isFrigo && portes === 0 ? INOX() : isLV && !habillage ? INOX() : woodMaterial(mat);
+      const innerMat = DARK(mat?.colorHex || '#D4A574', 0.85);
+      const facadeMat = isMiroir ? MIRROR() : woodMaterial(mat);
       const handleMat = new THREE.MeshStandardMaterial({ color: '#3c3c3c', roughness: 0.4, metalness: 0.7 });
 
-      const addHandle = (cx: number, cy: number, vertical: boolean) => {
+      if (isFrigo || isLV) {
+        // Électroménager : volume plein
+        const caisson = box(w, h, d, bodyMat);
+        caisson.position.set(w / 2, h / 2, d / 2);
+        mg.add(caisson);
+      } else {
+        // Caisson creux : côtés, dessus, dessous, fond — l'intérieur est visible
+        const side1 = box(PANEL, h, d, bodyMat);
+        side1.position.set(PANEL / 2, h / 2, d / 2);
+        const side2 = side1.clone();
+        side2.position.x = w - PANEL / 2;
+        const bottom = box(w - PANEL * 2, PANEL, d, bodyMat);
+        bottom.position.set(w / 2, PANEL / 2, d / 2);
+        const top = bottom.clone();
+        top.position.y = h - PANEL / 2;
+        const back = box(w - PANEL * 2, h - PANEL * 2, 0.012, innerMat);
+        back.position.set(w / 2, h / 2, 0.012);
+        mg.add(side1, side2, bottom, top, back);
+
+        // Étagères (positions réglables, visibles dans le caisson)
+        const shelfYs: number[] = shelfPositions(mod, mod.hauteur).map((pos) => pos * S);
+        for (const sy of shelfYs) {
+          const sh = box(w - PANEL * 2, PANEL, d - 0.04, bodyMat);
+          sh.position.set(w / 2, sy, d / 2 - 0.01);
+          mg.add(sh);
+        }
+
+        // Tringles : une par compartiment, du haut vers le bas — la 1re sous le dessus,
+        // la 2e sous l'étagère qui sépare les deux zones de penderie, etc.
+        const boundaries = [h - PANEL, ...shelfYs.slice().sort((a, b) => b - a)];
+        for (let i = 0; i < tringles; i++) {
+          const under = boundaries[i] ?? (boundaries[boundaries.length - 1] - 0.4 * (i - boundaries.length + 1));
+          const y = Math.max(under - 0.1, PANEL + 0.15);
+          const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w - PANEL * 2 - 0.02), handleMat);
+          rod.rotation.z = Math.PI / 2;
+          rod.position.set(w / 2, y, d / 2);
+          mg.add(rod);
+        }
+
+        // LED intérieure : un bandeau sous le dessus ET sous chaque étagère
+        // (chaque compartiment est éclairé, partie basse comprise)
+        if (ledInterieur) {
+          const stripMat = new THREE.MeshStandardMaterial({ color: '#fff3c4', emissive: '#ffdf8a', emissiveIntensity: 1.6 });
+          const stripYs = [h - PANEL, ...shelfYs];
+          for (const sy of stripYs.slice(0, 5)) {
+            const strip = new THREE.Mesh(new THREE.BoxGeometry(w - PANEL * 2 - 0.04, 0.012, 0.03), stripMat);
+            strip.position.set(w / 2, sy - PANEL / 2 - 0.012, d - 0.08);
+            mg.add(strip);
+          }
+          const glowTop = new THREE.PointLight('#ffe2a0', 2, Math.max(h * 0.8, 1), 2);
+          glowTop.position.set(w / 2, h * 0.75, d / 2);
+          mg.add(glowTop);
+          if (h > 1.2) {
+            const glowBas = new THREE.PointLight('#ffe2a0', 1.6, Math.max(h * 0.7, 0.9), 2);
+            glowBas.position.set(w / 2, h * 0.3, d / 2);
+            mg.add(glowBas);
+          }
+        }
+      }
+
+      const addHandle = (parent: THREE.Object3D, lx: number, ly: number, vertical: boolean) => {
         if (handleStyle === 'invisible') return;
         const hMesh = handleStyle === 'bouton'
           ? new THREE.Mesh(new THREE.SphereGeometry(0.012), handleMat)
           : box(vertical ? 0.014 : 0.14, vertical ? 0.14 : 0.014, 0.018, handleMat);
-        hMesh.position.set(cx, cy, d + FACADE + 0.012);
-        mg.add(hMesh);
+        hMesh.position.set(lx, ly, FACADE / 2 + 0.012);
+        parent.add(hMesh);
       };
 
-      /** n vantaux couvrant la zone verticale [y0, y1] (relatif au bas du caisson) */
-      const addDoors = (n: number, y0: number, y1: number) => {
+      /** Portes ouvrables : n vantaux sur [y0, y1]. Pivot sur la charnière, clic pour ouvrir. */
+      const addDoors = (n: number, y0: number, y1: number, zone: string, mirror = false) => {
         const dw = w / n;
+        const zoneH = y1 - y0 - 0.006;
         for (let i = 0; i < n; i++) {
-          const door = box(dw - 0.006, y1 - y0 - 0.006, FACADE, facadeMat);
-          door.position.set(i * dw + dw / 2, (y0 + y1) / 2, d + FACADE / 2);
-          mg.add(door);
-          addHandle(i % 2 === 0 ? (i + 1) * dw - 0.05 : i * dw + 0.05, (y0 + y1) / 2, true);
+          // Double porte : ouverture par le centre ; porte seule : sens choisi par l'option
+          const side: 'gauche' | 'droite' = n === 1 ? hingeSide : i < n / 2 ? 'gauche' : 'droite';
+          const hingeX = side === 'gauche' ? i * dw + 0.003 : (i + 1) * dw - 0.003;
+          const pivot = new THREE.Group();
+          pivot.position.set(hingeX, (y0 + y1) / 2, d + FACADE / 2);
+          const leaf = box(dw - 0.006, zoneH, FACADE, mirror ? MIRROR() : facadeMat);
+          leaf.position.x = side === 'gauche' ? (dw - 0.006) / 2 : -(dw - 0.006) / 2;
+          pivot.add(leaf);
+          if (!mirror) addHandle(leaf, side === 'gauche' ? (dw - 0.006) / 2 - 0.05 : -((dw - 0.006) / 2 - 0.05), 0, true);
+          // Charnières apparentes le long de l'axe de rotation
+          const hingeFractions = zoneH > 1.4 ? [0.12, 0.5, 0.88] : [0.15, 0.85];
+          for (const f of hingeFractions) {
+            const hinge = box(0.024, 0.06, 0.028, handleMat);
+            hinge.position.set(side === 'gauche' ? 0.006 : -0.006, (f - 0.5) * zoneH, -FACADE / 2 - 0.008);
+            pivot.add(hinge);
+          }
+          pivot.userData = {
+            action: 'door',
+            key: `${mod.id}:${zone}:${i}`,
+            openRot: side === 'gauche' ? -1.85 : 1.85,
+          };
+          mg.add(pivot);
+          state.interactives.push(pivot as unknown as Interactive);
         }
       };
 
       if (isFrigo) {
         const split = h * 0.33;
         const fmat = portes > 0 ? facadeMat : INOX();
-        const top = box(w - 0.01, h - split - 0.008, FACADE, fmat);
-        top.position.set(w / 2, split + (h - split) / 2, d + FACADE / 2);
-        mg.add(top);
-        const bot = box(w - 0.01, split - 0.008, FACADE, fmat);
-        bot.position.set(w / 2, split / 2, d + FACADE / 2);
-        mg.add(bot);
-        addHandle(0.06, split + (h - split) / 2, true);
-        addHandle(0.06, split / 2, true);
+        const topDoor = box(w - 0.01, h - split - 0.008, FACADE, fmat);
+        topDoor.position.set(w / 2, split + (h - split) / 2, d + FACADE / 2);
+        const botDoor = box(w - 0.01, split - 0.008, FACADE, fmat);
+        botDoor.position.set(w / 2, split / 2, d + FACADE / 2);
+        mg.add(topDoor, botDoor);
+        addHandle(topDoor, -(w / 2) + 0.06, 0, true);
+        addHandle(botDoor, -(w / 2) + 0.06, 0, true);
       } else if (isLV) {
         const face = box(w - 0.01, h - 0.01, FACADE, habillage ? facadeMat : INOX());
         face.position.set(w / 2, h / 2, d + FACADE / 2);
         mg.add(face);
-        addHandle(w / 2, h - 0.08, false);
+        addHandle(face, 0, h / 2 - 0.08, false);
       } else {
-        // Tiroirs en partie haute (cohérent avec la 2D)
-        const drawerZone = tiroirs > 0 ? (portes > 0 ? h * 0.4 : h) : 0;
+        // Tiroirs coulissants (clic pour ouvrir)
+        const autoZone = portes > 0 ? h * 0.4 : type.slug === 'banc_rangement' ? h * 0.75 : h;
+        const drawerZone = tiroirs > 0 ? Math.min(h, Math.max(0.12, mod.tiroirsHauteur != null ? mod.tiroirsHauteur * S : autoZone)) : 0;
         for (let i = 0; i < tiroirs; i++) {
           const th = drawerZone / tiroirs;
           const yC = h - i * th - th / 2;
-          const dr = box(w - 0.01, th - 0.008, FACADE, facadeMat);
-          dr.position.set(w / 2, yC, d + FACADE / 2);
-          mg.add(dr);
-          addHandle(w / 2, yC, false);
+          const dg = new THREE.Group(); // glisse en Z
+          const front = box(w - 0.01, th - 0.008, FACADE, facadeMat);
+          front.position.set(w / 2, yC, d + FACADE / 2);
+          dg.add(front);
+          const tub = box(w - 0.08, Math.max(th - 0.07, 0.05), d - 0.12, innerMat);
+          tub.position.set(w / 2, yC - 0.02, d / 2);
+          dg.add(tub);
+          addHandle(front, 0, 0, false);
+          dg.userData = { action: 'drawer', key: `${mod.id}:t:${i}`, openZ: Math.min(d * 0.6, 0.45) };
+          mg.add(dg);
+          state.interactives.push(dg as unknown as Interactive);
         }
-        if (portes > 0) addDoors(portes, 0, h - drawerZone);
-        if (pPleine > 0) addDoors(pPleine, 0, h);
+        if (portes > 0) addDoors(portes, 0, h - drawerZone, 'p', isMiroir);
+        if (pPleine > 0) addDoors(pPleine, 0, h, 'pp');
         else {
-          if (pBasse > 0) addDoors(pBasse, 0, h / 2 - 0.005);
-          if (pHaute > 0) addDoors(pHaute, h / 2 + 0.005, h);
+          if (pBasse > 0) addDoors(pBasse, 0, h / 2 - 0.005, 'pb');
+          if (pHaute > 0) addDoors(pHaute, h / 2 + 0.005, h, 'ph');
         }
+      }
 
-        // Intérieur ouvert : fond sombre + étagères + tringles
-        const open = portes === 0 && pPleine === 0 && tiroirs === 0;
-        if (open && (etageres > 0 || tringles > 0)) {
-          const innerMat = DARK(mat?.colorHex || '#D4A574', 0.8);
-          for (let i = 1; i <= etageres; i++) {
-            const sh = box(w - 0.04, FACADE, d - 0.05, innerMat);
-            sh.position.set(w / 2, (h / (etageres + 1)) * i, d / 2);
-            mg.add(sh);
-          }
-          for (let i = 0; i < tringles; i++) {
-            const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w - 0.06), handleMat);
-            rod.rotation.z = Math.PI / 2;
-            rod.position.set(w / 2, h - 0.12 - i * h * 0.4, d / 2);
-            mg.add(rod);
-          }
-        }
+      // Plinthe
+      if ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || isIlot) {
+        const plMat = config.plintheMaterialIndex != null && materials[config.plintheMaterialIndex]
+          ? woodMaterial(materials[config.plintheMaterialIndex])
+          : DARK(mat?.colorHex || '#8B6F47');
+        const pl = box(w - 0.04, PLINTH, d - 0.06, plMat);
+        pl.position.set(w / 2, -PLINTH / 2, d / 2 - 0.02);
+        mg.add(pl);
       }
 
       // Vasques
@@ -369,7 +456,7 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         mg.add(tap);
       }
 
-      // LED sous meuble
+      // LED sous meuble (extérieure)
       if ((mod.options['eclairage_sous_meuble'] ?? 0) > 0 || (mod.options['led'] ?? 0) > 0) {
         const strip = new THREE.Mesh(
           new THREE.BoxGeometry(w - 0.06, 0.012, 0.03),
@@ -383,20 +470,22 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       group.add(mg);
     }
 
-    // Plans de travail (rangée murale + îlots) — matériau dédié si choisi
+    // Plans de travail
     if (config.planTravail && univers?.planTravail?.disponible) {
       const planMat = config.planMaterialIndex != null && materials[config.planMaterialIndex]
-        ? woodMaterial(materials[config.planMaterialIndex], refresh)
+        ? woodMaterial(materials[config.planMaterialIndex])
         : DARK(materials[config.materialIndex]?.colorHex || '#D4A574', 0.65);
+      const planOv = (config.planDebord ?? 20) * S;
+      const planTh = (config.planEpaisseur ?? 40) * S;
       let run: typeof placed = [];
       const flush = () => {
         if (!run.length) return;
-        const xa = run[0].x * S - 0.02;
-        const xb = (run[run.length - 1].x + run[run.length - 1].module.largeur) * S + 0.02;
+        const xa = run[0].x * S - planOv;
+        const xb = (run[run.length - 1].x + run[run.length - 1].module.largeur) * S + planOv;
         const top = Math.max(...run.map((q) => (q.bottom + q.module.hauteur) * S));
-        const depth = Math.max(...run.map((q) => q.module.profondeur * S)) + 0.04;
-        const plan = box(xb - xa, 0.04, depth, planMat);
-        plan.position.set((xa + xb) / 2, top + 0.02, depth / 2);
+        const depth = Math.max(...run.map((q) => q.module.profondeur * S)) + planOv * 2;
+        const plan = box(xb - xa, planTh, depth, planMat);
+        plan.position.set((xa + xb) / 2, top + planTh / 2, depth / 2);
         group.add(plan);
         run = [];
       };
@@ -408,8 +497,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       flush();
       for (const p of placed.filter((q) => q.type.zone === 'ilot')) {
         const w = p.module.largeur * S, d = p.module.profondeur * S;
-        const plan = box(w + 0.06, 0.04, d + 0.06, planMat);
-        plan.position.set(p.x * S + w / 2, PLINTH + p.module.hauteur * S + 0.02, ILOT_Z + d / 2);
+        const plan = box(w + planOv * 2 + 0.02, planTh, d + planOv * 2 + 0.02, planMat);
+        plan.position.set(p.x * S + w / 2, PLINTH + p.module.hauteur * S + planTh / 2, ILOT_Z + d / 2);
         group.add(plan);
       }
     }
@@ -425,7 +514,7 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       group.add(rail);
       for (let i = 0; i < vantaux; i++) {
         const pw = (linearWidth * S) / vantaux + 0.04;
-        const panelMat = woodMaterial(mainMat, refresh);
+        const panelMat = woodMaterial(mainMat);
         panelMat.transparent = true;
         panelMat.opacity = 0.55;
         const panel = box(pw, hF - (i % 2 ? 0.015 : 0), FACADE, panelMat);
@@ -437,37 +526,41 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     // Surbrillance du module sélectionné
     if (selectedId) {
       const sel = group.children.find((c) => c.userData.moduleId === selectedId);
-      if (sel) {
-        const bb = new THREE.BoxHelper(sel, '#2C5F2D');
-        (bb.material as THREE.LineBasicMaterial).linewidth = 2;
-        group.add(bb);
-      }
+      if (sel) group.add(new THREE.BoxHelper(sel, '#2C5F2D'));
     }
 
-    // Centrage de la scène
     group.position.x = -(totalWidth * S) / 2;
     state.scene.add(group);
     state.group = group;
 
-    const center = new THREE.Vector3(0, (maxTop * S) * 0.45, config.modules.length && placed.some((p) => p.type.zone === 'ilot') ? ILOT_Z / 2 : 0.3);
+    // Restaure instantanément les portes/tiroirs déjà ouverts
+    for (const it of state.interactives) {
+      const open = openMapRef.current.get(it.userData.key) || false;
+      if (it.userData.action === 'door') it.rotation.y = open ? (it.userData.openRot || 0) : 0;
+      else it.position.z = open ? (it.userData.openZ || 0) : 0;
+    }
+
+    const hasIlot = placed.some((p) => p.type.zone === 'ilot');
+    const center = new THREE.Vector3(0, (maxTop * S) * 0.45, hasIlot ? ILOT_Z / 2 : 0.3);
     const radius = Math.max(totalWidth * S, maxTop * S, 2);
     fitRef.current = { center, radius };
-    if (state.camera.position.lengthSq() === 0 || !state.controls.target.equals(center)) {
-      // Premier rendu ou recentrage : vue 3/4 confortable
-      if (state.camera.position.lengthSq() === 0) {
-        state.camera.position.set(center.x + radius * 0.7, maxTop * S * 0.8 + 0.4, center.z + radius * 1.15 + 1);
-      }
-      state.controls.target.copy(center);
+    state.controls.target.copy(center);
+
+    // Première ouverture : vue 3/4 dézoomée
+    if (!state.cameraInit) {
+      state.cameraInit = true;
+      const dist = radius * 1.35 + 1.4;
+      state.camera.position.set(center.x + dist * 0.62, center.y + radius * 0.5 + 0.4, center.z + dist * 0.95);
     }
   }, [config, moduleTypes, materials, univers, selectedId]);
 
-  const setView = useCallback((kind: 'face' | 'trois-quarts' | 'reset') => {
+  const setView = useCallback((kind: 'face' | 'trois-quarts') => {
     const state = stateRef.current;
     if (!state) return;
     const { center, radius } = fitRef.current;
-    const dist = radius * 1.15 + 1;
+    const dist = radius * 1.35 + 1.4;
     if (kind === 'face') state.camera.position.set(center.x, center.y + 0.2, center.z + dist);
-    else state.camera.position.set(center.x + dist * 0.6, center.y + radius * 0.45 + 0.3, center.z + dist * 0.85);
+    else state.camera.position.set(center.x + dist * 0.62, center.y + radius * 0.5 + 0.4, center.z + dist * 0.95);
     state.controls.target.copy(center);
   }, []);
 
@@ -482,8 +575,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
           Vue 3/4
         </button>
       </div>
-      <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-noir/60 bg-white/90 px-3 py-1.5 rounded-full whitespace-nowrap">
-        Tournez avec la souris ou le doigt · molette ou pincement pour zoomer
+      <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-noir/60 bg-white/90 px-3 py-1.5 rounded-full whitespace-nowrap max-w-[calc(100%-24px)] truncate">
+        Cliquez sur une porte ou un tiroir pour l&apos;ouvrir · tournez avec la souris ou le doigt
       </p>
     </div>
   );

@@ -50,13 +50,11 @@ export function UniversGate({
   hasDraft,
   onResumeDraft,
   onStart,
-  onMeubleLibre,
 }: {
   settings: ConfigurateurSettings;
   hasDraft: boolean;
   onResumeDraft: () => void;
   onStart: (config: CompositionConfig) => void;
-  onMeubleLibre: () => void;
 }) {
   const universList = (settings.univers || []).filter((u) => u.actif).sort((a, b) => a.sortOrder - b.sortOrder);
   const materials = settings.materials || [];
@@ -110,19 +108,6 @@ export function UniversGate({
                 <p className="text-sm text-noir/65 leading-relaxed">{u.description}</p>
               </button>
             ))}
-            <button
-              onClick={onMeubleLibre}
-              style={{ ['--rise-delay' as string]: `${universList.length * 70}ms` }}
-              className="animate-hero-rise group text-left bg-white rounded-2xl ring-1 ring-noir/8 p-6 hover:ring-vert-foret hover:ring-2 transition-all card-lift"
-            >
-              <span className="inline-flex w-16 h-16 rounded-full bg-beige text-bois-fonce items-center justify-center mb-4 group-hover:bg-vert-foret group-hover:text-white transition-colors">
-                <UniversIcon slug="meuble" />
-              </span>
-              <h2 className="font-display text-xl text-noir mb-1.5">Meuble à l&apos;unité</h2>
-              <p className="text-sm text-noir/65 leading-relaxed">
-                Bibliothèque, meuble TV, bureau, plan de travail, étagère… un seul meuble, configuré en détail.
-              </p>
-            </button>
           </div>
         ) : (
           <div className="max-w-xl mx-auto bg-white rounded-2xl ring-1 ring-noir/8 p-7 animate-scale-in">

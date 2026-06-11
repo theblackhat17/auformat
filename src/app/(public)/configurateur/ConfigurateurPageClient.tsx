@@ -145,7 +145,6 @@ function ConfigurateurLoader() {
         if (d) setView({ kind: 'compo', config: d.config, projectId: d.projectId, projectName: d.projectName });
       }}
       onStart={(config) => setView({ kind: 'compo', config, projectId: null, projectName: null })}
-      onMeubleLibre={() => setView({ kind: 'meuble' })}
     />
   );
 }

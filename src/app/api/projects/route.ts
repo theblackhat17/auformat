@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { query, rawQuery } from '@/lib/db';
+import { query, queryOne, rawQuery } from '@/lib/db';
 import { requireAuth } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { getClientIp, getUserAgent } from '@/lib/middleware-auth';
@@ -29,11 +29,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
+    // Un admin (commercial) peut créer un projet directement sur le compte d'un client
+    let ownerId = auth.userId;
+    if (body.clientUserId && auth.role === 'admin') {
+      const client = await queryOne<{ id: string }>('SELECT id FROM profiles WHERE id = $1', [body.clientUserId]);
+      if (!client) {
+        return NextResponse.json({ error: 'Client introuvable' }, { status: 400 });
+      }
+      ownerId = client.id;
+    }
+
     const result = await rawQuery(
       `INSERT INTO projects (user_id, name, type, config, status, thumbnail_url, notes)
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [
-        auth.userId,
+        ownerId,
         body.name,
         body.type || 'custom',
         JSON.stringify(body.config),

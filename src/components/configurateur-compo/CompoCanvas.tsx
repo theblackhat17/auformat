@@ -54,6 +54,7 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
 
     if (type.zone === 'ilot') {
       // Îlot : rangée séparée sous l'élévation principale (vue de face, devant le mur)
+      ilotCursor += mod.ecartGauche || 0;
       const bottom = -(ILOT_GAP + mod.hauteur);
       placed.push({ module: mod, type, x: ilotCursor, bottom, free: false });
       ilotDepth = Math.max(ilotDepth, ILOT_GAP + mod.hauteur + PLINTH);
@@ -61,6 +62,7 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
       continue;
     }
 
+    cursor += mod.ecartGauche || 0; // décalage libre dans la rangée
     const bottom = type.zone === 'bas' ? (mod.options['suspendu'] > 0 ? SUSPENDU_BOTTOM : PLINTH) : 0;
     placed.push({ module: mod, type, x: cursor, bottom, free: false });
     lastLinearX = cursor;
@@ -83,6 +85,18 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
   return { placed, totalWidth: Math.max(linearWidth, freeRight, ilotWidth), linearWidth, maxTop, ilotDepth };
 }
 
+/** Positions des étagères (mm depuis le bas du module) : personnalisées ou réparties automatiquement */
+export function shelfPositions(mod: CompositionModule, hauteur: number): number[] {
+  const n = mod.options['etagere'] ?? 0;
+  const ys: number[] = [];
+  for (let i = 1; i <= n; i++) {
+    const auto = (hauteur / (n + 1)) * i;
+    const custom = mod.etageresPos?.[i - 1];
+    ys.push(custom != null ? Math.min(hauteur - 80, Math.max(80, custom)) : auto);
+  }
+  return ys;
+}
+
 type CompoCanvasProps = {
   config: CompositionConfig;
   moduleTypes: ConfigurateurModuleType[];
@@ -91,11 +105,13 @@ type CompoCanvasProps = {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onMoveFree?: (id: string, posX: number, posY: number) => void;
+  /** Décalage horizontal des modules posés (drag) */
+  onEcart?: (id: string, value: number) => void;
 };
 
-export function CompoCanvas({ config, moduleTypes, materials, univers, selectedId, onSelect, onMoveFree }: CompoCanvasProps) {
+export function CompoCanvas({ config, moduleTypes, materials, univers, selectedId, onSelect, onMoveFree, onEcart }: CompoCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const dragRef = useRef<{ id: string; startX: number; startY: number; origX: number; origY: number; moved: boolean } | null>(null);
+  const dragRef = useRef<{ id: string; kind: 'free' | 'linear'; startX: number; startY: number; origX: number; origY: number; origEcart: number; moved: boolean } | null>(null);
 
   const { placed, totalWidth, linearWidth, maxTop, ilotDepth } = layoutModules(config, moduleTypes);
 
@@ -117,24 +133,37 @@ export function CompoCanvas({ config, moduleTypes, materials, univers, selectedI
   };
 
   const handlePointerDown = (p: Placed) => (e: React.PointerEvent) => {
-    if (!p.free || !onMoveFree) return;
+    const kind: 'free' | 'linear' = p.free ? 'free' : 'linear';
+    if (kind === 'free' && !onMoveFree) return;
+    if (kind === 'linear' && !onEcart) return;
     e.preventDefault();
     (e.target as Element).setPointerCapture?.(e.pointerId);
-    dragRef.current = { id: p.module.id, startX: e.clientX, startY: e.clientY, origX: p.x, origY: p.bottom, moved: false };
+    dragRef.current = {
+      id: p.module.id, kind,
+      startX: e.clientX, startY: e.clientY,
+      origX: p.x, origY: p.bottom,
+      origEcart: p.module.ecartGauche || 0,
+      moved: false,
+    };
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     const drag = dragRef.current;
-    if (!drag || !onMoveFree) return;
+    if (!drag) return;
     const scale = pxToMm();
     const dx = (e.clientX - drag.startX) * scale;
     const dy = (e.clientY - drag.startY) * scale;
     if (Math.abs(dx) + Math.abs(dy) > 8) drag.moved = true;
     const mod = config.modules.find((m) => m.id === drag.id);
     if (!mod) return;
+    if (drag.kind === 'linear') {
+      // Décalage horizontal dans la rangée (jamais négatif : les modules ne se chevauchent pas)
+      onEcart?.(drag.id, Math.round((drag.origEcart + dx) / 10) * 10);
+      return;
+    }
     const newX = Math.round(Math.max(-PLAN_OVERHANG, Math.min(sceneRight - mod.largeur + PLAN_OVERHANG, drag.origX + dx)) / 10) * 10;
     const newY = Math.round(Math.max(100, Math.min(maxTop + 200 - mod.hauteur, drag.origY - dy)) / 10) * 10;
-    onMoveFree(drag.id, newX, newY);
+    onMoveFree?.(drag.id, newX, newY);
   };
 
   const handlePointerUp = () => {
@@ -222,10 +251,10 @@ export function CompoCanvas({ config, moduleTypes, materials, univers, selectedI
       {planRuns.map((run, i) => (
         <rect
           key={i}
-          x={MARGIN_X + run.x - PLAN_OVERHANG}
-          y={Y(run.top + PLAN_THICKNESS)}
-          width={run.width + PLAN_OVERHANG * 2}
-          height={PLAN_THICKNESS}
+          x={MARGIN_X + run.x - (config.planDebord ?? PLAN_OVERHANG)}
+          y={Y(run.top + (config.planEpaisseur ?? PLAN_THICKNESS))}
+          width={run.width + (config.planDebord ?? PLAN_OVERHANG) * 2}
+          height={config.planEpaisseur ?? PLAN_THICKNESS}
           rx={6}
           fill={config.planMaterialIndex != null && materials[config.planMaterialIndex]
             ? materials[config.planMaterialIndex].colorHex
@@ -425,8 +454,9 @@ function ModuleShape({
       </g>
     );
   } else {
-    // Répartition façade : tiroirs en partie haute si portes simples aussi
-    const drawerZoneH = tiroirs > 0 ? (portes > 0 ? innerH * 0.4 : isBanc ? innerH * 0.75 : innerH) : 0;
+    // Répartition façade : zone de tiroirs réglable (sinon automatique, en partie haute)
+    const autoZone = portes > 0 ? innerH * 0.4 : isBanc ? innerH * 0.75 : innerH;
+    const drawerZoneH = tiroirs > 0 ? Math.min(innerH, Math.max(120, mod.tiroirsHauteur ?? autoZone)) : 0;
     for (let i = 0; i < tiroirs; i++) {
       const th = drawerZoneH / tiroirs;
       const ty = innerTop - i * th;
@@ -453,22 +483,28 @@ function ModuleShape({
     // Intérieur visible : étagères, tringles (masqués par les portes pleines/positionnelles ensuite)
     const interiorHidden = portes > 0;
     if (!interiorHidden) {
-      for (let i = 1; i <= etageres; i++) {
-        const ey = innerBottom + (innerH / (etageres + 1)) * i;
+      // Positions personnalisées ou réparties (mm depuis le bas du module)
+      const shelfYs = shelfPositions(mod, h).map((pos) => bottom + pos);
+      shelfYs.forEach((ey, idx) => {
         // Étagères inclinées pour le meuble à chaussures
         const tilt = isChaussures ? 35 : 0;
-        elements.push(<line key={`e${i}`} x1={innerX} y1={Y(ey + tilt)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
-      }
-      for (let i = 0; i < tringles; i++) {
-        const ry = innerTop - 120 - i * (innerH / Math.max(tringles, 1)) * 0.85;
-        elements.push(
-          <g key={`r${i}`} stroke={stroke}>
-            <line x1={innerX} y1={Y(ry)} x2={innerX + innerW} y2={Y(ry)} strokeWidth={6} strokeLinecap="round" />
-            {[0.3, 0.5, 0.7].map((f) => (
-              <path key={f} d={`M ${innerX + innerW * f} ${Y(ry)} v 30 m -28 110 l 28 -110 l 28 110 z`} fill="none" strokeWidth={3} opacity={0.55} />
-            ))}
-          </g>
-        );
+        elements.push(<line key={`e${idx}`} x1={innerX} y1={Y(ey + tilt)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
+      });
+      {
+        // Tringles : une par compartiment, sous le dessus puis sous chaque étagère
+        const shelfBounds = [innerTop, ...shelfYs.slice().sort((a, b) => b - a)];
+        for (let i = 0; i < tringles; i++) {
+          const under = shelfBounds[i] ?? (shelfBounds[shelfBounds.length - 1] - 400 * (i - shelfBounds.length + 1));
+          const ry = Math.max(under - 120, innerBottom + 150);
+          elements.push(
+            <g key={`r${i}`} stroke={stroke}>
+              <line x1={innerX} y1={Y(ry)} x2={innerX + innerW} y2={Y(ry)} strokeWidth={6} strokeLinecap="round" />
+              {[0.3, 0.5, 0.7].map((f) => (
+                <path key={f} d={`M ${innerX + innerW * f} ${Y(ry)} v 30 m -28 110 l 28 -110 l 28 110 z`} fill="none" strokeWidth={3} opacity={0.55} />
+              ))}
+            </g>
+          );
+        }
       }
     }
 

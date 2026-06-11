@@ -729,6 +729,12 @@ export interface CompositionModule {
   /** Modules suspendus (zone 'haut') : position libre. null = placement automatique. */
   posX?: number | null;          // mm depuis la gauche de la composition
   posY?: number | null;          // mm du sol au bas du module
+  /** Modules posés : espace laissé à gauche du module (décalage dans la rangée), mm */
+  ecartGauche?: number;
+  /** Hauteur totale de la zone de tiroirs en mm (null = automatique) */
+  tiroirsHauteur?: number | null;
+  /** Position de chaque étagère en mm depuis le bas (null = répartition automatique) */
+  etageresPos?: (number | null)[];
 }
 
 export interface CompositionConfig {
@@ -742,6 +748,10 @@ export interface CompositionConfig {
   facadeVantaux?: number;
   /** Matériau du plan de travail (null = teinte foncée du matériau principal) */
   planMaterialIndex?: number | null;
+  /** Débord du plan de travail de chaque côté, mm (défaut 20) */
+  planDebord?: number;
+  /** Épaisseur du plan de travail, mm (défaut 40) */
+  planEpaisseur?: number;
   /** Matériau des plinthes (null = teinte foncée du matériau de chaque module) */
   plintheMaterialIndex?: number | null;
   /** Largeur de mur disponible (mm) — alerte si la composition dépasse. null = libre. */
