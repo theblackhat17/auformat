@@ -40,6 +40,24 @@ export function MesDevisClient() {
     }
   }
 
+  async function handleRevision(id: string) {
+    const message = prompt('Quelle modification souhaitez-vous ? (dimensions, matériau, budget…)');
+    if (!message?.trim()) return;
+    const res = await fetch(`/api/quotes/${id}/revision`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setQuotes((prev) => prev.map((q) => q.id === id ? updated : q));
+      alert('Votre demande a été transmise à l\'atelier — nous revenons vers vous rapidement avec un devis ajusté.');
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || 'Erreur lors de l\'envoi de la demande.');
+    }
+  }
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-vert-foret border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
@@ -56,9 +74,12 @@ export function MesDevisClient() {
           {quotes.map((quote) => (
             <Card key={quote.id} className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1">
+                <div className="flex items-center gap-3 mb-1 flex-wrap">
                   <span className="text-sm font-mono text-noir/40">{quote.quoteNumber}</span>
                   <Badge variant={QUOTE_STATUS_COLORS[quote.status]}>{QUOTE_STATUS_LABELS[quote.status]}</Badge>
+                  {quote.revisionRequestedAt && (quote.status === 'sent' || quote.status === 'viewed') && (
+                    <Badge variant="bg-amber-100 text-amber-700">Modification demandée</Badge>
+                  )}
                 </div>
                 <h3 className="text-lg font-semibold text-noir truncate">{quote.title}</h3>
                 {quote.description && <p className="text-sm text-noir/50 mt-1 line-clamp-1">{quote.description}</p>}
@@ -78,6 +99,7 @@ export function MesDevisClient() {
                   {(quote.status === 'sent' || quote.status === 'viewed') && (
                     <>
                       <Button size="sm" onClick={() => handleAccept(quote.id)}>Accepter</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleRevision(quote.id)}>Demander une modification</Button>
                       <Button variant="ghost" size="sm" onClick={() => handleRefuse(quote.id)} className="text-red-500">Refuser</Button>
                     </>
                   )}

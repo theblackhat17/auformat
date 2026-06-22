@@ -219,8 +219,16 @@ export interface ContactFormData {
   message: string;
 }
 
-export async function sendContactNotification(data: ContactFormData): Promise<boolean> {
+export async function sendContactNotification(
+  data: ContactFormData,
+  attachments?: { name: string; url: string }[]
+): Promise<boolean> {
   const typeProjetLabel = data.typeProjet || 'Non précisé';
+  const attachmentsHtml = attachments?.length
+    ? `<hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;" />
+       <p style="margin: 0 0 8px; color: #888; font-size: 13px;">Fichiers joints par le client :</p>
+       <ul style="margin: 0; padding-left: 18px;">${attachments.map((a) => `<li><a href="${a.url}">${esc(a.name)}</a></li>`).join('')}</ul>`
+    : '';
   const html = `
     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
@@ -237,6 +245,7 @@ export async function sendContactNotification(data: ContactFormData): Promise<bo
         <hr style="margin: 16px 0; border: none; border-top: 1px solid #eee;" />
         <p style="margin: 0 0 8px; color: #888; font-size: 13px;">Message :</p>
         <p style="margin: 0; white-space: pre-wrap;">${esc(data.message)}</p>
+        ${attachmentsHtml}
         ${SIGNATURE}
       </div>
     </div>
@@ -265,6 +274,152 @@ export async function sendContactConfirmation(data: ContactFormData): Promise<bo
   `;
 
   return sendMail(data.email, 'Votre demande de contact — Au Format', html);
+}
+
+const SITE = process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com';
+
+const btn = (href: string, label: string) => `
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="${href}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">${label}</a>
+  </div>`;
+
+const wrap = (title: string, body: string) => `
+  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+      <h2 style="margin: 0;">${title}</h2>
+    </div>
+    <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+      ${body}
+      ${SIGNATURE}
+    </div>
+  </div>`;
+
+/** Le projet du client avance à l'atelier : nouvelle étape de fabrication */
+export async function sendProjectUpdateEmail(
+  to: string,
+  clientName: string,
+  projectName: string,
+  statusLabel: string,
+  note?: string | null,
+  photoCount = 0
+): Promise<boolean> {
+  const html = wrap('Votre projet avance !', `
+    <p>Bonjour ${esc(clientName)},</p>
+    <p>Bonne nouvelle : votre projet <strong>${esc(projectName)}</strong> vient de passer à l'étape
+    <strong style="color: #2C5F2D;">${esc(statusLabel)}</strong>.</p>
+    ${note ? `<blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px; color: #555;">${esc(note).replace(/\n/g, '<br/>')}</blockquote>` : ''}
+    ${photoCount > 0 ? `<p>📷 ${photoCount} photo${photoCount > 1 ? 's' : ''} d'atelier ${photoCount > 1 ? 'ont été ajoutées' : 'a été ajoutée'} à votre suivi.</p>` : ''}
+    ${btn(`${SITE}/mes-projets`, 'Voir le suivi de mon projet')}
+  `);
+  return sendMail(to, `Votre projet « ${projectName} » : ${statusLabel} — Au Format`, html);
+}
+
+/** Relance d'un devis resté sans réponse (J+7) */
+export async function sendQuoteReminderEmail(
+  to: string,
+  clientName: string,
+  quoteNumber: string,
+  totalTtc: number,
+  validUntil?: string | null
+): Promise<boolean> {
+  const formatEur = (n: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+  const html = wrap('Votre devis vous attend', `
+    <p>Bonjour ${esc(clientName)},</p>
+    <p>Nous vous avons transmis il y a quelques jours le devis <strong>${esc(quoteNumber)}</strong>
+    (${formatEur(totalTtc)} TTC) pour votre projet sur mesure.</p>
+    <p>Avez-vous eu le temps d'y jeter un œil ? Nous restons à votre disposition pour
+    ajuster le projet, répondre à vos questions ou planifier une visite à l'atelier.</p>
+    ${validUntil ? `<p style="color: #888; font-size: 13px;">Ce devis est valable jusqu'au ${new Date(validUntil).toLocaleDateString('fr-FR')}.</p>` : ''}
+    ${btn(`${SITE}/mes-devis`, 'Consulter mon devis')}
+    <p style="color: #888; font-size: 13px;">Une question ? Répondez simplement à cet email ou appelez-nous.</p>
+  `);
+  return sendMail(to, `Votre devis ${esc(quoteNumber)} vous attend — Au Format`, html);
+}
+
+/** Le devis expire bientôt (J-5) */
+export async function sendQuoteExpiryEmail(
+  to: string,
+  clientName: string,
+  quoteNumber: string,
+  validUntil: string
+): Promise<boolean> {
+  const html = wrap('Votre devis expire bientôt', `
+    <p>Bonjour ${esc(clientName)},</p>
+    <p>Petit rappel : votre devis <strong>${esc(quoteNumber)}</strong> arrive à échéance le
+    <strong>${new Date(validUntil).toLocaleDateString('fr-FR')}</strong>.</p>
+    <p>Passé cette date, les prix des matériaux pourront être réévalués. Si le projet vous
+    tient toujours à cœur, c'est le bon moment pour le valider — ou pour nous demander
+    un ajustement.</p>
+    ${btn(`${SITE}/mes-devis`, 'Consulter mon devis')}
+  `);
+  return sendMail(to, `Votre devis ${esc(quoteNumber)} expire bientôt — Au Format`, html);
+}
+
+/** Le client demande une modification sur son devis */
+export async function notifyAdminsQuoteRevision(
+  quoteNumber: string,
+  clientName: string,
+  clientEmail: string,
+  message: string
+): Promise<void> {
+  const html = wrap('Demande de modification de devis', `
+    <p><strong>Devis :</strong> ${esc(quoteNumber)}</p>
+    <p><strong>Client :</strong> ${esc(clientName)} (<a href="mailto:${esc(clientEmail)}">${esc(clientEmail)}</a>)</p>
+    <p style="margin: 0 0 8px; color: #888; font-size: 13px;">Sa demande :</p>
+    <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px;">${esc(message).replace(/\n/g, '<br/>')}</blockquote>
+    <p>Retrouvez le devis dans l'espace admin pour le retravailler et le renvoyer.</p>
+  `);
+  await sendMail(NOTIFY_EMAIL, `Modification demandée sur ${esc(quoteNumber)} — ${esc(clientName)}`, html);
+}
+
+/** Le chantier est terminé : on invite le client à laisser un avis Google */
+export async function sendReviewRequestEmail(
+  to: string,
+  clientName: string,
+  projectName: string,
+  reviewUrl: string
+): Promise<boolean> {
+  const html = wrap('Votre avis compte énormément', `
+    <p>Bonjour ${esc(clientName)},</p>
+    <p>Votre projet <strong>${esc(projectName)}</strong> est terminé — nous espérons qu'il vous
+    apporte entière satisfaction, et c'était un plaisir de le fabriquer pour vous.</p>
+    <p>Si vous avez deux minutes, votre avis sur Google aide énormément notre atelier :
+    c'est grâce à lui que d'autres familles de la région nous découvrent.</p>
+    ${btn(reviewUrl, '⭐ Laisser un avis sur Google')}
+    <p style="color: #888; font-size: 13px;">Un détail à reprendre ? Répondez simplement à cet email,
+    nous revenons chez vous — c'est garanti 2 ans.</p>
+  `);
+  return sendMail(to, `Comment trouvez-vous votre ${esc(projectName)} ? — Au Format`, html);
+}
+
+/** Nouveau message de l'atelier en attente côté client */
+export async function sendChatNotificationToClient(
+  to: string,
+  clientName: string,
+  contextLabel: string,
+  preview: string
+): Promise<boolean> {
+  const html = wrap('Nouveau message de l\'atelier', `
+    <p>Bonjour ${esc(clientName)},</p>
+    <p>L'atelier Au Format vous a écrit au sujet de <strong>${esc(contextLabel)}</strong> :</p>
+    <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px; color: #555;">${esc(preview)}</blockquote>
+    ${btn(`${SITE}/mes-projets`, 'Répondre dans mon espace')}
+  `);
+  return sendMail(to, `Nouveau message — ${esc(contextLabel)} — Au Format`, html);
+}
+
+/** Nouveau message client en attente côté atelier */
+export async function notifyAdminsChatMessage(
+  clientName: string,
+  contextLabel: string,
+  preview: string
+): Promise<void> {
+  const html = wrap('Nouveau message client', `
+    <p><strong>${esc(clientName)}</strong> vous a écrit au sujet de <strong>${esc(contextLabel)}</strong> :</p>
+    <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px;">${esc(preview)}</blockquote>
+    ${btn(`${SITE}/admin/projets`, 'Répondre depuis le suivi des projets')}
+  `);
+  await sendMail(NOTIFY_EMAIL, `Message client — ${esc(contextLabel)} — ${esc(clientName)}`, html);
 }
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<boolean> {

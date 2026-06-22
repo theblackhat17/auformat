@@ -97,6 +97,18 @@ export function AdminDevisClient() {
     }
   }
 
+  async function handleDelete(q: QuoteWithClient) {
+    if (!confirm(`Supprimer définitivement le devis ${q.quoteNumber} ? Cette action est irréversible.`)) return;
+    const res = await fetch(`/api/quotes/${q.id}`, { method: 'DELETE' });
+    if (res.ok) {
+      setQuotes((prev) => prev.filter((x) => x.id !== q.id));
+      if (detailQuote?.id === q.id) setDetailQuote(null);
+      toast.success('Devis supprimé');
+    } else {
+      toast.error('Erreur lors de la suppression');
+    }
+  }
+
   if (loading) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-vert-foret border-t-transparent rounded-full animate-spin" /></div>;
 
   return (
@@ -133,6 +145,16 @@ export function AdminDevisClient() {
                   <div className="flex items-center justify-end gap-2">
                     <a href={`/admin/devis/${q.id}`} className="text-xs font-semibold text-vert-foret hover:underline whitespace-nowrap">Modifier</a>
                     {q.status === 'draft' && <Button variant="outline" size="sm" onClick={() => handleSend(q.id)}>Envoyer</Button>}
+                    <button
+                      onClick={() => handleDelete(q)}
+                      aria-label={`Supprimer le devis ${q.quoteNumber}`}
+                      title="Supprimer"
+                      className="text-noir/30 hover:text-red-600 transition-colors p-1"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 7h12M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-7 0v12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V7" />
+                      </svg>
+                    </button>
                   </div>
                 </td>
               </tr>

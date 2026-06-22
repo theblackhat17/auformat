@@ -13,6 +13,27 @@ import { ModulePicker } from './ModulePicker';
 import { CompoQuoteModal } from './CompoQuoteModal';
 import { AssistantModal } from './AssistantModal';
 import { PrintRecap } from './PrintRecap';
+import { UnitProvider, useUnit } from './units';
+
+/** Sélecteur d'unité d'affichage mm / cm (préférence persistée) */
+function UnitToggle() {
+  const { unit, setUnit } = useUnit();
+  return (
+    <div className="flex items-center bg-beige/70 rounded-full p-0.5" role="group" aria-label="Unité d'affichage">
+      {(['mm', 'cm'] as const).map((u) => (
+        <button
+          key={u}
+          type="button"
+          onClick={() => setUnit(u)}
+          aria-pressed={unit === u}
+          className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${unit === u ? 'bg-white text-noir shadow-sm' : 'text-noir/55 hover:text-noir'}`}
+        >
+          {u}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 /* La 3D (Three.js) n'est chargée que si le client ouvre l'onglet */
 const Compo3D = dynamic(() => import('./Compo3D'), {
@@ -62,6 +83,7 @@ export function ConfigurateurCompo({
   const [clients, setClients] = useState<{ id: string; email: string; fullName: string | null }[]>([]);
   const [clientSearch, setClientSearch] = useState('');
   const [clientUserId, setClientUserId] = useState<string | null>(null);
+  const [clientEmail, setClientEmail] = useState<string | null>(null);
   const moduleTypes = useMemo(() => settings.module_types || [], [settings.module_types]);
   const materials = settings.materials || [];
 
@@ -75,21 +97,76 @@ export function ConfigurateurCompo({
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [assistantNote, setAssistantNote] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'2d' | '3d'>('2d');
+  const [showDims, setShowDims] = useState(false);
+  const [templateState, setTemplateState] = useState<'idle' | 'busy' | 'done'>('idle');
   const [projectId, setProjectId] = useState<string | null>(initialProjectId ?? null);
   const [projectName, setProjectName] = useState<string | null>(initialProjectName ?? null);
   const [saveState, setSaveState] = useState<'idle' | 'naming' | 'saving' | 'saved' | 'error'>('idle');
   const [nameInput, setNameInput] = useState('');
   const [shareAfterSave, setShareAfterSave] = useState(false);
   const [shareState, setShareState] = useState<'idle' | 'busy' | 'copied' | 'error'>('idle');
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [attribOpen, setAttribOpen] = useState(false);
+  const [attribState, setAttribState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle');
 
   const breakdown = useMemo(
     () => computeCompositionPrice(compo.config, moduleTypes, materials, univers),
     [compo.config, moduleTypes, materials, univers]
   );
-  const { totalWidth } = useMemo(() => layoutModules(compo.config, moduleTypes), [compo.config, moduleTypes]);
+  const layout = useMemo(() => layoutModules(compo.config, moduleTypes), [compo.config, moduleTypes]);
+  const { totalWidth } = layout;
 
   const selectedModule = compo.config.modules.find((m) => m.id === compo.selectedId) || null;
   const selectedType = selectedModule ? getModuleType(moduleTypes, selectedModule.typeSlug) : undefined;
+
+  /** Flèches ← → : intervertit avec le voisin de la même rangée (mur principal, retour ou îlot) */
+  function moveSelected(direction: -1 | 1) {
+    if (!selectedModule) return;
+    const me = layout.placed.find((p) => p.module.id === selectedModule.id);
+    if (!me || me.free) {
+      compo.moveModule(selectedModule.id, direction);
+      return;
+    }
+    const sameRow = layout.placed
+      .filter((p) => !p.free && p.row === me.row && p.module.id !== selectedModule.id)
+      .sort((a, b) => a.x - b.x);
+    const neighbor = direction === 1
+      ? sameRow.find((p) => p.x > me.x)
+      : [...sameRow].reverse().find((p) => p.x < me.x);
+    if (neighbor) compo.swapModules(selectedModule.id, neighbor.module.id);
+  }
+
+  /** Ajout d'un module, avec une astuce quand un plan libre risque de doublonner le plan automatique */
+  function handleAddModule(type: NonNullable<typeof selectedType>) {
+    compo.addModule(type);
+    if (type.slug === 'plan_de_travail' && compo.config.planTravail && univers?.planTravail?.disponible) {
+      setAssistantNote(
+        'Astuce : le plan de travail automatique couvre déjà vos meubles bas. Ce plan libre sert plutôt de plan snack ou de tablette — si vous vouliez remplacer le plan automatique, désactivez « Plan de travail » dans les réglages de la composition, ou cochez « Sans plan de travail au-dessus » sur certains meubles.'
+      );
+    }
+  }
+
+  /* Annuler / rétablir au clavier (hors champs de saisie) */
+  const undoRef = useRef({ undo: compo.undo, redo: compo.redo });
+  undoRef.current = { undo: compo.undo, redo: compo.redo };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) undoRef.current.redo();
+        else undoRef.current.undo();
+      } else if (e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        undoRef.current.redo();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   /* Brouillon local : le travail n'est jamais perdu, même sans compte. */
   useEffect(() => {
@@ -159,6 +236,7 @@ export function ConfigurateurCompo({
           type: compo.config.univers,
           config: compo.config,
           ...(isAdmin && clientUserId ? { clientUserId } : {}),
+          ...(isAdmin && !clientUserId && clientEmail ? { clientEmail } : {}),
         }),
       });
       const data = await res.json();
@@ -184,14 +262,120 @@ export function ConfigurateurCompo({
       const data = await res.json();
       if (!res.ok) throw new Error();
       const url = `${window.location.origin}${data.path}`;
-      await navigator.clipboard.writeText(url).catch(() => {
-        window.prompt('Copiez le lien de partage :', url);
-      });
-      setShareState('copied');
-      setTimeout(() => setShareState('idle'), 3500);
+      setShareUrl(url);
+      setShareOpen(true);
+      setShareState('idle');
     } catch {
       setShareState('error');
       setTimeout(() => setShareState('idle'), 3500);
+    }
+  }
+
+  async function regenerateShare() {
+    if (!projectId) return;
+    if (!window.confirm("Générer un nouveau lien ? L'ancien lien ne fonctionnera plus.")) return;
+    setShareState('busy');
+    try {
+      await fetch(`/api/projects/${projectId}/share`, { method: 'DELETE' });
+      await doShare(projectId);
+    } catch {
+      setShareState('error');
+    }
+  }
+
+  // Recherche / sélection de client, partagée entre le modal de nommage et le modal d'attribution
+  function renderClientPicker() {
+    return (
+      <>
+        <input
+          value={clientSearch}
+          onChange={async (e) => {
+            setClientSearch(e.target.value);
+            setClientUserId(null);
+            if (clients.length === 0) {
+              try {
+                const res = await fetch('/api/admin/clients');
+                const data = await res.json();
+                setClients(Array.isArray(data) ? data : data.clients || []);
+              } catch { /* liste indisponible */ }
+            }
+          }}
+          placeholder="Rechercher par nom ou email…"
+          aria-label="Rechercher un client"
+          className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+        />
+        {clientSearch.length >= 2 && !clientUserId && !clientEmail && (
+          <ul className="mt-1.5 max-h-36 overflow-y-auto bg-white rounded-lg ring-1 ring-noir/10 divide-y divide-noir/5">
+            {clients
+              .filter((c) => `${c.fullName || ''} ${c.email}`.toLowerCase().includes(clientSearch.toLowerCase()))
+              .slice(0, 8)
+              .map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => { setClientUserId(c.id); setClientSearch(`${c.fullName || c.email}`); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-beige/60 transition-colors"
+                  >
+                    <span className="font-medium text-noir">{c.fullName || '—'}</span>
+                    <span className="block text-xs text-noir/55">{c.email}</span>
+                  </button>
+                </li>
+              ))}
+            {/* Client sans compte : création par email */}
+            {/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientSearch.trim()) &&
+              !clients.some((c) => c.email.toLowerCase() === clientSearch.trim().toLowerCase()) && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => setClientEmail(clientSearch.trim().toLowerCase())}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-vert-foret/10 transition-colors text-vert-foret font-semibold"
+                  >
+                    + Créer le compte client « {clientSearch.trim()} » et lui attribuer
+                  </button>
+                </li>
+              )}
+          </ul>
+        )}
+        {clientUserId && (
+          <p className="mt-1.5 text-xs text-vert-foret font-semibold flex items-center gap-1.5">
+            ✓ Sera enregistré sur le compte de {clientSearch}
+            <button type="button" onClick={() => { setClientUserId(null); setClientSearch(''); }} className="text-noir/55 underline font-normal">annuler</button>
+          </p>
+        )}
+        {clientEmail && (
+          <p className="mt-1.5 text-xs text-vert-foret font-semibold">
+            ✓ Compte client créé pour {clientEmail} — il l&apos;activera via « Mot de passe oublié » avec cet email.
+            <button type="button" onClick={() => { setClientEmail(null); setClientSearch(''); }} className="ml-1.5 text-noir/55 underline font-normal">annuler</button>
+          </p>
+        )}
+      </>
+    );
+  }
+
+  async function handleAttribuer() {
+    if (!projectId || (!clientUserId && !clientEmail)) return;
+    setAttribState('busy');
+    try {
+      const res = await fetch(`/api/projects/${projectId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(clientUserId ? { clientUserId } : { clientEmail }),
+      });
+      if (!res.ok) throw new Error();
+      setAttribState('done');
+    } catch {
+      setAttribState('error');
+    }
+  }
+
+  async function copyShareUrl() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShareState('copied');
+      setTimeout(() => setShareState('idle'), 2500);
+    } catch {
+      window.prompt('Copiez le lien de partage :', shareUrl);
     }
   }
 
@@ -222,6 +406,7 @@ export function ConfigurateurCompo({
   }
 
   return (
+    <UnitProvider>
     <div className="min-h-screen bg-beige/40 pb-28 lg:pb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Barre de titre */}
@@ -242,12 +427,64 @@ export function ConfigurateurCompo({
             </div>
           </div>
           <div className="flex items-center gap-2.5 flex-wrap">
+            <UnitToggle />
+            {/* Annuler / rétablir */}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={compo.undo}
+                disabled={!compo.canUndo}
+                title="Annuler (Ctrl+Z)"
+                aria-label="Annuler la dernière modification"
+                className="w-9 h-9 rounded-full border border-noir/15 text-noir/70 hover:border-noir disabled:opacity-30 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5" /><path d="M4 9h10a6 6 0 0 1 0 12h-3" /></svg>
+              </button>
+              <button
+                onClick={compo.redo}
+                disabled={!compo.canRedo}
+                title="Rétablir (Ctrl+Shift+Z)"
+                aria-label="Rétablir la modification annulée"
+                className="w-9 h-9 rounded-full border border-noir/15 text-noir/70 hover:border-noir disabled:opacity-30 flex items-center justify-center transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5" /><path d="M20 9H10a6 6 0 0 0 0 12h3" /></svg>
+              </button>
+            </div>
             <button onClick={() => window.print()} title="Télécharger le récapitulatif en PDF" className="btn-secondary !py-2 !px-4 text-sm">
               PDF
             </button>
             <button onClick={handleShareClick} disabled={shareState === 'busy'} className="btn-secondary !py-2 !px-4 text-sm disabled:opacity-60">
-              {shareState === 'copied' ? 'Lien copié ✓' : shareState === 'error' ? 'Erreur' : shareState === 'busy' ? '…' : 'Partager'}
+              {shareState === 'error' ? 'Erreur' : shareState === 'busy' ? '…' : 'Partager'}
             </button>
+            {isAdmin && projectId && (
+              <button
+                onClick={() => { setAttribState('idle'); setClientUserId(null); setClientEmail(null); setClientSearch(''); setAttribOpen(true); }}
+                className="btn-secondary !py-2 !px-4 text-sm"
+              >
+                Attribuer
+              </button>
+            )}
+            {isAdmin && projectId && (
+              <button
+                onClick={async () => {
+                  setTemplateState('busy');
+                  try {
+                    const res = await fetch(`/api/projects/${projectId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ isTemplate: true, config: compo.config }),
+                    });
+                    setTemplateState(res.ok ? 'done' : 'idle');
+                  } catch {
+                    setTemplateState('idle');
+                  }
+                }}
+                disabled={templateState !== 'idle'}
+                title="Proposer cette composition comme point de départ aux clients"
+                className="btn-secondary !py-2 !px-4 text-sm disabled:opacity-60"
+              >
+                {templateState === 'done' ? 'Modèle ✓' : templateState === 'busy' ? '…' : 'Définir comme modèle'}
+              </button>
+            )}
             <button onClick={handleSaveClick} disabled={saveState === 'saving'} className="btn-secondary !py-2 !px-5 text-sm disabled:opacity-60">
               {saveState === 'saving' ? 'Enregistrement…' : projectId ? 'Enregistrer' : 'Enregistrer le projet'}
             </button>
@@ -260,24 +497,37 @@ export function ConfigurateurCompo({
         <div className="grid lg:grid-cols-12 gap-5 items-start">
           {/* Canvas */}
           <div className="lg:col-span-8 bg-white rounded-2xl ring-1 ring-noir/8 p-4 sm:p-6">
-            {/* Onglets 2D / 3D */}
-            <div className="flex gap-1 mb-4 bg-beige/70 rounded-full p-1 w-fit" role="tablist" aria-label="Mode d'affichage">
-              <button
-                role="tab"
-                aria-selected={viewMode === '2d'}
-                onClick={() => setViewMode('2d')}
-                className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${viewMode === '2d' ? 'bg-white text-noir shadow-sm' : 'text-noir/60 hover:text-noir'}`}
-              >
-                Plan 2D
-              </button>
-              <button
-                role="tab"
-                aria-selected={viewMode === '3d'}
-                onClick={() => setViewMode('3d')}
-                className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${viewMode === '3d' ? 'bg-white text-noir shadow-sm' : 'text-noir/60 hover:text-noir'}`}
-              >
-                Aperçu 3D
-              </button>
+            {/* Onglets 2D / 3D + cotes */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex gap-1 bg-beige/70 rounded-full p-1 w-fit" role="tablist" aria-label="Mode d'affichage">
+                <button
+                  role="tab"
+                  aria-selected={viewMode === '2d'}
+                  onClick={() => setViewMode('2d')}
+                  className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${viewMode === '2d' ? 'bg-white text-noir shadow-sm' : 'text-noir/60 hover:text-noir'}`}
+                >
+                  Plan 2D
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={viewMode === '3d'}
+                  onClick={() => setViewMode('3d')}
+                  className={`px-5 py-1.5 text-sm font-semibold rounded-full transition-colors ${viewMode === '3d' ? 'bg-white text-noir shadow-sm' : 'text-noir/60 hover:text-noir'}`}
+                >
+                  Aperçu 3D
+                </button>
+              </div>
+              {viewMode === '2d' && (
+                <button
+                  onClick={() => setShowDims((v) => !v)}
+                  aria-pressed={showDims}
+                  className={`px-4 py-1.5 text-xs font-semibold rounded-full border transition-colors ${
+                    showDims ? 'bg-noir text-white border-noir' : 'text-noir/65 border-noir/20 hover:border-noir'
+                  }`}
+                >
+                  Cotes
+                </button>
+              )}
             </div>
 
             {viewMode === '2d' ? (
@@ -290,6 +540,8 @@ export function ConfigurateurCompo({
                 onSelect={(id) => compo.select(id === compo.selectedId ? null : id)}
                 onMoveFree={(id, posX, posY) => compo.setModulePos(id, posX, posY)}
                 onEcart={(id, value) => compo.setModuleEcart(id, value)}
+                onSwap={(a, b) => compo.swapModules(a, b)}
+                showDims={showDims}
               />
             ) : (
               <Compo3D
@@ -345,13 +597,17 @@ export function ConfigurateurCompo({
                   onDim={(f, v) => compo.setModuleDim(selectedModule.id, f, v)}
                   onMaterial={(i) => compo.setModuleMaterial(selectedModule.id, i)}
                   onOption={(slug, v) => compo.setModuleOption(selectedModule.id, slug, v)}
-                  onMove={(d) => compo.moveModule(selectedModule.id, d)}
+                  onMove={moveSelected}
                   onDuplicate={() => compo.duplicateModule(selectedModule.id)}
                   onRemove={() => compo.removeModule(selectedModule.id)}
                   onPos={(posX, posY) => compo.setModulePos(selectedModule.id, posX, posY)}
                   onEcart={(value) => compo.setModuleEcart(selectedModule.id, value)}
                   onTiroirsHauteur={(value) => compo.setTiroirsHauteur(selectedModule.id, value)}
                   onEtagerePos={(index, value) => compo.setEtagerePos(selectedModule.id, index, value)}
+                  onFacadeMaterial={(index) => compo.setFacadeMaterial(selectedModule.id, index)}
+                  onStyleFacade={(value) => compo.setStyleFacade(selectedModule.id, value)}
+                  onApplyMaterialAll={compo.applyMaterialAll}
+                  onMur={(value) => compo.setModuleMur(selectedModule.id, value)}
                 />
               ) : (
                 <GlobalPanel
@@ -365,9 +621,12 @@ export function ConfigurateurCompo({
                   onFacadeCoulissante={compo.setFacadeCoulissante}
                   onFacadeVantaux={compo.setFacadeVantaux}
                   onPlanMaterial={compo.setPlanMaterial}
+                  onPlanChant={compo.setPlanChant}
                   onPlintheMaterial={compo.setPlintheMaterial}
                   onLineaireMax={compo.setLineaireMax}
                   onPlanDims={compo.setPlanDims}
+                  onPoigneeFinition={compo.setPoigneeFinition}
+                  onLedTemp={compo.setLedTemp}
                 />
               )}
             </div>
@@ -448,7 +707,7 @@ export function ConfigurateurCompo({
           universList={settings.univers || []}
           universSlug={compo.config.univers}
           showPrices={showPrices}
-          onAdd={compo.addModule}
+          onAdd={handleAddModule}
           onClose={() => setPickerOpen(false)}
         />
       )}
@@ -488,6 +747,100 @@ export function ConfigurateurCompo({
         showPrices={showPrices}
       />
 
+      {/* Fenêtre de partage */}
+      {shareOpen && shareUrl && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-noir/45 animate-fade-in" onClick={() => setShareOpen(false)} aria-hidden="true" />
+          <div className="relative bg-white rounded-2xl shadow-[0_24px_64px_-16px_rgba(43,43,43,0.35)] w-full max-w-md p-6 animate-scale-in">
+            <h2 className="font-display text-xl text-noir mb-1.5">Partager ce projet</h2>
+            <p className="text-sm text-noir/60 mb-4">
+              Ce lien est consultable par <strong>toutes les personnes</strong> à qui vous l&apos;envoyez — partagez-le autant de fois que vous voulez.
+            </p>
+            <div className="flex gap-2">
+              <input
+                readOnly
+                value={shareUrl}
+                onFocus={(e) => e.target.select()}
+                aria-label="Lien de partage"
+                className="flex-1 min-w-0 px-3 py-2.5 bg-beige/60 border border-noir/15 rounded-lg text-sm text-noir/80 font-mono"
+              />
+              <button onClick={copyShareUrl} className="btn-primary !py-2 !px-4 text-sm flex-shrink-0">
+                {shareState === 'copied' ? 'Copié ✓' : 'Copier'}
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-2.5 mt-4">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Voici mon projet d'agencement Au Format : ${shareUrl}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary !py-2 !px-4 text-sm"
+              >
+                WhatsApp
+              </a>
+              <a
+                href={`mailto:?subject=${encodeURIComponent('Mon projet d\'agencement Au Format')}&body=${encodeURIComponent(`Bonjour,\n\nVoici mon projet d'agencement sur mesure :\n${shareUrl}\n\n`)}`}
+                className="btn-secondary !py-2 !px-4 text-sm"
+              >
+                Email
+              </a>
+              <a href={shareUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-2 !px-4 text-sm">
+                Ouvrir
+              </a>
+            </div>
+            <div className="flex items-center justify-between mt-5 pt-4 border-t border-noir/8">
+              <button onClick={regenerateShare} className="text-xs text-noir/55 hover:text-red-700 underline">
+                Générer un nouveau lien (révoque l&apos;ancien)
+              </button>
+              <button onClick={() => setShareOpen(false)} className="btn-secondary !py-1.5 !px-4 text-sm">Fermer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attribution du projet au compte d'un client (admin) */}
+      {attribOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-noir/45 animate-fade-in" onClick={() => setAttribOpen(false)} aria-hidden="true" />
+          <div className="relative bg-white rounded-2xl shadow-[0_24px_64px_-16px_rgba(43,43,43,0.35)] w-full max-w-sm p-6 animate-scale-in">
+            <h2 className="font-display text-xl text-noir mb-1">Attribuer à un client</h2>
+            {attribState === 'done' ? (
+              <div className="mt-3">
+                <p className="text-sm text-vert-foret font-semibold">
+                  ✓ Projet attribué au compte de {clientUserId ? clientSearch : clientEmail}.
+                </p>
+                <p className="text-xs text-noir/60 mt-1.5">
+                  Il le retrouvera dans « Mes projets » et pourra le modifier.
+                  {clientEmail && ' S’il n’a pas encore de mot de passe : « Mot de passe oublié » avec cet email, ou connexion Google sur le même email.'}
+                </p>
+                <div className="flex justify-end mt-4">
+                  <button onClick={() => setAttribOpen(false)} className="btn-primary !py-2 !px-5 text-sm">Fermer</button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-noir/60 mb-4">
+                  Transfère ce projet sur le compte du client : il apparaîtra dans son espace « Mes projets » et il pourra le modifier.
+                </p>
+                {renderClientPicker()}
+                {attribState === 'error' && (
+                  <p className="mt-2 text-xs text-red-700 font-semibold">Erreur lors de l&apos;attribution — réessayez.</p>
+                )}
+                <div className="flex justify-end gap-2.5 mt-5">
+                  <button onClick={() => setAttribOpen(false)} className="btn-secondary !py-2 !px-5 text-sm">Annuler</button>
+                  <button
+                    onClick={handleAttribuer}
+                    disabled={attribState === 'busy' || (!clientUserId && !clientEmail)}
+                    className="btn-primary !py-2 !px-5 text-sm disabled:opacity-50"
+                  >
+                    {attribState === 'busy' ? '…' : 'Attribuer'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Nommage du projet */}
       {saveState === 'naming' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -508,48 +861,7 @@ export function ConfigurateurCompo({
               <div className="mt-4 p-3.5 bg-beige/60 rounded-xl">
                 <p className="text-sm font-semibold text-noir mb-0.5">Attribuer à un client</p>
                 <p className="text-xs text-noir/60 mb-2.5">Le projet apparaîtra dans « Mes projets » du client, qui pourra le modifier. Laissez vide pour le garder sur votre compte.</p>
-                <input
-                  value={clientSearch}
-                  onChange={async (e) => {
-                    setClientSearch(e.target.value);
-                    setClientUserId(null);
-                    if (clients.length === 0) {
-                      try {
-                        const res = await fetch('/api/admin/clients');
-                        const data = await res.json();
-                        setClients(Array.isArray(data) ? data : data.clients || []);
-                      } catch { /* liste indisponible */ }
-                    }
-                  }}
-                  placeholder="Rechercher par nom ou email…"
-                  aria-label="Rechercher un client"
-                  className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
-                />
-                {clientSearch.length >= 2 && !clientUserId && (
-                  <ul className="mt-1.5 max-h-36 overflow-y-auto bg-white rounded-lg ring-1 ring-noir/10 divide-y divide-noir/5">
-                    {clients
-                      .filter((c) => `${c.fullName || ''} ${c.email}`.toLowerCase().includes(clientSearch.toLowerCase()))
-                      .slice(0, 8)
-                      .map((c) => (
-                        <li key={c.id}>
-                          <button
-                            type="button"
-                            onClick={() => { setClientUserId(c.id); setClientSearch(`${c.fullName || c.email}`); }}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-beige/60 transition-colors"
-                          >
-                            <span className="font-medium text-noir">{c.fullName || '—'}</span>
-                            <span className="block text-xs text-noir/55">{c.email}</span>
-                          </button>
-                        </li>
-                      ))}
-                  </ul>
-                )}
-                {clientUserId && (
-                  <p className="mt-1.5 text-xs text-vert-foret font-semibold flex items-center gap-1.5">
-                    ✓ Sera enregistré sur le compte de {clientSearch}
-                    <button type="button" onClick={() => { setClientUserId(null); setClientSearch(''); }} className="text-noir/55 underline font-normal">annuler</button>
-                  </p>
-                )}
+                {renderClientPicker()}
               </div>
             )}
             <div className="flex justify-end gap-2.5 mt-5">
@@ -560,5 +872,6 @@ export function ConfigurateurCompo({
         </div>
       )}
     </div>
+    </UnitProvider>
   );
 }

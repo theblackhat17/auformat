@@ -2,22 +2,63 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import type { CompositionConfig, CompositionModule, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
+import type { CompositionConfig, CompositionModule, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers, PoigneeFinition, StyleFacade } from '@/lib/types';
 import { HAUT_BOTTOM_DEFAULT, shelfPositions } from './CompoCanvas';
+import { useUnit, toDisplay, fromDisplay, fmtLen, unitLabel } from './units';
+
+const STYLE_FACADE_LABELS: Record<StyleFacade, string> = {
+  lisse: 'Lisse',
+  cadre: 'Cadre',
+  rainuree: 'Rainurée',
+  cannage: 'Cannage',
+};
+const POIGNEE_FINITION_LABELS: Record<PoigneeFinition, string> = {
+  noir: 'Noir mat',
+  inox: 'Inox brossé',
+  laiton: 'Laiton',
+};
+
+/** Pilules radio génériques (style de façade, finitions…) */
+function Pills<T extends string>({ label, options, value, onChange }: { label: string; options: Record<T, string>; value: T; onChange: (v: T) => void }) {
+  return (
+    <div className="py-2.5">
+      <p className="text-sm font-medium text-noir mb-2">{label}</p>
+      <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
+        {(Object.keys(options) as T[]).map((key) => (
+          <button
+            key={key}
+            type="button"
+            role="radio"
+            aria-checked={value === key}
+            onClick={() => onChange(key)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              value === key ? 'bg-noir text-white border-noir' : 'bg-transparent text-noir border-noir/20 hover:border-noir'
+            }`}
+          >
+            {options[key]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type DimField = 'largeur' | 'hauteur' | 'profondeur';
 const DIM_LABELS: Record<DimField, string> = { largeur: 'Largeur', hauteur: 'Hauteur', profondeur: 'Profondeur' };
 
-/** Champ numérique saisissable au clavier : on tape librement, la valeur est bornée à la validation (Entrée ou sortie du champ). */
+/** Champ numérique saisissable au clavier : on tape librement, la valeur est bornée à la validation (Entrée ou sortie du champ).
+ *  Affichage/saisie dans l'unité courante (mm ou cm) ; la valeur transmise reste TOUJOURS en mm. */
 function NumField({ value, min, max, onCommit, ariaLabel, className }: { value: number; min: number; max: number; onCommit: (v: number) => void; ariaLabel: string; className?: string }) {
-  const [text, setText] = useState(String(value));
+  const { unit } = useUnit();
+  const disp = (mm: number) => String(toDisplay(mm, unit));
+  const [text, setText] = useState(disp(value));
   const [editing, setEditing] = useState(false);
-  useEffect(() => { if (!editing) setText(String(value)); }, [value, editing]);
+  useEffect(() => { if (!editing) setText(disp(value)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [value, editing, unit]);
   const commit = () => {
     setEditing(false);
     const n = Number(text.replace(',', '.'));
-    if (isFinite(n)) onCommit(Math.min(max, Math.max(min, Math.round(n))));
-    else setText(String(value));
+    if (isFinite(n)) onCommit(Math.min(max, Math.max(min, fromDisplay(n, unit))));
+    else setText(disp(value));
   };
   return (
     <input
@@ -165,6 +206,10 @@ export function ModulePanel({
   onEcart,
   onTiroirsHauteur,
   onEtagerePos,
+  onFacadeMaterial,
+  onStyleFacade,
+  onApplyMaterialAll,
+  onMur,
 }: {
   module: CompositionModule;
   type: ConfigurateurModuleType;
@@ -183,13 +228,22 @@ export function ModulePanel({
   onEcart: (value: number) => void;
   onTiroirsHauteur: (value: number | null) => void;
   onEtagerePos: (index: number, value: number | null) => void;
+  onFacadeMaterial: (index: number | null) => void;
+  onStyleFacade: (value: StyleFacade) => void;
+  onApplyMaterialAll: (index: number) => void;
+  onMur: (value: 'principal' | 'retour_gauche' | 'retour_droit') => void;
 }) {
+  const { unit } = useUnit();
   const isFree = type.zone === 'haut';
   const posX = mod.posX ?? 0;
   const posY = mod.posY ?? HAUT_BOTTOM_DEFAULT;
   const nbTiroirs = mod.options['tiroir'] ?? 0;
   const nbEtageres = mod.options['etagere'] ?? 0;
   const shelfYs = shelfPositions(mod, mod.hauteur);
+  const isDecor = !!type.decor;
+  /** Le module a-t-il des façades (portes ou tiroirs) à habiller ? */
+  const hasFacades = type.options.some((o) => ['porte', 'tiroir', 'porte_basse', 'porte_haute', 'porte_pleine', 'facade_habillage'].includes(o.slug))
+    || ['colonne_four', 'colonne_lave_linge'].includes(type.slug);
   return (
     <div>
       <div className="flex items-start justify-between gap-3 mb-1">
@@ -232,8 +286,8 @@ export function ModulePanel({
                   min={type.dimensionsMin[field]}
                   max={type.dimensionsMax[field]}
                   onCommit={(v) => onDim(field, v)}
-                  ariaLabel={`${DIM_LABELS[field]} en millimètres`}
-                /> mm
+                  ariaLabel={`${DIM_LABELS[field]} en ${unit === 'cm' ? 'centimètres' : 'millimètres'}`}
+                /> {unitLabel(unit)}
               </span>
             </div>
             <input
@@ -259,7 +313,7 @@ export function ModulePanel({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label htmlFor="pos-x" className="text-xs font-medium text-noir/80">Position horizontale</label>
-                <span className="text-xs tabular-nums text-noir/70">{posX} mm</span>
+                <span className="text-xs tabular-nums text-noir/70">{fmtLen(posX, unit)}</span>
               </div>
               <input
                 id="pos-x"
@@ -275,7 +329,7 @@ export function ModulePanel({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label htmlFor="pos-y" className="text-xs font-medium text-noir/80">Hauteur de pose (bas du module)</label>
-                <span className="text-xs tabular-nums text-noir/70">{posY} mm</span>
+                <span className="text-xs tabular-nums text-noir/70">{fmtLen(posY, unit)}</span>
               </div>
               <input
                 id="pos-y"
@@ -292,13 +346,30 @@ export function ModulePanel({
         </div>
       )}
 
+      {/* Mur : composition en L (tous les modules sauf l'îlot — y compris plan libre et suspendus) */}
+      {type.zone !== 'ilot' && (
+        <div className="mt-4">
+          <Pills
+            label="Mur"
+            options={{ principal: 'Mur principal', retour_gauche: 'Retour gauche', retour_droit: 'Retour droit' } as Record<'principal' | 'retour_gauche' | 'retour_droit', string>}
+            value={mod.mur ?? 'principal'}
+            onChange={onMur}
+          />
+          {(mod.mur === 'retour_gauche' || mod.mur === 'retour_droit') && (
+            <p className="text-xs text-noir/55 -mt-1">
+              Composition en L : ce module est posé sur le mur de {mod.mur === 'retour_gauche' ? 'gauche' : 'droite'}, perpendiculaire au mur principal. Sur le plan 2D, sa rangée est dessinée en dessous, vue de face.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Décalage dans la rangée (modules posés) */}
       {!isFree && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1">
             <label className="text-sm font-medium text-noir">Écart à gauche</label>
             <span className="text-sm tabular-nums text-noir/70">
-              <NumField value={mod.ecartGauche || 0} min={0} max={3000} onCommit={onEcart} ariaLabel="Écart à gauche en millimètres" /> mm
+              <NumField value={mod.ecartGauche || 0} min={0} max={3000} onCommit={onEcart} ariaLabel="Écart à gauche" /> {unitLabel(unit)}
             </span>
           </div>
           <input type="range" min={0} max={1500} step={10} value={mod.ecartGauche || 0} onChange={(e) => onEcart(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Écart à gauche" />
@@ -317,7 +388,7 @@ export function ModulePanel({
               ) : (
                 <button type="button" onClick={() => onTiroirsHauteur(Math.round(mod.hauteur * 0.4))} className="text-xs font-semibold text-vert-foret hover:underline">Auto — régler</button>
               )}
-              {mod.tiroirsHauteur != null && ' mm'}
+              {mod.tiroirsHauteur != null && ` ${unitLabel(unit)}`}
             </span>
           </div>
           {mod.tiroirsHauteur != null && (
@@ -332,7 +403,7 @@ export function ModulePanel({
       {/* Position des étagères */}
       {nbEtageres > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-medium text-noir mb-1.5">Position des étagères <span className="text-xs text-noir/55 font-normal">(mm depuis le bas)</span></p>
+          <p className="text-sm font-medium text-noir mb-1.5">Position des étagères <span className="text-xs text-noir/55 font-normal">({unitLabel(unit)} depuis le bas)</span></p>
           <div className="flex flex-wrap gap-2">
             {shelfYs.map((y, i) => (
               <span key={i} className="inline-flex items-center gap-1 text-xs text-noir/70">
@@ -357,15 +428,51 @@ export function ModulePanel({
       )}
 
       {/* Matériau du module */}
-      <div className="mt-5">
-        <p className="text-sm font-medium text-noir mb-2">Matériau de ce module</p>
-        <MaterialSwatches materials={materials} value={mod.materialIndex} onChange={onMaterial} allowInherit showPrices={showPrices} />
-        <p className="text-xs text-noir/55 mt-1.5">
-          {mod.materialIndex === null
-            ? `Suit le matériau principal (${materials[config.materialIndex]?.name || '—'})`
-            : materials[mod.materialIndex]?.name}
+      {!isDecor && (
+        <div className="mt-5">
+          <p className="text-sm font-medium text-noir mb-2">Matériau de ce module</p>
+          <MaterialSwatches materials={materials} value={mod.materialIndex} onChange={onMaterial} allowInherit showPrices={showPrices} />
+          <p className="text-xs text-noir/55 mt-1.5">
+            {mod.materialIndex === null
+              ? `Suit le matériau principal (${materials[config.materialIndex]?.name || '—'})`
+              : materials[mod.materialIndex]?.name}
+          </p>
+          {mod.materialIndex !== null && (
+            <button
+              type="button"
+              onClick={() => onApplyMaterialAll(mod.materialIndex as number)}
+              className="text-xs font-semibold text-vert-foret hover:underline mt-1"
+            >
+              Appliquer ce matériau à toute la composition
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Façades : matériau dédié et style */}
+      {!isDecor && hasFacades && (
+        <div className="mt-5">
+          <p className="text-sm font-medium text-noir mb-2">Matériau des façades</p>
+          <MaterialSwatches materials={materials} value={mod.facadeMaterialIndex ?? null} onChange={onFacadeMaterial} allowInherit showPrices={showPrices} />
+          <p className="text-xs text-noir/55 mt-1.5">
+            {mod.facadeMaterialIndex == null
+              ? 'Assorties au caisson — choisissez une teinte pour les contraster.'
+              : `Façades en ${materials[mod.facadeMaterialIndex]?.name}`}
+          </p>
+          <Pills
+            label="Style des façades"
+            options={STYLE_FACADE_LABELS}
+            value={mod.styleFacade ?? 'lisse'}
+            onChange={onStyleFacade}
+          />
+        </div>
+      )}
+
+      {isDecor && (
+        <p className="mt-4 text-xs text-noir/60 bg-beige/60 rounded-xl p-3.5 leading-relaxed">
+          Élément d&apos;environnement : il situe votre pièce (fenêtre, porte, radiateur…) sur le plan et n&apos;est jamais compté dans le devis.
         </p>
-      </div>
+      )}
 
       {/* Options */}
       {type.options.length > 0 && (
@@ -396,7 +503,7 @@ export function ModulePanel({
           {/* Groupes de choix exclusifs (ex. style de poignée) */}
           {Array.from(new Set(type.options.filter((o) => o.type === 'choix').map((o) => o.groupe || 'choix'))).map((groupe) => {
             const members = type.options.filter((o) => o.type === 'choix' && (o.groupe || 'choix') === groupe);
-            const groupLabels: Record<string, string> = { poignee: 'Style de poignées', sens_ouverture: "Sens d'ouverture (porte seule)" };
+            const groupLabels: Record<string, string> = { poignee: 'Style de poignées', sens_ouverture: "Sens d'ouverture (porte seule)", socle: 'Socle' };
             return (
               <div key={groupe} className="py-2.5">
                 <p className="text-sm font-medium text-noir mb-2">{groupLabels[groupe] || 'Finition'}</p>
@@ -441,9 +548,12 @@ export function GlobalPanel({
   onFacadeCoulissante,
   onFacadeVantaux,
   onPlanMaterial,
+  onPlanChant,
   onPlintheMaterial,
   onLineaireMax,
   onPlanDims,
+  onPoigneeFinition,
+  onLedTemp,
 }: {
   config: CompositionConfig;
   univers?: ConfigurateurUnivers;
@@ -455,12 +565,18 @@ export function GlobalPanel({
   onFacadeCoulissante: (value: boolean) => void;
   onFacadeVantaux: (value: number) => void;
   onPlanMaterial: (index: number | null) => void;
+  onPlanChant: (index: number | null) => void;
   onPlintheMaterial: (index: number | null) => void;
   onLineaireMax: (value: number | null) => void;
   onPlanDims: (dims: { debord?: number; epaisseur?: number }) => void;
+  onPoigneeFinition: (value: PoigneeFinition) => void;
+  onLedTemp: (value: 'chaud' | 'neutre') => void;
 }) {
+  const { unit } = useUnit();
   const overMax = config.lineaireMax ? totalWidth > config.lineaireMax : false;
   const hasBas = true; // les plinthes concernent les modules posés ; le sélecteur reste simple
+  // Largeurs de mur courantes (mm) proposées en raccourci
+  const WALL_PRESETS = [2000, 2400, 3000, 3600, 4200];
   return (
     <div>
       <h3 className="font-display text-lg text-noir mb-1">Réglages de la composition</h3>
@@ -483,6 +599,22 @@ export function GlobalPanel({
         </div>
       )}
 
+      {/* Finitions d'ensemble */}
+      <div className="mt-4 pt-1 border-t border-noir/8">
+        <Pills
+          label="Finition des poignées et de la quincaillerie"
+          options={POIGNEE_FINITION_LABELS}
+          value={config.poigneeFinition ?? 'noir'}
+          onChange={onPoigneeFinition}
+        />
+        <Pills
+          label="Température des éclairages LED"
+          options={{ chaud: 'Blanc chaud', neutre: 'Blanc neutre' } as Record<'chaud' | 'neutre', string>}
+          value={config.ledTemp ?? 'chaud'}
+          onChange={onLedTemp}
+        />
+      </div>
+
       {/* Largeur de mur disponible */}
       <div className="mt-5 pt-4 border-t border-noir/8">
         <div className="flex items-center justify-between gap-3">
@@ -493,19 +625,43 @@ export function GlobalPanel({
           <span className="text-sm tabular-nums text-noir/70 flex-shrink-0">
             <input
               type="number"
-              aria-label="Largeur de mur disponible en millimètres"
-              value={config.lineaireMax ?? ''}
+              aria-label={`Largeur de mur disponible en ${unit === 'cm' ? 'centimètres' : 'millimètres'}`}
+              value={config.lineaireMax != null ? toDisplay(config.lineaireMax, unit) : ''}
               placeholder="—"
-              min={300}
-              step={10}
-              onChange={(e) => onLineaireMax(e.target.value ? Number(e.target.value) : null)}
+              min={unit === 'cm' ? 30 : 300}
+              step={unit === 'cm' ? 1 : 10}
+              onChange={(e) => onLineaireMax(e.target.value ? fromDisplay(Number(e.target.value), unit) : null)}
               className="w-24 px-2 py-1 text-right border border-noir/20 rounded-md text-sm focus:outline-none focus:border-vert-foret"
-            /> mm
+            /> {unitLabel(unit)}
           </span>
+        </div>
+        {/* Presets de largeur de mur */}
+        <div className="flex flex-wrap gap-1.5 mt-2.5">
+          {WALL_PRESETS.map((w) => {
+            const active = config.lineaireMax === w;
+            return (
+              <button
+                key={w}
+                type="button"
+                onClick={() => onLineaireMax(active ? null : w)}
+                aria-pressed={active}
+                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
+                  active ? 'bg-noir text-white border-noir' : 'bg-transparent text-noir/70 border-noir/20 hover:border-noir'
+                }`}
+              >
+                {(w / 1000).toFixed(w % 1000 === 0 ? 0 : 1).replace('.', ',')} m
+              </button>
+            );
+          })}
+          {config.lineaireMax != null && (
+            <button type="button" onClick={() => onLineaireMax(null)} className="px-2.5 py-1 rounded-full text-xs text-noir/55 hover:text-noir underline">
+              Libre
+            </button>
+          )}
         </div>
         {overMax && (
           <p className="text-xs text-red-700 font-medium mt-2">
-            Votre composition ({totalWidth} mm) dépasse le mur de {totalWidth - (config.lineaireMax || 0)} mm.
+            Votre composition ({fmtLen(totalWidth, unit)}) dépasse le mur de {fmtLen(totalWidth - (config.lineaireMax || 0), unit)}.
           </p>
         )}
       </div>
@@ -515,8 +671,10 @@ export function GlobalPanel({
           {univers?.planTravail?.disponible && (
             <>
               <Toggle
-                label="Plan de travail"
-                hint={showPrices ? `${univers.planTravail.prixMl} € HT / mètre linéaire, posé sur les modules bas` : 'Posé sur les modules bas et l\'îlot'}
+                label="Plan de travail automatique"
+                hint={showPrices
+                  ? `${univers.planTravail.prixMl} € HT / ml — posé sur les meubles bas et l'îlot. Pour exclure un meuble : « Sans plan de travail » dans ses options.`
+                  : 'Posé automatiquement sur les meubles bas et l\'îlot. Pour exclure un meuble : « Sans plan de travail » dans ses options.'}
                 value={config.planTravail}
                 onChange={onPlanTravail}
               />
@@ -527,12 +685,17 @@ export function GlobalPanel({
                   <p className="text-xs text-noir/55 mt-1.5 mb-3">
                     {config.planMaterialIndex != null ? materials[config.planMaterialIndex]?.name : 'Assorti au matériau principal (teinte foncée)'}
                   </p>
+                  <p className="text-sm font-medium text-noir mb-2">Chants du plan <span className="text-xs text-noir/55 font-normal">(tranches visibles)</span></p>
+                  <MaterialSwatches materials={materials} value={config.planChantMaterialIndex ?? null} onChange={onPlanChant} allowInherit />
+                  <p className="text-xs text-noir/55 mt-1.5 mb-3">
+                    {config.planChantMaterialIndex != null ? `Chants en ${materials[config.planChantMaterialIndex]?.name}` : 'Assortis au plateau — choisissez une teinte pour les contraster.'}
+                  </p>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-xs font-medium text-noir/80">Débord</label>
                         <span className="text-xs tabular-nums text-noir/70">
-                          <NumField value={config.planDebord ?? 20} min={0} max={400} onCommit={(v) => onPlanDims({ debord: v })} ariaLabel="Débord du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> mm
+                          <NumField value={config.planDebord ?? 20} min={0} max={400} onCommit={(v) => onPlanDims({ debord: v })} ariaLabel="Débord du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> {unitLabel(unit)}
                         </span>
                       </div>
                       <input type="range" min={0} max={400} step={10} value={config.planDebord ?? 20} onChange={(e) => onPlanDims({ debord: Number(e.target.value) })} className="w-full accent-vert-foret" aria-label="Débord du plan de travail" />
@@ -541,7 +704,7 @@ export function GlobalPanel({
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-xs font-medium text-noir/80">Épaisseur</label>
                         <span className="text-xs tabular-nums text-noir/70">
-                          <NumField value={config.planEpaisseur ?? 40} min={20} max={100} onCommit={(v) => onPlanDims({ epaisseur: v })} ariaLabel="Épaisseur du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> mm
+                          <NumField value={config.planEpaisseur ?? 40} min={20} max={100} onCommit={(v) => onPlanDims({ epaisseur: v })} ariaLabel="Épaisseur du plan de travail" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> {unitLabel(unit)}
                         </span>
                       </div>
                       <input type="range" min={20} max={100} step={5} value={config.planEpaisseur ?? 40} onChange={(e) => onPlanDims({ epaisseur: Number(e.target.value) })} className="w-full accent-vert-foret" aria-label="Épaisseur du plan de travail" />

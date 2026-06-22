@@ -1,99 +1,68 @@
-interface RateLimitEntry {
-  count: number;
-  firstAttempt: number;
-  blockedUntil: number;
-}
+import { rawQuery } from './db';
 
-const store = new Map<string, RateLimitEntry>();
-
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of store) {
-    if (now - entry.firstAttempt > 30 * 60 * 1000) {
-      store.delete(key);
-    }
-  }
-}, 5 * 60 * 1000);
+/**
+ * Rate limiting persistant (PostgreSQL) : fenêtre glissante par clé.
+ * Survit aux redémarrages pm2, contrairement à l'ancien store en mémoire.
+ * Fail-open : si la base est indisponible, on laisse passer plutôt que de
+ * bloquer les connexions légitimes.
+ */
 
 interface RateLimitConfig {
   maxAttempts: number;
   windowMs: number;
-  blockDurationMs: number;
 }
 
-const IP_CONFIG: RateLimitConfig = {
-  maxAttempts: 15,
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  blockDurationMs: 15 * 60 * 1000, // blocked 15 minutes
-};
+const IP_CONFIG: RateLimitConfig = { maxAttempts: 15, windowMs: 15 * 60 * 1000 };
+const EMAIL_CONFIG: RateLimitConfig = { maxAttempts: 5, windowMs: 15 * 60 * 1000 };
+const CONTACT_CONFIG: RateLimitConfig = { maxAttempts: 3, windowMs: 60 * 60 * 1000 };
+const QUOTE_CONFIG: RateLimitConfig = { maxAttempts: 5, windowMs: 60 * 60 * 1000 };
 
-const EMAIL_CONFIG: RateLimitConfig = {
-  maxAttempts: 5,
-  windowMs: 15 * 60 * 1000,
-  blockDurationMs: 30 * 60 * 1000, // blocked 30 minutes
-};
+export type RateLimitResult = { allowed: boolean; retryAfterSeconds: number };
 
-function checkLimit(key: string, config: RateLimitConfig): { allowed: boolean; retryAfterSeconds: number } {
-  const now = Date.now();
-  const entry = store.get(key);
-
-  if (!entry) {
-    store.set(key, { count: 1, firstAttempt: now, blockedUntil: 0 });
+async function checkLimit(key: string, config: RateLimitConfig): Promise<RateLimitResult> {
+  try {
+    const res = await rawQuery(
+      `SELECT COUNT(*)::int AS n, MIN(ts) AS oldest
+       FROM rate_limit_hits
+       WHERE key = $1 AND ts > NOW() - ($2 * interval '1 millisecond')`,
+      [key, config.windowMs]
+    );
+    const n: number = res.rows[0]?.n ?? 0;
+    if (n >= config.maxAttempts) {
+      const oldest = res.rows[0]?.oldest ? new Date(res.rows[0].oldest).getTime() : Date.now();
+      const retryAfterSeconds = Math.max(1, Math.ceil((oldest + config.windowMs - Date.now()) / 1000));
+      return { allowed: false, retryAfterSeconds };
+    }
+    await rawQuery(`INSERT INTO rate_limit_hits (key) VALUES ($1)`, [key]);
+    // Nettoyage opportuniste (~2 % des appels) : les traces de plus d'un jour ne servent plus
+    if (Math.random() < 0.02) {
+      void rawQuery(`DELETE FROM rate_limit_hits WHERE ts < NOW() - interval '1 day'`).catch(() => {});
+    }
+    return { allowed: true, retryAfterSeconds: 0 };
+  } catch (err) {
+    console.error('[rate-limit] check failed, allowing request:', err);
     return { allowed: true, retryAfterSeconds: 0 };
   }
-
-  // Currently blocked
-  if (entry.blockedUntil > now) {
-    const retryAfterSeconds = Math.ceil((entry.blockedUntil - now) / 1000);
-    return { allowed: false, retryAfterSeconds };
-  }
-
-  // Window expired, reset
-  if (now - entry.firstAttempt > config.windowMs) {
-    store.set(key, { count: 1, firstAttempt: now, blockedUntil: 0 });
-    return { allowed: true, retryAfterSeconds: 0 };
-  }
-
-  entry.count++;
-
-  if (entry.count > config.maxAttempts) {
-    entry.blockedUntil = now + config.blockDurationMs;
-    const retryAfterSeconds = Math.ceil(config.blockDurationMs / 1000);
-    return { allowed: false, retryAfterSeconds };
-  }
-
-  return { allowed: true, retryAfterSeconds: 0 };
 }
 
-export function checkIpRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+export function checkIpRateLimit(ip: string): Promise<RateLimitResult> {
   return checkLimit(`ip:${ip}`, IP_CONFIG);
 }
 
-export function checkEmailRateLimit(email: string): { allowed: boolean; retryAfterSeconds: number } {
+export function checkEmailRateLimit(email: string): Promise<RateLimitResult> {
   return checkLimit(`email:${email.toLowerCase()}`, EMAIL_CONFIG);
 }
 
-export function resetEmailRateLimit(email: string): void {
-  store.delete(`email:${email.toLowerCase()}`);
+export async function resetEmailRateLimit(email: string): Promise<void> {
+  try {
+    await rawQuery(`DELETE FROM rate_limit_hits WHERE key = $1`, [`email:${email.toLowerCase()}`]);
+  } catch { /* non bloquant */ }
 }
 
-const CONTACT_CONFIG: RateLimitConfig = {
-  maxAttempts: 3,
-  windowMs: 60 * 60 * 1000, // 1 hour
-  blockDurationMs: 60 * 60 * 1000, // blocked 1 hour
-};
-
-export function checkContactRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+export function checkContactRateLimit(ip: string): Promise<RateLimitResult> {
   return checkLimit(`contact:${ip}`, CONTACT_CONFIG);
 }
 
-const QUOTE_CONFIG: RateLimitConfig = {
-  maxAttempts: 5,
-  windowMs: 60 * 60 * 1000, // 1 hour
-  blockDurationMs: 60 * 60 * 1000, // blocked 1 hour
-};
-
-export function checkQuoteRateLimit(ip: string): { allowed: boolean; retryAfterSeconds: number } {
+export function checkQuoteRateLimit(ip: string): Promise<RateLimitResult> {
   return checkLimit(`quote:${ip}`, QUOTE_CONFIG);
 }

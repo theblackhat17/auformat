@@ -49,6 +49,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entries.push({ url: `${SITE_URL}/services/${s.slug}`, lastModified: new Date(s.updatedAt || Date.now()) });
   }
 
+  // Realisation detail pages
+  for (const r of realisations) {
+    const entry: MetadataRoute.Sitemap[number] = {
+      url: `${SITE_URL}/realisations/${r.slug}`,
+      lastModified: latestRealisation,
+    };
+    if (r.image) {
+      entry.images = [r.image.startsWith('http') ? r.image : `${SITE_URL}${r.image}`];
+    }
+    entries.push(entry);
+  }
+
   // Blog category pages
   for (const c of blogCategories) {
     if (c.articleCount > 0) {

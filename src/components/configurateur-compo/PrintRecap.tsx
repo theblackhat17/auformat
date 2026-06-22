@@ -3,6 +3,7 @@
 import type { CompositionConfig, CompositionPriceBreakdown, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
 import { CompoCanvas } from './CompoCanvas';
 import { getModuleType, formatEur } from './pricingCompo';
+import { useUnit, toDisplay, unitLabel } from './units';
 
 /**
  * Récapitulatif au format A4, rendu uniquement à l'impression (bouton « PDF »
@@ -26,6 +27,7 @@ export function PrintRecap({
   projectName?: string | null;
   showPrices?: boolean;
 }) {
+  const { unit } = useUnit();
   const mainMaterial = materials[config.materialIndex];
 
   return (
@@ -60,7 +62,7 @@ export function PrintRecap({
           <tr className="border-b border-noir text-left">
             <th className="py-1.5 pr-2">N°</th>
             <th className="py-1.5 pr-2">Module</th>
-            <th className="py-1.5 pr-2">Dimensions (L×H×P mm)</th>
+            <th className="py-1.5 pr-2">Dimensions (L×H×P {unitLabel(unit)})</th>
             <th className="py-1.5 pr-2">Matériau</th>
             <th className="py-1.5 pr-2">Détail</th>
             {showPrices && <th className="py-1.5 text-right">Total HT</th>}
@@ -80,10 +82,10 @@ export function PrintRecap({
               <tr key={mod.id} className="border-b border-noir/15 align-top">
                 <td className="py-1.5 pr-2">{i + 1}</td>
                 <td className="py-1.5 pr-2 font-semibold">{type.nom}</td>
-                <td className="py-1.5 pr-2">{mod.largeur} × {mod.hauteur} × {mod.profondeur}</td>
-                <td className="py-1.5 pr-2">{material?.name}</td>
+                <td className="py-1.5 pr-2">{toDisplay(mod.largeur, unit)} × {toDisplay(mod.hauteur, unit)} × {toDisplay(mod.profondeur, unit)}</td>
+                <td className="py-1.5 pr-2">{type.decor ? 'Environnement (non chiffré)' : material?.name}</td>
                 <td className="py-1.5 pr-2">{optsText || '—'}</td>
-                {showPrices && <td className="py-1.5 text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{line ? formatEur(line.total) : '—'}</td>}
+                {showPrices && <td className="py-1.5 text-right" style={{ fontVariantNumeric: 'tabular-nums' }}>{type.decor ? '—' : line ? formatEur(line.total) : '—'}</td>}
               </tr>
             );
           })}

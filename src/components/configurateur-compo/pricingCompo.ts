@@ -41,6 +41,8 @@ export function computeCompositionPrice(
   for (const mod of config.modules) {
     const type = getModuleType(moduleTypes, mod.typeSlug);
     if (!type) continue;
+    // Les éléments d'environnement (fenêtre, porte, radiateur…) situent la pièce, jamais chiffrés
+    if (type.decor) continue;
     const material = moduleMaterial(materials, config, mod.materialIndex);
     const surface = caissonSurfaceM2(mod.largeur, mod.hauteur, mod.profondeur);
     const materialCost = surface * (material?.prixM2 || 0);
@@ -54,6 +56,21 @@ export function computeCompositionPrice(
         total: round2(baseTotal),
       },
     ];
+
+    // Façades dans un matériau dédié : surface de façade chiffrée en plus
+    if (mod.facadeMaterialIndex != null && materials[mod.facadeMaterialIndex]) {
+      const facadeMat = materials[mod.facadeMaterialIndex];
+      const facadeSurface = (mod.largeur * mod.hauteur) / 1_000_000;
+      const facadeCost = round2(facadeSurface * (facadeMat.prixM2 || 0));
+      if (facadeCost > 0) {
+        details.push({
+          label: `— Façades en ${facadeMat.name}`,
+          quantity: 1,
+          unitPrice: facadeCost,
+          total: facadeCost,
+        });
+      }
+    }
 
     for (const opt of type.options) {
       const qty = mod.options[opt.slug] ?? 0;
@@ -76,7 +93,8 @@ export function computeCompositionPrice(
   if (config.planTravail && univers?.planTravail?.disponible) {
     const basWidth = config.modules.reduce((sum, mod) => {
       const type = getModuleType(moduleTypes, mod.typeSlug);
-      return type?.zone === 'bas' || type?.zone === 'ilot' ? sum + mod.largeur : sum;
+      const exclu = type?.decor || (mod.options['sans_plan'] ?? 0) > 0;
+      return (type?.zone === 'bas' || type?.zone === 'ilot') && !exclu ? sum + mod.largeur : sum;
     }, 0);
     if (basWidth > 0) {
       const ml = basWidth / 1000;
@@ -94,7 +112,7 @@ export function computeCompositionPrice(
   if (config.facadeCoulissante && univers?.facadeCoulissante?.disponible) {
     const linWidth = config.modules.reduce((sum, mod) => {
       const type = getModuleType(moduleTypes, mod.typeSlug);
-      return type && type.zone !== 'haut' ? sum + mod.largeur : sum;
+      return type && type.zone !== 'haut' && !type.decor ? sum + mod.largeur : sum;
     }, 0);
     if (linWidth > 0) {
       const ml = linWidth / 1000;

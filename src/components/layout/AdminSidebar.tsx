@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { ADMIN_NAV_CRM, ADMIN_NAV_CONTENT } from '@/lib/constants';
 import { getInitials, getDisplayName } from '@/lib/utils';
+import { useChatUnread } from '@/lib/useChatUnread';
 
-function NavItem({ item, pathname, onClick }: { item: { href: string; label: string; icon: string }; pathname: string; onClick?: () => void }) {
+function NavItem({ item, pathname, onClick, badge }: { item: { href: string; label: string; icon: string }; pathname: string; onClick?: () => void; badge?: number }) {
   const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
   return (
     <Link
@@ -20,7 +21,10 @@ function NavItem({ item, pathname, onClick }: { item: { href: string; label: str
       }`}
     >
       <span className="text-base">{item.icon}</span>
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {badge ? (
+        <span className="min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center">{badge}</span>
+      ) : null}
     </Link>
   );
 }
@@ -29,6 +33,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const { profile, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const { total: chatUnread } = useChatUnread();
 
   // Close sidebar on route change
   useEffect(() => {
@@ -93,7 +98,7 @@ export function AdminSidebar() {
         <nav className="flex-1 py-4 overflow-y-auto">
           <p className="px-6 pb-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">CRM</p>
           {ADMIN_NAV_CRM.map((item) => (
-            <NavItem key={item.href} item={item} pathname={pathname} onClick={closeSidebar} />
+            <NavItem key={item.href} item={item} pathname={pathname} onClick={closeSidebar} badge={item.href === '/admin/chat' ? chatUnread : undefined} />
           ))}
 
           <div className="my-3 mx-6 border-t border-white/10" />

@@ -4,10 +4,29 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
+const MAX_FILES = 3;
+const MAX_FILE_MB = 10;
+
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+
+  function handleFileChange(list: FileList | null) {
+    if (!list) return;
+    setError(null);
+    const next = [...files];
+    for (const f of Array.from(list)) {
+      if (next.length >= MAX_FILES) break;
+      if (f.size > MAX_FILE_MB * 1024 * 1024) {
+        setError(`« ${f.name} » dépasse ${MAX_FILE_MB} Mo`);
+        continue;
+      }
+      next.push(f);
+    }
+    setFiles(next);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -15,23 +34,13 @@ export function ContactForm() {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const data = {
-      nom: formData.get('nom') as string,
-      prenom: formData.get('prenom') as string,
-      email: formData.get('email') as string,
-      telephone: formData.get('telephone') as string,
-      ville: formData.get('ville') as string,
-      codePostal: formData.get('codePostal') as string,
-      typeProjet: formData.get('typeProjet') as string,
-      message: formData.get('message') as string,
-      _hp_website: formData.get('_hp_website') as string,
-    };
+    formData.delete('fichiers');
+    for (const f of files) formData.append('fichiers', f);
 
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: formData,
       });
 
       if (!res.ok) {
@@ -104,6 +113,31 @@ export function ContactForm() {
           placeholder="Décrivez votre projet..."
           className="w-full px-4 py-2.5 bg-white border border-noir/20 rounded-lg text-sm text-noir placeholder-noir/55 focus:outline-none focus:border-vert-foret focus:ring-[3px] focus:ring-vert-foret/15 resize-none"
         />
+      </div>
+      {/* Photos de la pièce / plans */}
+      <div>
+        <label htmlFor="fichiers" className="block text-sm font-medium text-noir/70 mb-1.5">
+          Photos de la pièce ou plans <span className="text-noir/40">(optionnel — {MAX_FILES} fichiers max, images ou PDF)</span>
+        </label>
+        <input
+          id="fichiers"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,.pdf"
+          multiple
+          onChange={(e) => { handleFileChange(e.target.files); e.target.value = ''; }}
+          className="block w-full text-sm text-noir/70 file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-vert-foret/10 file:text-vert-foret file:font-semibold file:cursor-pointer hover:file:bg-vert-foret/20"
+        />
+        {files.length > 0 && (
+          <ul className="mt-2 space-y-1">
+            {files.map((f, i) => (
+              <li key={`${f.name}-${i}`} className="flex items-center justify-between gap-2 text-xs text-noir/70 bg-beige/50 rounded-lg px-3 py-1.5">
+                <span className="truncate">📎 {f.name} ({(f.size / 1024 / 1024).toFixed(1)} Mo)</span>
+                <button type="button" onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} aria-label={`Retirer ${f.name}`} className="text-noir/50 hover:text-red-600 font-bold">×</button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="text-xs text-noir/50 mt-1">Une photo de la pièce et un croquis coté nous aident à chiffrer plus vite.</p>
       </div>
       {/* Honeypot - hidden from humans */}
       <div className="absolute opacity-0 -z-10 overflow-hidden" aria-hidden="true" style={{ position: 'absolute', left: '-9999px' }}>

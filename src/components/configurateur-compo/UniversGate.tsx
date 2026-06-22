@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { CompositionConfig, ConfigurateurSettings, ConfigurateurUnivers } from '@/lib/types';
 import { createStarterConfig } from './useComposition';
 import { AssistantModal } from './AssistantModal';
+
+type CompoTemplate = { id: string; name: string; type: string; config: CompositionConfig };
 
 /* Pictogrammes d'univers — trait 1.5, jamais d'emoji */
 function UniversIcon({ slug }: { slug: string }) {
@@ -62,6 +64,15 @@ export function UniversGate({
   const [chosen, setChosen] = useState<ConfigurateurUnivers | null>(null);
   const [materialIndex, setMaterialIndex] = useState(0);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [templates, setTemplates] = useState<CompoTemplate[]>([]);
+
+  /* Modèles de l'atelier : compositions prêtes à personnaliser */
+  useEffect(() => {
+    fetch('/api/configurateur/templates')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setTemplates(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   return (
     <div className="min-h-screen bg-beige/40">
@@ -93,6 +104,7 @@ export function UniversGate({
         </div>
 
         {!chosen ? (
+          <>
           <div className="grid sm:grid-cols-2 gap-4">
             {universList.map((u, i) => (
               <button
@@ -109,6 +121,35 @@ export function UniversGate({
               </button>
             ))}
           </div>
+
+          {/* Modèles de l'atelier : compositions complètes prêtes à personnaliser */}
+          {templates.length > 0 && (
+            <div className="mt-12">
+              <h2 className="font-display text-xl text-noir text-center mb-1.5">Ou partez d&apos;un modèle de l&apos;atelier</h2>
+              <p className="text-sm text-noir/60 text-center mb-6">Des compositions complètes imaginées par nos menuisiers — tout reste modifiable.</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {templates.map((t) => {
+                  const u = universList.find((x) => x.slug === t.config.univers);
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => onStart({ ...t.config, modules: t.config.modules.map((m) => ({ ...m, options: { ...m.options } })) })}
+                      className="group text-left bg-white rounded-2xl ring-1 ring-noir/8 p-5 hover:ring-vert-foret hover:ring-2 transition-all card-lift"
+                    >
+                      <span className="inline-flex items-center gap-2 text-[11px] font-semibold text-bois-fonce bg-beige px-2.5 py-1 rounded-full mb-2.5">
+                        {u?.nom || t.config.univers}
+                      </span>
+                      <h3 className="font-display text-lg text-noir leading-snug">{t.name}</h3>
+                      <p className="text-xs text-noir/55 mt-1">
+                        {t.config.modules.length} module{t.config.modules.length > 1 ? 's' : ''} · personnalisable de A à Z
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+          </>
         ) : (
           <div className="max-w-xl mx-auto bg-white rounded-2xl ring-1 ring-noir/8 p-7 animate-scale-in">
             <button onClick={() => setChosen(null)} className="text-sm text-noir/60 hover:text-noir transition-colors mb-4 inline-flex items-center gap-1.5">

@@ -5,11 +5,13 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getInitials, getDisplayName } from '@/lib/utils';
+import { useChatUnread } from '@/lib/useChatUnread';
 
 export function UserDropdown() {
   const { isAuthenticated, profile, isLoading, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { total: chatUnread } = useChatUnread(isAuthenticated);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -53,13 +55,18 @@ export function UserDropdown() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1 rounded-lg hover:bg-beige/50 transition-colors"
       >
-        {profile.avatarUrl ? (
-          <Image src={profile.avatarUrl} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
-        ) : (
-          <div className="w-9 h-9 rounded-full bg-vert-foret text-white flex items-center justify-center text-sm font-semibold">
-            {initials}
-          </div>
-        )}
+        <span className="relative">
+          {profile.avatarUrl ? (
+            <Image src={profile.avatarUrl} alt="" width={36} height={36} className="w-9 h-9 rounded-full object-cover" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-vert-foret text-white flex items-center justify-center text-sm font-semibold">
+              {initials}
+            </div>
+          )}
+          {chatUnread > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">{chatUnread}</span>
+          )}
+        </span>
         <span className="text-sm font-medium text-noir/80 max-w-[120px] truncate">{displayName}</span>
         <svg className={`w-4 h-4 text-noir/50 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -80,7 +87,11 @@ export function UserDropdown() {
               <span className="w-5 text-center">👤</span> Mon profil
             </Link>
             <Link href="/mes-projets" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-noir/70 hover:bg-beige/50 hover:text-noir transition-colors">
-              <span className="w-5 text-center">📁</span> Mes projets
+              <span className="w-5 text-center">📁</span>
+              <span className="flex-1">Mes projets</span>
+              {chatUnread > 0 && (
+                <span className="min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{chatUnread}</span>
+              )}
             </Link>
             <Link href="/mes-devis" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-noir/70 hover:bg-beige/50 hover:text-noir transition-colors">
               <span className="w-5 text-center">📄</span> Mes devis

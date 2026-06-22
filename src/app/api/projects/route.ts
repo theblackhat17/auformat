@@ -37,6 +37,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Client introuvable' }, { status: 400 });
       }
       ownerId = client.id;
+    } else if (body.clientEmail && auth.role === 'admin') {
+      // Client sans compte : profil léger créé (même mécanique que les demandes de devis).
+      // Le client l'activera via « Mot de passe oublié » avec cet email.
+      const email = String(body.clientEmail).toLowerCase().trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return NextResponse.json({ error: 'Email client invalide' }, { status: 400 });
+      }
+      const existing = await queryOne<{ id: string }>('SELECT id FROM profiles WHERE email = $1', [email]);
+      if (existing) {
+        ownerId = existing.id;
+      } else {
+        const created = await rawQuery(
+          `INSERT INTO profiles (email, full_name, role, discount_rate) VALUES ($1, $2, 'client', 0) RETURNING id`,
+          [email, body.clientName || email.split('@')[0]]
+        );
+        ownerId = created.rows[0].id;
+      }
     }
 
     const result = await rawQuery(

@@ -14,7 +14,10 @@ export const PROJECT_STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
   quote_requested: 'Devis demandé',
   quoted: 'Devis reçu',
-  in_production: 'En production',
+  accepted: 'Devis accepté',
+  in_production: 'En fabrication',
+  finishing: 'Finitions',
+  installation: 'Pose planifiée',
   completed: 'Terminé',
 };
 
@@ -22,9 +25,24 @@ export const PROJECT_STATUS_COLORS: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-700',
   quote_requested: 'bg-amber-100 text-amber-700',
   quoted: 'bg-blue-100 text-blue-700',
+  accepted: 'bg-emerald-100 text-emerald-700',
   in_production: 'bg-purple-100 text-purple-700',
+  finishing: 'bg-fuchsia-100 text-fuchsia-700',
+  installation: 'bg-cyan-100 text-cyan-700',
   completed: 'bg-green-100 text-green-700',
 };
+
+/** Ordre des étapes de fabrication (kanban admin + timeline client) */
+export const PROJECT_STATUS_FLOW = [
+  'draft',
+  'quote_requested',
+  'quoted',
+  'accepted',
+  'in_production',
+  'finishing',
+  'installation',
+  'completed',
+] as const;
 
 // Quote status
 export const QUOTE_STATUS_LABELS: Record<string, string> = {
@@ -58,6 +76,7 @@ export const ACTION_TYPE_LABELS: Record<string, string> = {
   send_quote: 'Envoi devis',
   accept_quote: 'Acceptation devis',
   refuse_quote: 'Refus devis',
+  delete_quote: 'Suppression devis',
   create_project: 'Création projet',
   update_project: 'Modification projet',
   delete_project: 'Suppression projet',
@@ -123,6 +142,7 @@ export const ACTION_TYPE_ICONS: Record<string, string> = {
   send_quote: '📨',
   accept_quote: '✅',
   refuse_quote: '❌',
+  delete_quote: '🗑️',
   create_project: '🪑',
   update_project: '🔧',
   delete_project: '🗑️',
@@ -231,6 +251,8 @@ export const ADMIN_NAV_CRM = [
   { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
   { href: '/admin/clients', label: 'Clients', icon: '👥' },
   { href: '/admin/devis', label: 'Devis', icon: '📄' },
+  { href: '/admin/projets', label: 'Projets', icon: '🛠️' },
+  { href: '/admin/chat', label: 'Chat', icon: '💬' },
   { href: '/admin/logs', label: 'Logs', icon: '📋' },
 ];
 

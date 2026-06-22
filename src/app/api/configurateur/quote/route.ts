@@ -3,12 +3,15 @@ import { rawQuery, queryOne } from '@/lib/db';
 import { TAX_RATE } from '@/lib/constants';
 import { notifyAdminsNewQuote, sendQuoteToClient } from '@/lib/mailer';
 import { checkQuoteRateLimit } from '@/lib/rate-limit';
+import { saveUploadedFile } from '@/lib/upload';
+
+const SITE = process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com';
 
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-    const rateLimit = checkQuoteRateLimit(ip);
+    const rateLimit = await checkQuoteRateLimit(ip);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: 'Trop de demandes. Reessayez plus tard.' },
@@ -16,8 +19,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { nom, email, telephone, message, productType, dimensions, materiau, items, subtotalHt, tva, totalTtc, configData } = body;
+    // Multipart (avec photos/plans joints) ou JSON (compatibilité)
+    const contentType = request.headers.get('content-type') || '';
+    let body: Record<string, unknown>;
+    const attachmentLinks: string[] = [];
+    if (contentType.includes('multipart/form-data')) {
+      const fd = await request.formData();
+      body = JSON.parse(String(fd.get('payload') || '{}'));
+      const files = fd.getAll('fichiers').filter((f): f is File => f instanceof File && f.size > 0).slice(0, 3);
+      for (const file of files) {
+        try {
+          const saved = await saveUploadedFile(file, { allowPdf: true, prefix: 'devis' });
+          attachmentLinks.push(`${saved.originalName} : ${SITE}${saved.path}`);
+        } catch (err) {
+          return NextResponse.json({ error: `« ${file.name} » : ${err instanceof Error ? err.message : 'fichier refusé'}` }, { status: 400 });
+        }
+      }
+    } else {
+      body = await request.json();
+    }
+    const { nom, email, telephone, message, productType, dimensions, materiau, items, subtotalHt, tva, totalTtc, configData } = body as {
+      nom?: string; email?: string; telephone?: string; message?: string;
+      productType?: string; dimensions?: string; materiau?: string;
+      items?: { label: string; quantity: number; unitPrice: number; total: number }[];
+      subtotalHt?: number; tva?: number; totalTtc?: number; configData?: unknown;
+    };
 
     if (!nom || !email || !items || !Array.isArray(items)) {
       return NextResponse.json({ error: 'Donnees incompletes' }, { status: 400 });
@@ -53,6 +79,7 @@ export async function POST(request: NextRequest) {
       `Materiau : ${materiau}`,
       message ? `Message : ${message}` : null,
       telephone ? `Tel : ${telephone}` : null,
+      attachmentLinks.length ? `Fichiers joints par le client :\n${attachmentLinks.map((l) => `- ${l}`).join('\n')}` : null,
     ].filter(Boolean).join('\n');
 
     // Convert line items to quote items format

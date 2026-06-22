@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, update } from '@/lib/db';
-import { requireAuth } from '@/lib/middleware-auth';
+import { queryOne, update, deleteById } from '@/lib/db';
+import { requireAuth, getClientIp, getUserAgent } from '@/lib/middleware-auth';
+import { logActivity } from '@/lib/activity-logger';
 import type { Quote } from '@/lib/types';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -100,6 +101,35 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(quote);
   } catch (err) {
     console.error('Update quote error:', err);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+/** Suppression d'un devis — réservée à l'admin */
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAuth(request);
+  if (auth instanceof NextResponse) return auth;
+  if (auth.role !== 'admin') {
+    return NextResponse.json({ error: 'Accès interdit' }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const existing = await queryOne<Quote>('SELECT id, quote_number FROM quotes WHERE id = $1', [id]);
+    if (!existing) {
+      return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 });
+    }
+
+    await deleteById('quotes', id);
+    await logActivity(
+      auth.userId, 'delete_quote', 'quote', id,
+      { description: `Devis ${existing.quoteNumber} supprimé` },
+      getClientIp(request), getUserAgent(request)
+    );
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Delete quote error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

@@ -6,6 +6,8 @@ import type {
   CompositionModule,
   ConfigurateurModuleType,
   ConfigurateurUnivers,
+  PoigneeFinition,
+  StyleFacade,
 } from '@/lib/types';
 
 function newId(): string {
@@ -54,7 +56,14 @@ type State = {
   selectedId: string | null;
   /** Incrémenté à chaque mutation : déclenche l'autosave débouncé */
   dirty: number;
+  /** Historique pour annuler/rétablir */
+  past: CompositionConfig[];
+  future: CompositionConfig[];
+  /** Clé de la dernière mutation : les coups répétés (glissière) se regroupent en une seule étape d'historique */
+  lastKey: string | null;
 };
+
+const HISTORY_MAX = 60;
 
 type Action =
   | { type: 'LOAD'; config: CompositionConfig }
@@ -72,12 +81,22 @@ type Action =
   | { type: 'SET_FACADE_COULISSANTE'; value: boolean }
   | { type: 'SET_FACADE_VANTAUX'; value: number }
   | { type: 'SET_PLAN_MATERIAL'; index: number | null }
+  | { type: 'SET_PLAN_CHANT'; index: number | null }
   | { type: 'SET_PLAN_DIMS'; debord?: number; epaisseur?: number }
   | { type: 'SET_MODULE_ECART'; id: string; value: number }
   | { type: 'SET_TIROIRS_HAUTEUR'; id: string; value: number | null }
   | { type: 'SET_ETAGERE_POS'; id: string; index: number; value: number | null }
   | { type: 'SET_PLINTHE_MATERIAL'; index: number | null }
-  | { type: 'SET_LINEAIRE_MAX'; value: number | null };
+  | { type: 'SET_LINEAIRE_MAX'; value: number | null }
+  | { type: 'SET_FACADE_MATERIAL'; id: string; index: number | null }
+  | { type: 'SET_STYLE_FACADE'; id: string; value: StyleFacade }
+  | { type: 'SET_MODULE_MUR'; id: string; value: 'principal' | 'retour_gauche' | 'retour_droit' }
+  | { type: 'SWAP_MODULES'; idA: string; idB: string }
+  | { type: 'SET_POIGNEE_FINITION'; value: PoigneeFinition }
+  | { type: 'SET_LED_TEMP'; value: 'chaud' | 'neutre' }
+  | { type: 'APPLY_MATERIAL_ALL'; index: number }
+  | { type: 'UNDO' }
+  | { type: 'REDO' };
 
 function patchModule(state: State, id: string, patch: Partial<CompositionModule>): State {
   return {
@@ -90,10 +109,66 @@ function patchModule(state: State, id: string, patch: Partial<CompositionModule>
   };
 }
 
-function reducer(state: State, action: Action): State {
+/** Clé d'historique : les répétitions de la même mutation (drag, slider) ne créent qu'une étape */
+function actionKey(action: Action): string | null {
+  switch (action.type) {
+    case 'SET_MODULE_DIM': return `dim:${action.id}:${action.field}`;
+    case 'SET_MODULE_POS': return `pos:${action.id}`;
+    case 'SET_MODULE_ECART': return `ecart:${action.id}`;
+    case 'SET_TIROIRS_HAUTEUR': return `th:${action.id}`;
+    case 'SET_ETAGERE_POS': return `ep:${action.id}:${action.index}`;
+    case 'SET_PLAN_DIMS': return 'plandims';
+    case 'SET_LINEAIRE_MAX': return 'linmax';
+    default: return action.type.startsWith('SET_') ? action.type : null;
+  }
+}
+
+function reducer(rawState: State, action: Action): State {
+  // Annuler / rétablir : on navigue dans l'historique des configs
+  if (action.type === 'UNDO') {
+    if (rawState.past.length === 0) return rawState;
+    const prev = rawState.past[rawState.past.length - 1];
+    return {
+      ...rawState,
+      config: prev,
+      past: rawState.past.slice(0, -1),
+      future: [rawState.config, ...rawState.future].slice(0, HISTORY_MAX),
+      dirty: rawState.dirty + 1,
+      lastKey: null,
+      selectedId: rawState.selectedId && prev.modules.some((m) => m.id === rawState.selectedId) ? rawState.selectedId : null,
+    };
+  }
+  if (action.type === 'REDO') {
+    if (rawState.future.length === 0) return rawState;
+    const next = rawState.future[0];
+    return {
+      ...rawState,
+      config: next,
+      past: [...rawState.past, rawState.config].slice(-HISTORY_MAX),
+      future: rawState.future.slice(1),
+      dirty: rawState.dirty + 1,
+      lastKey: null,
+      selectedId: rawState.selectedId && next.modules.some((m) => m.id === rawState.selectedId) ? rawState.selectedId : null,
+    };
+  }
+
+  // Toute autre mutation empile l'état courant (sauf répétition de la même glissière)
+  const key = actionKey(action);
+  const mutates = action.type !== 'SELECT';
+  const state: State = mutates && action.type !== 'LOAD'
+    ? {
+        ...rawState,
+        past: key !== null && key === rawState.lastKey
+          ? rawState.past
+          : [...rawState.past, rawState.config].slice(-HISTORY_MAX),
+        future: [],
+        lastKey: key,
+      }
+    : rawState;
+
   switch (action.type) {
     case 'LOAD':
-      return { config: action.config, selectedId: null, dirty: 0 };
+      return { config: action.config, selectedId: null, dirty: 0, past: [], future: [], lastKey: null };
     case 'SELECT':
       return { ...state, selectedId: action.id };
     case 'ADD_MODULE': {
@@ -114,7 +189,7 @@ function reducer(state: State, action: Action): State {
       };
     case 'DUPLICATE_MODULE': {
       const idx = state.config.modules.findIndex((m) => m.id === action.id);
-      if (idx === -1) return state;
+      if (idx === -1) return rawState;
       const copy: CompositionModule = { ...state.config.modules[idx], id: newId(), options: { ...state.config.modules[idx].options } };
       const modules = [...state.config.modules];
       modules.splice(idx + 1, 0, copy);
@@ -123,7 +198,7 @@ function reducer(state: State, action: Action): State {
     case 'MOVE_MODULE': {
       const idx = state.config.modules.findIndex((m) => m.id === action.id);
       const target = idx + action.direction;
-      if (idx === -1 || target < 0 || target >= state.config.modules.length) return state;
+      if (idx === -1 || target < 0 || target >= state.config.modules.length) return rawState;
       const modules = [...state.config.modules];
       [modules[idx], modules[target]] = [modules[target], modules[idx]];
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, modules } };
@@ -134,7 +209,7 @@ function reducer(state: State, action: Action): State {
       return patchModule(state, action.id, { materialIndex: action.index });
     case 'SET_MODULE_OPTION': {
       const mod = state.config.modules.find((m) => m.id === action.id);
-      if (!mod) return state;
+      if (!mod) return rawState;
       return patchModule(state, action.id, { options: { ...mod.options, [action.slug]: action.value } });
     }
     case 'SET_GLOBAL_MATERIAL':
@@ -149,6 +224,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, facadeVantaux: Math.min(4, Math.max(2, action.value)) } };
     case 'SET_PLAN_MATERIAL':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, planMaterialIndex: action.index } };
+    case 'SET_PLAN_CHANT':
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, planChantMaterialIndex: action.index } };
     case 'SET_PLAN_DIMS':
       return {
         ...state,
@@ -165,7 +242,7 @@ function reducer(state: State, action: Action): State {
       return patchModule(state, action.id, { tiroirsHauteur: action.value });
     case 'SET_ETAGERE_POS': {
       const mod = state.config.modules.find((m) => m.id === action.id);
-      if (!mod) return state;
+      if (!mod) return rawState;
       const pos = [...(mod.etageresPos || [])];
       pos[action.index] = action.value;
       return patchModule(state, action.id, { etageresPos: pos });
@@ -174,13 +251,43 @@ function reducer(state: State, action: Action): State {
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, plintheMaterialIndex: action.index } };
     case 'SET_LINEAIRE_MAX':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, lineaireMax: action.value } };
+    case 'SET_FACADE_MATERIAL':
+      return patchModule(state, action.id, { facadeMaterialIndex: action.index });
+    case 'SET_STYLE_FACADE':
+      return patchModule(state, action.id, { styleFacade: action.value });
+    case 'SET_MODULE_MUR':
+      // Changer de mur remet le décalage à zéro : le module repart au bout de sa nouvelle rangée
+      return patchModule(state, action.id, { mur: action.value, ecartGauche: 0 });
+    case 'SWAP_MODULES': {
+      const ia = state.config.modules.findIndex((m) => m.id === action.idA);
+      const ib = state.config.modules.findIndex((m) => m.id === action.idB);
+      if (ia === -1 || ib === -1 || ia === ib) return rawState;
+      const modules = [...state.config.modules];
+      [modules[ia], modules[ib]] = [modules[ib], modules[ia]];
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, modules } };
+    }
+    case 'SET_POIGNEE_FINITION':
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, poigneeFinition: action.value } };
+    case 'SET_LED_TEMP':
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, ledTemp: action.value } };
+    case 'APPLY_MATERIAL_ALL':
+      // Matériau appliqué à toute la composition : devient le principal, les exceptions par module sont levées
+      return {
+        ...state,
+        dirty: state.dirty + 1,
+        config: {
+          ...state.config,
+          materialIndex: action.index,
+          modules: state.config.modules.map((m) => (m.materialIndex !== null ? { ...m, materialIndex: null } : m)),
+        },
+      };
     default:
-      return state;
+      return rawState;
   }
 }
 
 export function useComposition(initial: CompositionConfig) {
-  const [state, dispatch] = useReducer(reducer, { config: initial, selectedId: null, dirty: 0 });
+  const [state, dispatch] = useReducer(reducer, { config: initial, selectedId: null, dirty: 0, past: [], future: [], lastKey: null });
 
   const select = useCallback((id: string | null) => dispatch({ type: 'SELECT', id }), []);
   const addModule = useCallback((moduleType: ConfigurateurModuleType) => dispatch({ type: 'ADD_MODULE', moduleType }), []);
@@ -200,18 +307,30 @@ export function useComposition(initial: CompositionConfig) {
   const setFacadeCoulissante = useCallback((value: boolean) => dispatch({ type: 'SET_FACADE_COULISSANTE', value }), []);
   const setFacadeVantaux = useCallback((value: number) => dispatch({ type: 'SET_FACADE_VANTAUX', value }), []);
   const setPlanMaterial = useCallback((index: number | null) => dispatch({ type: 'SET_PLAN_MATERIAL', index }), []);
+  const setPlanChant = useCallback((index: number | null) => dispatch({ type: 'SET_PLAN_CHANT', index }), []);
   const setPlanDims = useCallback((dims: { debord?: number; epaisseur?: number }) => dispatch({ type: 'SET_PLAN_DIMS', ...dims }), []);
   const setModuleEcart = useCallback((id: string, value: number) => dispatch({ type: 'SET_MODULE_ECART', id, value }), []);
   const setTiroirsHauteur = useCallback((id: string, value: number | null) => dispatch({ type: 'SET_TIROIRS_HAUTEUR', id, value }), []);
   const setEtagerePos = useCallback((id: string, index: number, value: number | null) => dispatch({ type: 'SET_ETAGERE_POS', id, index, value }), []);
   const setPlintheMaterial = useCallback((index: number | null) => dispatch({ type: 'SET_PLINTHE_MATERIAL', index }), []);
   const setLineaireMax = useCallback((value: number | null) => dispatch({ type: 'SET_LINEAIRE_MAX', value }), []);
+  const setFacadeMaterial = useCallback((id: string, index: number | null) => dispatch({ type: 'SET_FACADE_MATERIAL', id, index }), []);
+  const setStyleFacade = useCallback((id: string, value: StyleFacade) => dispatch({ type: 'SET_STYLE_FACADE', id, value }), []);
+  const setModuleMur = useCallback((id: string, value: 'principal' | 'retour_gauche' | 'retour_droit') => dispatch({ type: 'SET_MODULE_MUR', id, value }), []);
+  const swapModules = useCallback((idA: string, idB: string) => dispatch({ type: 'SWAP_MODULES', idA, idB }), []);
+  const setPoigneeFinition = useCallback((value: PoigneeFinition) => dispatch({ type: 'SET_POIGNEE_FINITION', value }), []);
+  const setLedTemp = useCallback((value: 'chaud' | 'neutre') => dispatch({ type: 'SET_LED_TEMP', value }), []);
+  const applyMaterialAll = useCallback((index: number) => dispatch({ type: 'APPLY_MATERIAL_ALL', index }), []);
+  const undo = useCallback(() => dispatch({ type: 'UNDO' }), []);
+  const redo = useCallback(() => dispatch({ type: 'REDO' }), []);
   const load = useCallback((config: CompositionConfig) => dispatch({ type: 'LOAD', config }), []);
 
   return {
     config: state.config,
     selectedId: state.selectedId,
     dirty: state.dirty,
+    canUndo: state.past.length > 0,
+    canRedo: state.future.length > 0,
     select,
     addModule,
     removeModule,
@@ -226,12 +345,22 @@ export function useComposition(initial: CompositionConfig) {
     setFacadeCoulissante,
     setFacadeVantaux,
     setPlanMaterial,
+    setPlanChant,
     setPlanDims,
     setModuleEcart,
     setTiroirsHauteur,
     setEtagerePos,
     setPlintheMaterial,
     setLineaireMax,
+    setFacadeMaterial,
+    setStyleFacade,
+    setModuleMur,
+    swapModules,
+    setPoigneeFinition,
+    setLedTemp,
+    applyMaterialAll,
+    undo,
+    redo,
     load,
   };
 }

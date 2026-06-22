@@ -117,6 +117,175 @@ export function woodTexture(baseHex: string, grainHex: string): THREE.CanvasText
   return tex;
 }
 
+/** Façade rainurée verticale : base unie ou veinée + rainures régulières ombrées. */
+export function rainureTexture(baseHex: string, grainHex: string | undefined, renderType: string | undefined): THREE.CanvasTexture {
+  const key = `rainure:${baseHex}:${grainHex}:${renderType}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const size = 512;
+  const ctx = makeCanvas(size);
+  // Fond : la texture du matériau (uni ou bois) redessinée
+  const base = renderType === 'bois' ? woodTexture(baseHex, grainHex || '#8B6F47') : uniTexture(baseHex);
+  ctx.drawImage(base.image as HTMLCanvasElement, 0, 0, size, size);
+
+  // Rainures : une gorge sombre + un rebord clair, toutes les ~64 px (≈ tasseau de 60 mm)
+  const step = 64;
+  for (let x = step; x < size; x += step) {
+    const g = ctx.createLinearGradient(x - 6, 0, x + 6, 0);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(0.45, 'rgba(0,0,0,0.38)');
+    g.addColorStop(0.55, 'rgba(0,0,0,0.45)');
+    g.addColorStop(0.7, 'rgba(255,255,255,0.18)');
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 6, 0, 12, size);
+  }
+
+  const tex = toTexture(ctx);
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Façade cannage : tressage ajouré sur fond sombre, encadré par la teinte du matériau. */
+export function cannageTexture(baseHex: string): THREE.CanvasTexture {
+  const key = `cannage:${baseHex}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  const size = 512;
+  const ctx = makeCanvas(size);
+  // Fond sombre : l'intérieur entrevu à travers le tressage
+  ctx.fillStyle = '#2e2418';
+  ctx.fillRect(0, 0, size, size);
+
+  // Tressage : brins diagonaux croisés (canne claire, tons rotin)
+  const brin = shade(baseHex, 1.18);
+  const brinSombre = shade(baseHex, 0.85);
+  ctx.lineCap = 'round';
+  const step = 26;
+  for (let off = -size; off < size * 2; off += step) {
+    ctx.strokeStyle = brin;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(off, -8);
+    ctx.lineTo(off + size, size + 8);
+    ctx.stroke();
+  }
+  for (let off = -size; off < size * 2; off += step) {
+    ctx.strokeStyle = brinSombre;
+    ctx.lineWidth = 9;
+    ctx.beginPath();
+    ctx.moveTo(off + size, -8);
+    ctx.lineTo(off, size + 8);
+    ctx.stroke();
+  }
+  // Trous du cannage : points sombres réguliers aux croisements
+  ctx.fillStyle = 'rgba(30,22,12,0.85)';
+  for (let y = step / 2; y < size; y += step) {
+    for (let x = step / 2; x < size; x += step) {
+      ctx.beginPath();
+      ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const tex = toTexture(ctx);
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Sol parquet : lames horizontales décalées, veinage léger. */
+export function floorParquet(baseHex: string): THREE.CanvasTexture {
+  const key = `floor-parquet:${baseHex}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const size = 512;
+  const ctx = makeCanvas(size);
+  const rnd = mulberry(11);
+  ctx.fillStyle = shade(baseHex, 0.92);
+  ctx.fillRect(0, 0, size, size);
+  const rows = 6;
+  const rowH = size / rows;
+  const plankW = size / 2.5;
+  for (let r = 0; r < rows; r++) {
+    const offset = (r % 2) * (plankW / 2);
+    for (let x = -plankW; x < size + plankW; x += plankW) {
+      const px = x + offset;
+      const tone = shade(baseHex, 0.86 + rnd() * 0.22);
+      ctx.fillStyle = tone;
+      ctx.fillRect(px + 1, r * rowH + 1, plankW - 2, rowH - 2);
+      // veines
+      ctx.strokeStyle = withAlpha(shade(baseHex, 0.6), 0.18);
+      ctx.lineWidth = 1;
+      for (let k = 0; k < 4; k++) {
+        const vy = r * rowH + 4 + rnd() * (rowH - 8);
+        ctx.beginPath();
+        ctx.moveTo(px + 3, vy);
+        ctx.lineTo(px + plankW - 3, vy + (rnd() - 0.5) * 4);
+        ctx.stroke();
+      }
+    }
+  }
+  const tex = toTexture(ctx);
+  tex.repeat.set(8, 8);
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Sol carrelage : grille de carreaux avec joints. */
+export function floorCarrelage(baseHex: string): THREE.CanvasTexture {
+  const key = `floor-carrelage:${baseHex}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const size = 512;
+  const ctx = makeCanvas(size);
+  const rnd = mulberry(23);
+  const joint = shade(baseHex, 0.7);
+  ctx.fillStyle = joint;
+  ctx.fillRect(0, 0, size, size);
+  const tiles = 4;
+  const tileSize = size / tiles;
+  const gap = 6;
+  for (let y = 0; y < tiles; y++) {
+    for (let x = 0; x < tiles; x++) {
+      ctx.fillStyle = shade(baseHex, 0.95 + rnd() * 0.1);
+      ctx.fillRect(x * tileSize + gap / 2, y * tileSize + gap / 2, tileSize - gap, tileSize - gap);
+      // léger reflet
+      ctx.fillStyle = withAlpha('#ffffff', 0.05);
+      ctx.fillRect(x * tileSize + gap / 2, y * tileSize + gap / 2, tileSize - gap, (tileSize - gap) * 0.4);
+    }
+  }
+  const tex = toTexture(ctx);
+  tex.repeat.set(10, 10);
+  cache.set(key, tex);
+  return tex;
+}
+
+/** Sol béton ciré : mouchetures douces. */
+export function floorBeton(baseHex: string): THREE.CanvasTexture {
+  const key = `floor-beton:${baseHex}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const size = 256;
+  const ctx = makeCanvas(size);
+  const rnd = mulberry(37);
+  ctx.fillStyle = baseHex;
+  ctx.fillRect(0, 0, size, size);
+  for (let i = 0; i < 2600; i++) {
+    const a = (rnd() - 0.5) * 0.16;
+    ctx.fillStyle = a > 0 ? withAlpha('#ffffff', a) : withAlpha('#000000', -a);
+    const r = 1 + rnd() * 3;
+    ctx.beginPath();
+    ctx.arc(rnd() * size, rnd() * size, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  const tex = toTexture(ctx);
+  tex.repeat.set(6, 6);
+  cache.set(key, tex);
+  return tex;
+}
+
 function shade(hex: string, f: number): string {
   const n = hex.replace('#', '');
   if (n.length !== 6) return hex;

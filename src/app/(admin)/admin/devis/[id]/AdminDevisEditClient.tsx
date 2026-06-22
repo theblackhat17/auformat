@@ -132,6 +132,16 @@ export function AdminDevisEditClient({ quoteId }: { quoteId: string }) {
         </div>
       )}
 
+      {quote.revisionRequestedAt && (quote.status === 'sent' || quote.status === 'viewed') && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+          <p className="font-semibold mb-1">
+            ✏️ Le client a demandé une modification le {new Date(quote.revisionRequestedAt).toLocaleDateString('fr-FR')} :
+          </p>
+          <p className="whitespace-pre-wrap">{quote.revisionMessage}</p>
+          <p className="text-xs text-blue-700/80 mt-2">Ajustez les lignes ci-dessous puis renvoyez le devis au client.</p>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Objet */}

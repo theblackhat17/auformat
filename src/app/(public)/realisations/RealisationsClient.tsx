@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import type { Realisation } from '@/lib/types';
 import { Modal } from '@/components/ui/Modal';
 
@@ -131,6 +132,9 @@ export function RealisationsClient({ realisations, categoryLabels }: Props) {
               {selectedItem.location && <span className="text-xs font-medium bg-gray-100 text-noir/60 px-3 py-1 rounded-full">Lieu: {selectedItem.location}</span>}
             </div>
             <p className="text-sm text-noir/70 leading-relaxed">{selectedItem.description}</p>
+            <Link href={`/realisations/${selectedItem.slug}`} className="link-arrow text-sm">
+              Voir la page complète du projet
+            </Link>
             {selectedItem.body && <p className="text-sm text-noir/60 leading-relaxed">{selectedItem.body}</p>}
             {selectedItem.features && selectedItem.features.length > 0 && (
               <div>

@@ -38,11 +38,51 @@ export interface Project {
   status: ProjectStatus;
   thumbnailUrl: string | null;
   notes: string | null;
+  /** Modèle de composition proposé au démarrage du configurateur (admin) */
+  isTemplate?: boolean;
+  /** Dossier de chantier regroupant plusieurs projets */
+  folderId?: string | null;
+  /** Demande d'avis Google envoyée après la fin du chantier */
+  reviewRequestSentAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
-export type ProjectStatus = 'draft' | 'quote_requested' | 'quoted' | 'in_production' | 'completed';
+/** Dossier de chantier : regroupe plusieurs projets qui vont ensemble */
+export interface ProjectFolder {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  projectCount?: number;
+}
+
+/** Message de la discussion client ↔ atelier (rattachée à un projet ou à un dossier) */
+export interface ChatMessage {
+  id: string;
+  projectId: string | null;
+  folderId: string | null;
+  senderId: string | null;
+  senderRole: 'client' | 'admin';
+  body: string | null;
+  attachments: { name: string; url: string }[];
+  readAt: string | null;
+  createdAt: string;
+}
+
+export type ProjectStatus = 'draft' | 'quote_requested' | 'quoted' | 'accepted' | 'in_production' | 'finishing' | 'installation' | 'completed';
+
+/** Étape de la timeline de fabrication d'un projet (note + photos d'atelier) */
+export interface ProjectUpdate {
+  id: string;
+  projectId: string;
+  status: ProjectStatus | null;
+  note: string | null;
+  photos: string[];
+  createdBy: string | null;
+  createdAt: string;
+}
 
 export interface Quote {
   id: string;
@@ -62,6 +102,12 @@ export interface Quote {
   refusedAt: string | null;
   adminNotes: string | null;
   clientNotes: string | null;
+  /** Relances automatiques (cron) */
+  reminderSentAt?: string | null;
+  expiryReminderSentAt?: string | null;
+  /** Demande de modification par le client */
+  revisionRequestedAt?: string | null;
+  revisionMessage?: string | null;
   pdfUrl: string | null;
   configData: QuoteConfigData | null;
   clientName: string | null;
@@ -466,6 +512,8 @@ export interface SiteSettings {
   facebook: string | null;
   heroBackground: string | null;
   configurateurEnabled: boolean;
+  /** Lien direct « laisser un avis » de la fiche Google Business (demande d'avis automatique) */
+  googleReviewUrl?: string | null;
   /** 'moderne' (Young Serif + Hanken Grotesk) ou 'classique' (polices système, ancien site) */
   fontTheme: string;
   colorBoisClair: string;
@@ -713,9 +761,16 @@ export interface ConfigurateurModuleType {
   dimensionsMax: { largeur: number; hauteur: number; profondeur: number };
   prixBase: number;              // € HT : caisson + quincaillerie de base
   options: ConfigurateurModuleOption[];
+  /** Hauteur de pose par défaut (mm du sol) pour les modules suspendus */
+  posYDefaut?: number;
+  /** Élément d'environnement (fenêtre, porte, radiateur…) : dessiné pour situer la pièce, jamais chiffré */
+  decor?: boolean;
   actif: boolean;
   sortOrder: number;
 }
+
+export type StyleFacade = 'lisse' | 'cadre' | 'rainuree' | 'cannage';
+export type PoigneeFinition = 'noir' | 'inox' | 'laiton';
 
 export interface CompositionModule {
   id: string;                    // identifiant client (croissant)
@@ -735,6 +790,12 @@ export interface CompositionModule {
   tiroirsHauteur?: number | null;
   /** Position de chaque étagère en mm depuis le bas (null = répartition automatique) */
   etageresPos?: (number | null)[];
+  /** Matériau des façades (portes, tiroirs) — null = même matériau que le caisson */
+  facadeMaterialIndex?: number | null;
+  /** Style des façades : lisse (défaut), cadre (shaker), rainurée verticale, cannage */
+  styleFacade?: StyleFacade;
+  /** Mur sur lequel le module est posé : principal (défaut) ou retour en L à gauche/droite */
+  mur?: 'principal' | 'retour_gauche' | 'retour_droit';
 }
 
 export interface CompositionConfig {
@@ -748,6 +809,8 @@ export interface CompositionConfig {
   facadeVantaux?: number;
   /** Matériau du plan de travail (null = teinte foncée du matériau principal) */
   planMaterialIndex?: number | null;
+  /** Matériau des chants du plan de travail (null = assorti au plateau) */
+  planChantMaterialIndex?: number | null;
   /** Débord du plan de travail de chaque côté, mm (défaut 20) */
   planDebord?: number;
   /** Épaisseur du plan de travail, mm (défaut 40) */
@@ -756,6 +819,10 @@ export interface CompositionConfig {
   plintheMaterialIndex?: number | null;
   /** Largeur de mur disponible (mm) — alerte si la composition dépasse. null = libre. */
   lineaireMax?: number | null;
+  /** Finition des poignées et de la quincaillerie visible (défaut : noir) */
+  poigneeFinition?: PoigneeFinition;
+  /** Température des éclairages LED (défaut : chaud) */
+  ledTemp?: 'chaud' | 'neutre';
   modules: CompositionModule[];
 }
 

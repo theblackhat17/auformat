@@ -9,7 +9,7 @@ export function organizationJsonLd() {
     url: SITE_URL,
     logo: {
       '@type': 'ImageObject',
-      url: `${SITE_URL}/img/logo_tmp.png`,
+      url: `${SITE_URL}/img/logo.png`,
       width: 200,
       height: 65,
     },
@@ -60,7 +60,7 @@ function buildLocalBusiness(key: 'cysoing' | 'calotterie', rating?: AggregateRat
     '@type': 'Carpenter',
     '@id': `${SITE_URL}/#${key}`,
     name: loc.name,
-    image: `${SITE_URL}/img/logo_tmp.png`,
+    image: `${SITE_URL}/img/logo.png`,
     url: key === 'cysoing' ? `${SITE_URL}/menuiserie-lille` : `${SITE_URL}/menuiserie-le-touquet`,
     telephone: PHONE_INTL,
     email: EMAIL,

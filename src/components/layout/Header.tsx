@@ -27,7 +27,7 @@ export async function Header() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0" aria-label="Au Format — accueil">
             <Image
-              src="/img/logo_tmp.png"
+              src="/img/logo.png"
               alt="Au Format - Menuiserie sur mesure Cysoing Lille Montreuil Le Touquet"
               width={200}
               height={65}

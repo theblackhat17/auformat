@@ -28,7 +28,7 @@ async function withRateLimit(request: NextRequest, handle: (req: NextRequest) =>
   const ip = getClientIp(request);
 
   // Check IP rate limit
-  const ipCheck = checkIpRateLimit(ip);
+  const ipCheck = await checkIpRateLimit(ip);
   if (!ipCheck.allowed) {
     return NextResponse.json(
       { message: 'Trop de tentatives. Veuillez réessayer plus tard.' },
@@ -46,7 +46,7 @@ async function withRateLimit(request: NextRequest, handle: (req: NextRequest) =>
       const body = await cloned.json();
       const email = body?.email;
       if (email && typeof email === 'string') {
-        const emailCheck = checkEmailRateLimit(email);
+        const emailCheck = await checkEmailRateLimit(email);
         if (!emailCheck.allowed) {
           return NextResponse.json(
             { message: 'Compte temporairement verrouillé suite à trop de tentatives. Veuillez réessayer plus tard.' },

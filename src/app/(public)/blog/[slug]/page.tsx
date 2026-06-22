@@ -58,7 +58,7 @@ export default async function BlogArticlePage({ params }: Props) {
   const articleUrl = `${SITE_URL}/blog/${slug}`;
   const imageFullUrl = article.coverImage
     ? (article.coverImage.startsWith('http') ? article.coverImage : `${SITE_URL}${article.coverImage}`)
-    : `${SITE_URL}/img/logo_tmp.png`;
+    : `${SITE_URL}/img/logo.png`;
 
   return (
     <>

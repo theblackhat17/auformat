@@ -29,6 +29,7 @@ interface Settings {
   colorBeige: string;
   colorNoir: string;
   colorBlanc: string;
+  googleReviewUrl: string;
 }
 
 const COLOR_FIELDS: Array<{ key: keyof Settings & `color${string}`; label: string; hint: string }> = [
@@ -52,6 +53,7 @@ const EMPTY: Settings = {
   companyName: '', slogan: '', address: '', zipcode: '', city: '',
   phone: '', email: '', hoursWeekdays: '', hoursSaturday: '', hoursSunday: '',
   instagram: '', facebook: '', heroBackground: '', configurateurEnabled: false,
+  googleReviewUrl: '',
   fontTheme: 'moderne',
   ...DEFAULT_THEME_COLORS,
 };
@@ -222,6 +224,10 @@ export function AdminSettingsClient() {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Instagram (URL)" value={settings.instagram || ''} onChange={(v) => update('instagram', v)} type="url" placeholder="https://instagram.com/..." />
               <Field label="Facebook (URL)" value={settings.facebook || ''} onChange={(v) => update('facebook', v)} type="url" placeholder="https://facebook.com/..." />
+            </div>
+            <div className="mt-4">
+              <Field label="Lien « laisser un avis » Google" value={settings.googleReviewUrl || ''} onChange={(v) => update('googleReviewUrl', v)} type="url" placeholder="https://g.page/r/.../review" />
+              <p className="text-xs text-gray-400 mt-1">Quand un projet est terminé, le client reçoit automatiquement (3 jours après) un email l'invitant à laisser un avis via ce lien. Laissez vide pour désactiver.</p>
             </div>
           </div>
 

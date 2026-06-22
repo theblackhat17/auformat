@@ -18,6 +18,24 @@ export async function getRealisations(): Promise<Realisation[]> {
   }));
 }
 
+export async function getRealisationBySlug(slug: string): Promise<Realisation | null> {
+  const r = await queryOne<Realisation & { categorySlug: string; categoryLabel: string; matName: string | null }>(
+    `SELECT r.*, c.slug as category_slug, c.label as category_label, mat.name as mat_name
+     FROM realisations r
+     LEFT JOIN categories c ON r.category_id = c.id
+     LEFT JOIN materiaux mat ON r.material_id = mat.id
+     WHERE r.published = true AND r.slug = $1`,
+    [slug]
+  );
+  if (!r) return null;
+  return {
+    ...r,
+    category: r.categorySlug || '',
+    categoryLabel: r.categoryLabel || '',
+    materialName: r.matName || r.material || '',
+  };
+}
+
 export async function getAvis(): Promise<Avis[]> {
   return query<Avis>(
     'SELECT * FROM avis WHERE published = true ORDER BY date DESC'

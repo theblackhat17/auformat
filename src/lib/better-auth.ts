@@ -53,6 +53,16 @@ export const auth = betterAuth({
     },
   },
 
+  account: {
+    accountLinking: {
+      // Un profil créé par le commercial (attribution de projet) ou par une demande de
+      // devis doit pouvoir être récupéré en se connectant avec Google sur le même email :
+      // Google vérifie l'email, la liaison est sûre.
+      enabled: true,
+      trustedProviders: ['google'],
+    },
+  },
+
   session: {
     expiresIn: 7 * 24 * 60 * 60, // 7 days
     updateAge: 24 * 60 * 60, // refresh every 24h
