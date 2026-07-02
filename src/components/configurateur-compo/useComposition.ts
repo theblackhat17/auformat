@@ -89,6 +89,16 @@ type Action =
   | { type: 'SET_PLINTHE_MATERIAL'; index: number | null }
   | { type: 'SET_LINEAIRE_MAX'; value: number | null }
   | { type: 'SET_FACADE_MATERIAL'; id: string; index: number | null }
+  | { type: 'SET_INTERIEUR_MATERIAL'; id: string; index: number | null }
+  | { type: 'SET_FUSION'; id: string; value: boolean }
+  | { type: 'SET_BANDEAU'; id: string; value: boolean }
+  | { type: 'SET_BANDEAU_HAUTEUR'; id: string; value: number | null }
+  | { type: 'SET_GRILLE'; id: string; value: { colonnes: number; etageresParColonne: number[] } | null }
+  | { type: 'SET_GRILLE_COLONNES'; id: string; value: number }
+  | { type: 'SET_GRILLE_ETAGERES'; id: string; col: number; value: number }
+  | { type: 'SET_EMPILE'; id: string; baseId: string | null }
+  | { type: 'SET_EMPILE_OFFSET'; id: string; value: number }
+  | { type: 'SET_HAUTEUR_PLAFOND'; value: number }
   | { type: 'SET_STYLE_FACADE'; id: string; value: StyleFacade }
   | { type: 'SET_MODULE_MUR'; id: string; value: 'principal' | 'retour_gauche' | 'retour_droit' }
   | { type: 'SWAP_MODULES'; idA: string; idB: string }
@@ -117,8 +127,11 @@ function actionKey(action: Action): string | null {
     case 'SET_MODULE_ECART': return `ecart:${action.id}`;
     case 'SET_TIROIRS_HAUTEUR': return `th:${action.id}`;
     case 'SET_ETAGERE_POS': return `ep:${action.id}:${action.index}`;
+    case 'SET_BANDEAU_HAUTEUR': return `bh:${action.id}`;
+    case 'SET_EMPILE_OFFSET': return `eo:${action.id}`;
     case 'SET_PLAN_DIMS': return 'plandims';
     case 'SET_LINEAIRE_MAX': return 'linmax';
+    case 'SET_HAUTEUR_PLAFOND': return 'plafond';
     default: return action.type.startsWith('SET_') ? action.type : null;
   }
 }
@@ -221,7 +234,7 @@ function reducer(rawState: State, action: Action): State {
     case 'SET_FACADE_COULISSANTE':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, facadeCoulissante: action.value } };
     case 'SET_FACADE_VANTAUX':
-      return { ...state, dirty: state.dirty + 1, config: { ...state.config, facadeVantaux: Math.min(4, Math.max(2, action.value)) } };
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, facadeVantaux: Math.min(6, Math.max(1, action.value)) } };
     case 'SET_PLAN_MATERIAL':
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, planMaterialIndex: action.index } };
     case 'SET_PLAN_CHANT':
@@ -253,6 +266,51 @@ function reducer(rawState: State, action: Action): State {
       return { ...state, dirty: state.dirty + 1, config: { ...state.config, lineaireMax: action.value } };
     case 'SET_FACADE_MATERIAL':
       return patchModule(state, action.id, { facadeMaterialIndex: action.index });
+    case 'SET_INTERIEUR_MATERIAL':
+      return patchModule(state, action.id, { interieurMaterialIndex: action.index });
+    case 'SET_FUSION':
+      return patchModule(state, action.id, { fusionSuivant: action.value });
+    case 'SET_BANDEAU':
+      return patchModule(state, action.id, { bandeau: action.value });
+    case 'SET_BANDEAU_HAUTEUR':
+      return patchModule(state, action.id, { bandeauHauteur: action.value });
+    case 'SET_GRILLE':
+      return patchModule(state, action.id, { grille: action.value ?? undefined });
+    case 'SET_GRILLE_COLONNES': {
+      const mod = state.config.modules.find((m) => m.id === action.id);
+      if (!mod) return rawState;
+      const n = Math.min(8, Math.max(1, Math.round(action.value)));
+      const prev = mod.grille?.etageresParColonne ?? [];
+      const cols = Array.from({ length: n }, (_, i) => prev[i] ?? prev[prev.length - 1] ?? 3);
+      return patchModule(state, action.id, { grille: { colonnes: n, etageresParColonne: cols } });
+    }
+    case 'SET_GRILLE_ETAGERES': {
+      const mod = state.config.modules.find((m) => m.id === action.id);
+      if (!mod?.grille) return rawState;
+      const cols = [...mod.grille.etageresParColonne];
+      cols[action.col] = Math.min(12, Math.max(0, Math.round(action.value)));
+      return patchModule(state, action.id, { grille: { ...mod.grille, etageresParColonne: cols } });
+    }
+    case 'SET_EMPILE': {
+      // Empêche les cycles : le support ne peut pas être le module lui-même ni un de ses descendants
+      if (action.baseId === action.id) return rawState;
+      if (action.baseId) {
+        const mods = state.config.modules;
+        let cur: string | null | undefined = action.baseId;
+        const seen = new Set<string>();
+        while (cur) {
+          if (cur === action.id) return rawState; // cycle
+          if (seen.has(cur)) break;
+          seen.add(cur);
+          cur = mods.find((m) => m.id === cur)?.empileSur ?? null;
+        }
+      }
+      return patchModule(state, action.id, { empileSur: action.baseId, empileOffset: action.baseId ? 0 : undefined });
+    }
+    case 'SET_EMPILE_OFFSET':
+      return patchModule(state, action.id, { empileOffset: Math.round(action.value) });
+    case 'SET_HAUTEUR_PLAFOND':
+      return { ...state, dirty: state.dirty + 1, config: { ...state.config, hauteurPlafond: Math.min(3500, Math.max(2000, Math.round(action.value))) } };
     case 'SET_STYLE_FACADE':
       return patchModule(state, action.id, { styleFacade: action.value });
     case 'SET_MODULE_MUR':
@@ -315,6 +373,16 @@ export function useComposition(initial: CompositionConfig) {
   const setPlintheMaterial = useCallback((index: number | null) => dispatch({ type: 'SET_PLINTHE_MATERIAL', index }), []);
   const setLineaireMax = useCallback((value: number | null) => dispatch({ type: 'SET_LINEAIRE_MAX', value }), []);
   const setFacadeMaterial = useCallback((id: string, index: number | null) => dispatch({ type: 'SET_FACADE_MATERIAL', id, index }), []);
+  const setInterieurMaterial = useCallback((id: string, index: number | null) => dispatch({ type: 'SET_INTERIEUR_MATERIAL', id, index }), []);
+  const setFusion = useCallback((id: string, value: boolean) => dispatch({ type: 'SET_FUSION', id, value }), []);
+  const setBandeau = useCallback((id: string, value: boolean) => dispatch({ type: 'SET_BANDEAU', id, value }), []);
+  const setBandeauHauteur = useCallback((id: string, value: number | null) => dispatch({ type: 'SET_BANDEAU_HAUTEUR', id, value }), []);
+  const setGrille = useCallback((id: string, value: { colonnes: number; etageresParColonne: number[] } | null) => dispatch({ type: 'SET_GRILLE', id, value }), []);
+  const setGrilleColonnes = useCallback((id: string, value: number) => dispatch({ type: 'SET_GRILLE_COLONNES', id, value }), []);
+  const setGrilleEtageres = useCallback((id: string, col: number, value: number) => dispatch({ type: 'SET_GRILLE_ETAGERES', id, col, value }), []);
+  const setEmpile = useCallback((id: string, baseId: string | null) => dispatch({ type: 'SET_EMPILE', id, baseId }), []);
+  const setEmpileOffset = useCallback((id: string, value: number) => dispatch({ type: 'SET_EMPILE_OFFSET', id, value }), []);
+  const setHauteurPlafond = useCallback((value: number) => dispatch({ type: 'SET_HAUTEUR_PLAFOND', value }), []);
   const setStyleFacade = useCallback((id: string, value: StyleFacade) => dispatch({ type: 'SET_STYLE_FACADE', id, value }), []);
   const setModuleMur = useCallback((id: string, value: 'principal' | 'retour_gauche' | 'retour_droit') => dispatch({ type: 'SET_MODULE_MUR', id, value }), []);
   const swapModules = useCallback((idA: string, idB: string) => dispatch({ type: 'SWAP_MODULES', idA, idB }), []);
@@ -353,6 +421,16 @@ export function useComposition(initial: CompositionConfig) {
     setPlintheMaterial,
     setLineaireMax,
     setFacadeMaterial,
+    setInterieurMaterial,
+    setFusion,
+    setBandeau,
+    setBandeauHauteur,
+    setGrille,
+    setGrilleColonnes,
+    setGrilleEtageres,
+    setEmpile,
+    setEmpileOffset,
+    setHauteurPlafond,
     setStyleFacade,
     setModuleMur,
     swapModules,

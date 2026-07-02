@@ -73,6 +73,17 @@ const SEO_PAGE_LABELS: Record<string, string> = {
 export function AdminSettingsClient() {
   const [tab, setTab] = useState<'settings' | 'appearance' | 'seo'>('settings');
   const [settings, setSettings] = useState<Settings>(EMPTY);
+
+  // Recherche admin : bascule sur le bon onglet quand on cible un réglage (couleurs/typo = « Apparence »)
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const key = (e as CustomEvent<string>).detail;
+      if (key === 'typographie' || key === 'couleurs') setTab('appearance');
+      else if (['general', 'contact', 'horaires', 'reseaux', 'hero', 'configurateur'].includes(key)) setTab('settings');
+    };
+    window.addEventListener('admin-focus', onFocus);
+    return () => window.removeEventListener('admin-focus', onFocus);
+  }, []);
   const [seoPages, setSeoPages] = useState<SeoEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -184,7 +195,7 @@ export function AdminSettingsClient() {
       {tab === 'settings' && (
         <div className="space-y-6">
           {/* General */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="general" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir mb-4">Informations générales</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nom de la société" value={settings.companyName} onChange={(v) => update('companyName', v)} />
@@ -193,7 +204,7 @@ export function AdminSettingsClient() {
           </div>
 
           {/* Contact */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="contact" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir mb-4">Contact</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               <div className="sm:col-span-3">
@@ -209,7 +220,7 @@ export function AdminSettingsClient() {
           </div>
 
           {/* Hours */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="horaires" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir mb-4">Horaires</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               <Field label="Lundi - Vendredi" value={settings.hoursWeekdays} onChange={(v) => update('hoursWeekdays', v)} />
@@ -219,7 +230,7 @@ export function AdminSettingsClient() {
           </div>
 
           {/* Social */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="reseaux" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir mb-4">Réseaux sociaux</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Instagram (URL)" value={settings.instagram || ''} onChange={(v) => update('instagram', v)} type="url" placeholder="https://instagram.com/..." />
@@ -232,7 +243,7 @@ export function AdminSettingsClient() {
           </div>
 
           {/* Hero Background */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="hero" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir mb-2">Image de fond - Page d&apos;accueil</h2>
             <p className="text-sm text-noir/50 mb-4">
               Cette image sera affichée en arrière-plan de la section hero sur la page d&apos;accueil, derrière le texte &quot;Franchissons ensemble, le pas vers le bois&quot;.
@@ -245,7 +256,7 @@ export function AdminSettingsClient() {
           </div>
 
           {/* Configurateur toggle */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="configurateur" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-noir">Configurateur en ligne</h2>
@@ -278,7 +289,7 @@ export function AdminSettingsClient() {
       {tab === 'appearance' && (
         <div className="space-y-6">
           {/* Typographie */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="typographie" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h2 className="text-lg font-semibold text-noir">Typographie</h2>
             <p className="text-sm text-noir/50 mt-1 mb-4">
               Choisissez les polices du site public. « Moderne » utilise Young Serif pour les titres et Hanken Grotesk pour le texte ; « Classique » revient aux polices d&apos;origine du site.
@@ -311,7 +322,7 @@ export function AdminSettingsClient() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+          <div data-focus="couleurs" className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between mb-2 gap-4 flex-wrap">
               <div>
                 <h2 className="text-lg font-semibold text-noir">Couleurs principales du site</h2>

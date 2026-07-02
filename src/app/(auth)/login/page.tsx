@@ -20,9 +20,6 @@ export default function LoginPage() {
           <Link href="/forgot-password" className="text-sm text-noir/50 hover:text-noir/70 hover:underline block">
             Mot de passe oublié ?
           </Link>
-          <Link href="/register" className="text-sm text-vert-foret hover:underline block">
-            Pas encore de compte ? Inscrivez-vous
-          </Link>
         </div>
       </div>
     </div>

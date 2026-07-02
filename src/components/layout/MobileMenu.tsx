@@ -78,9 +78,6 @@ export function MobileMenu({ navLinks }: { navLinks?: { href: string; label: str
                   <Link href="/mes-projets" onClick={() => setIsOpen(false)} className="block px-7 py-2.5 text-sm text-noir/70 hover:bg-beige/60 transition-colors">
                     Mes projets
                   </Link>
-                  <Link href="/mes-devis" onClick={() => setIsOpen(false)} className="block px-7 py-2.5 text-sm text-noir/70 hover:bg-beige/60 transition-colors">
-                    Mes devis
-                  </Link>
                   {profile?.role === 'admin' && (
                     <Link href="/admin" onClick={() => setIsOpen(false)} className="block px-7 py-2.5 text-sm text-vert-foret font-semibold hover:bg-beige/60 transition-colors">
                       Administration
@@ -95,12 +92,9 @@ export function MobileMenu({ navLinks }: { navLinks?: { href: string; label: str
                 </div>
               </div>
             ) : (
-              <div className="p-5 border-t border-noir/8 flex gap-3">
-                <Link href="/login" onClick={() => setIsOpen(false)} className="btn-secondary flex-1 !py-2.5 text-sm">
+              <div className="p-5 border-t border-noir/8">
+                <Link href="/login" onClick={() => setIsOpen(false)} className="btn-primary w-full !py-2.5 text-sm text-center">
                   Connexion
-                </Link>
-                <Link href="/register" onClick={() => setIsOpen(false)} className="btn-primary flex-1 !py-2.5 text-sm">
-                  Inscription
                 </Link>
               </div>
             )}

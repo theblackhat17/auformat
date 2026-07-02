@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CSSProperties } from 'react';
-import { getServiceBySlug, getServices } from '@/lib/content';
+import { getServiceBySlug, getServices, getRealisationsByService } from '@/lib/content';
 import { buildPageMetadata } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
@@ -49,6 +49,7 @@ export default async function ServicePage({ params }: Props) {
   const content = service.content || {};
   const allServices = await getServices();
   const otherServices = allServices.filter((s) => s.slug !== slug).slice(0, 4);
+  const realisations = await getRealisationsByService(slug, 6);
 
   return (
     <>
@@ -144,6 +145,45 @@ export default async function ServicePage({ params }: Props) {
                 <p>{paragraph}</p>
               </Reveal>
             ))}
+          </div>
+        </section>
+      )}
+
+      {/* Réalisations associées — galerie automatique via les tags */}
+      {realisations.length > 0 && (
+        <section className="py-20 lg:py-24 bg-beige">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8">
+            <Reveal>
+              <h2 className="font-display text-[clamp(1.625rem,2vw+0.5rem,2.25rem)] leading-[1.15] text-noir mb-3 text-center">
+                Nos réalisations · {service.title}
+              </h2>
+              <p className="text-center text-noir/65 mb-12 max-w-2xl mx-auto">Quelques projets de ce type sortis de notre atelier.</p>
+            </Reveal>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {realisations.map((r, i) => (
+                <Reveal as="div" key={r.id} delay={i * 80}>
+                  <Link href={`/realisations/${r.slug}`} className="group block rounded-2xl overflow-hidden bg-white ring-1 ring-noir/8 hover:ring-vert-foret/40 transition-all duration-300">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-beige">
+                      {r.image && (
+                        <Image src={r.image} alt={r.title} fill sizes="(max-width:640px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <h3 className="font-display text-lg text-noir group-hover:text-vert-foret transition-colors duration-300">{r.title}</h3>
+                      {(r.location || r.description) && (
+                        <p className="text-[0.9375rem] text-noir/65 leading-relaxed mt-1.5 line-clamp-2">{r.location || r.description}</p>
+                      )}
+                    </div>
+                  </Link>
+                </Reveal>
+              ))}
+            </div>
+            <div className="text-center mt-12">
+              <Link href="/realisations" className="inline-flex items-center gap-2 px-6 py-3 border border-noir/20 rounded-full text-noir font-medium hover:bg-noir hover:text-white transition-colors duration-200">
+                Voir toutes nos réalisations
+                <ArrowIcon />
+              </Link>
+            </div>
           </div>
         </section>
       )}

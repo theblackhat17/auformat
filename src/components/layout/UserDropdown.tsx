@@ -32,15 +32,9 @@ export function UserDropdown() {
       <div className="hidden lg:flex items-center gap-3">
         <Link
           href="/login"
-          className="text-sm font-medium text-noir/70 hover:text-vert-foret transition-colors"
-        >
-          Connexion
-        </Link>
-        <Link
-          href="/register"
           className="text-sm font-medium bg-vert-foret text-white px-4 py-2 rounded-lg hover:bg-vert-foret-dark transition-colors"
         >
-          Inscription
+          Connexion
         </Link>
       </div>
     );
@@ -92,9 +86,6 @@ export function UserDropdown() {
               {chatUnread > 0 && (
                 <span className="min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{chatUnread}</span>
               )}
-            </Link>
-            <Link href="/mes-devis" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-noir/70 hover:bg-beige/50 hover:text-noir transition-colors">
-              <span className="w-5 text-center">📄</span> Mes devis
             </Link>
             {profile.role === 'admin' && (
               <Link href="/admin" onClick={() => setIsOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-vert-foret font-medium hover:bg-beige/50 transition-colors">

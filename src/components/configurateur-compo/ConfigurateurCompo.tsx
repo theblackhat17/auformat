@@ -89,8 +89,11 @@ export function ConfigurateurCompo({
 
   const compo = useComposition(initialConfig);
   const univers = (settings.univers || []).find((u) => u.slug === compo.config.univers);
-  /** Mode prix : 'masque' (défaut) = aucun prix côté client, chiffrage par devis */
-  const showPrices = settings.pricing_mode === 'estimation';
+  /** Les prix ne sont JAMAIS montrés au client : seul un admin (commercial) voit le chiffrage. */
+  const showPrices = isAdmin;
+  /** Un client connecté ne demande pas de devis (son commercial pilote tout) ; on garde la
+   *  demande pour les prospects (visiteurs non connectés) et pour l'admin. */
+  const canRequestQuote = isAdmin || !isAuthenticated;
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -488,15 +491,17 @@ export function ConfigurateurCompo({
             <button onClick={handleSaveClick} disabled={saveState === 'saving'} className="btn-secondary !py-2 !px-5 text-sm disabled:opacity-60">
               {saveState === 'saving' ? 'Enregistrement…' : projectId ? 'Enregistrer' : 'Enregistrer le projet'}
             </button>
-            <button onClick={() => setQuoteOpen(true)} className="btn-primary !py-2 !px-5 text-sm">
-              Demander un devis
-            </button>
+            {canRequestQuote && (
+              <button onClick={() => setQuoteOpen(true)} className="btn-primary !py-2 !px-5 text-sm">
+                Demander un devis
+              </button>
+            )}
           </div>
         </div>
 
         <div className="grid lg:grid-cols-12 gap-5 items-start">
-          {/* Canvas */}
-          <div className="lg:col-span-8 bg-white rounded-2xl ring-1 ring-noir/8 p-4 sm:p-6">
+          {/* Canvas — reste visible (collé en haut) pendant qu'on fait défiler les réglages */}
+          <div className="lg:col-span-8 lg:sticky lg:top-4 lg:self-start bg-white rounded-2xl ring-1 ring-noir/8 p-4 sm:p-6">
             {/* Onglets 2D / 3D + cotes */}
             <div className="flex items-center justify-between gap-3 mb-4">
               <div className="flex gap-1 bg-beige/70 rounded-full p-1 w-fit" role="tablist" aria-label="Mode d'affichage">
@@ -591,6 +596,7 @@ export function ConfigurateurCompo({
                   type={selectedType}
                   config={compo.config}
                   materials={materials}
+                  moduleTypes={moduleTypes}
                   moduleCount={compo.config.modules.length}
                   totalWidth={totalWidth}
                   showPrices={showPrices}
@@ -601,13 +607,21 @@ export function ConfigurateurCompo({
                   onDuplicate={() => compo.duplicateModule(selectedModule.id)}
                   onRemove={() => compo.removeModule(selectedModule.id)}
                   onPos={(posX, posY) => compo.setModulePos(selectedModule.id, posX, posY)}
-                  onEcart={(value) => compo.setModuleEcart(selectedModule.id, value)}
                   onTiroirsHauteur={(value) => compo.setTiroirsHauteur(selectedModule.id, value)}
                   onEtagerePos={(index, value) => compo.setEtagerePos(selectedModule.id, index, value)}
                   onFacadeMaterial={(index) => compo.setFacadeMaterial(selectedModule.id, index)}
+                  onInterieurMaterial={(index) => compo.setInterieurMaterial(selectedModule.id, index)}
                   onStyleFacade={(value) => compo.setStyleFacade(selectedModule.id, value)}
                   onApplyMaterialAll={compo.applyMaterialAll}
                   onMur={(value) => compo.setModuleMur(selectedModule.id, value)}
+                  onFusion={(value) => compo.setFusion(selectedModule.id, value)}
+                  onBandeau={(value) => compo.setBandeau(selectedModule.id, value)}
+                  onBandeauHauteur={(value) => compo.setBandeauHauteur(selectedModule.id, value)}
+                  onGrille={(value) => compo.setGrille(selectedModule.id, value)}
+                  onGrilleColonnes={(value) => compo.setGrilleColonnes(selectedModule.id, value)}
+                  onGrilleEtageres={(col, value) => compo.setGrilleEtageres(selectedModule.id, col, value)}
+                  onEmpile={(baseId) => compo.setEmpile(selectedModule.id, baseId)}
+                  onEmpileOffset={(value) => compo.setEmpileOffset(selectedModule.id, value)}
                 />
               ) : (
                 <GlobalPanel
@@ -624,6 +638,7 @@ export function ConfigurateurCompo({
                   onPlanChant={compo.setPlanChant}
                   onPlintheMaterial={compo.setPlintheMaterial}
                   onLineaireMax={compo.setLineaireMax}
+                  onHauteurPlafond={compo.setHauteurPlafond}
                   onPlanDims={compo.setPlanDims}
                   onPoigneeFinition={compo.setPoigneeFinition}
                   onLedTemp={compo.setLedTemp}
@@ -670,12 +685,20 @@ export function ConfigurateurCompo({
               ) : (
                 <>
                   <p className="font-display text-xl">Prix sur devis</p>
-                  <p className="text-sm text-white/75 mt-1.5 leading-relaxed">
-                    Enregistrez votre projet et demandez votre devis : l&apos;atelier vous transmet un chiffrage détaillé sous 48h, gratuit et sans engagement.
-                  </p>
-                  <button onClick={() => setQuoteOpen(true)} className="btn-on-dark w-full !py-2.5 text-sm mt-4">
-                    Demander mon devis gratuit
-                  </button>
+                  {canRequestQuote ? (
+                    <>
+                      <p className="text-sm text-white/75 mt-1.5 leading-relaxed">
+                        Enregistrez votre projet et demandez votre devis : l&apos;atelier vous transmet un chiffrage détaillé sous 48h, gratuit et sans engagement.
+                      </p>
+                      <button onClick={() => setQuoteOpen(true)} className="btn-on-dark w-full !py-2.5 text-sm mt-4">
+                        Demander mon devis gratuit
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-sm text-white/75 mt-1.5 leading-relaxed">
+                      Votre conseiller Au Format chiffre votre projet et vous accompagne à chaque étape.
+                    </p>
+                  )}
                 </>
               )}
             </div>
@@ -698,7 +721,9 @@ export function ConfigurateurCompo({
             </>
           )}
         </div>
-        <button onClick={() => setQuoteOpen(true)} className="btn-primary !py-2.5 text-sm">Demander un devis</button>
+        {canRequestQuote && (
+          <button onClick={() => setQuoteOpen(true)} className="btn-primary !py-2.5 text-sm">Demander un devis</button>
+        )}
       </div>
 
       {pickerOpen && (

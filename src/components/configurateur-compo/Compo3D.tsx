@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { CompositionConfig, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
-import { layoutModules, shelfPositions } from './CompoCanvas';
+import { layoutModules, shelfPositions, penderieRails } from './CompoCanvas';
 import { moduleMaterial } from './pricingCompo';
 import { cannageTexture, rainureTexture, uniTexture, woodTexture, floorParquet, floorCarrelage, floorBeton } from './textures3d';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
@@ -26,6 +26,44 @@ const ILOT_Z = 1.5;
 const textureCache = new Map<string, THREE.Texture>();
 const texLoader = new THREE.TextureLoader();
 texLoader.setCrossOrigin('anonymous');
+
+/** Silhouette humaine (1,80 m) dessinée sur un canevas transparent — repère d'échelle. */
+let humanTex: THREE.CanvasTexture | null = null;
+function humanTexture(): THREE.CanvasTexture {
+  if (humanTex) return humanTex;
+  const W = 200, H = 600;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const c = cv.getContext('2d')!;
+  c.fillStyle = 'rgba(120,124,130,0.55)';
+  c.strokeStyle = 'rgba(90,94,100,0.65)';
+  c.lineWidth = 3;
+  // Tête
+  c.beginPath(); c.arc(W / 2, 70, 42, 0, Math.PI * 2); c.fill();
+  // Corps + jambes (tracé simple d'une silhouette debout)
+  c.beginPath();
+  c.moveTo(W / 2 - 30, 118);
+  c.bezierCurveTo(W / 2 - 78, 150, W / 2 - 72, 300, W / 2 - 60, 340); // épaule/bras gauche
+  c.lineTo(W / 2 - 40, 345);
+  c.lineTo(W / 2 - 44, 200);
+  c.lineTo(W / 2 - 40, 360);
+  c.bezierCurveTo(W / 2 - 44, 470, W / 2 - 40, 560, W / 2 - 34, 590); // jambe gauche
+  c.lineTo(W / 2 - 6, 590);
+  c.lineTo(W / 2 - 2, 400);
+  c.lineTo(W / 2 + 2, 400);
+  c.lineTo(W / 2 + 6, 590);
+  c.lineTo(W / 2 + 34, 590);
+  c.bezierCurveTo(W / 2 + 40, 560, W / 2 + 44, 470, W / 2 + 40, 360); // jambe droite
+  c.lineTo(W / 2 + 44, 200);
+  c.lineTo(W / 2 + 40, 345);
+  c.lineTo(W / 2 + 60, 340);
+  c.bezierCurveTo(W / 2 + 72, 300, W / 2 + 78, 150, W / 2 + 30, 118); // bras droit
+  c.closePath();
+  c.fill();
+  humanTex = new THREE.CanvasTexture(cv);
+  humanTex.colorSpace = THREE.SRGBColorSpace;
+  return humanTex;
+}
 
 function woodMaterial(mat: ConfigurateurMaterial | undefined): THREE.MeshStandardMaterial {
   if (mat?.renderType === 'uni') {
@@ -95,7 +133,7 @@ function rng(seed: number) {
 }
 
 type Interactive = THREE.Object3D & {
-  userData: { action: 'door' | 'drawer'; key: string; openRot?: number; openRotX?: number; openZ?: number };
+  userData: { action: 'door' | 'drawer' | 'slide'; key: string; openRot?: number; openRotX?: number; openZ?: number; openX?: number };
 };
 
 type Props = {
@@ -123,6 +161,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     cameraInit: boolean;
     floorMat: THREE.MeshStandardMaterial;
     wallMat: THREE.MeshStandardMaterial;
+    ceiling: THREE.Mesh;
+    human: THREE.Mesh;
     hemi: THREE.HemisphereLight;
     sun: THREE.DirectionalLight;
     ambient: THREE.AmbientLight;
@@ -133,6 +173,9 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
   const [floor, setFloor] = useState(floorColor || '#caa46f');
   const [floorStyle, setFloorStyle] = useState<'parquet' | 'carrelage' | 'beton' | 'uni'>('parquet');
   const [ambiance, setAmbiance] = useState<'jour' | 'soir'>('jour');
+  const [showHuman, setShowHuman] = useState(true);
+  const showHumanRef = useRef(showHuman);
+  showHumanRef.current = showHuman;
   /* Réalité augmentée : modèles exportés (blob URLs) */
   const [arUrls, setArUrls] = useState<{ glb: string; usdz: string } | null>(null);
   const [arBusy, setArBusy] = useState(false);
@@ -191,6 +234,21 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     wall.position.set(0, 6, -0.005);
     wall.receiveShadow = true;
     scene.add(wall);
+    // Plafond : plan à hauteur sous plafond, face tournée vers le bas (invisible vu de dessus, ne masque rien)
+    const ceilMat = new THREE.MeshStandardMaterial({ color: '#f4efe6', roughness: 0.96, side: THREE.FrontSide });
+    const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), ceilMat);
+    ceiling.rotation.x = Math.PI / 2;
+    ceiling.position.set(0, 2.5, 0);
+    ceiling.receiveShadow = true;
+    scene.add(ceiling);
+    // Silhouette humaine 1,80 m (repère d'échelle) — placée à droite de la composition
+    const human = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.6, 1.8),
+      new THREE.MeshBasicMaterial({ map: humanTexture(), transparent: true, depthWrite: false })
+    );
+    human.position.set(2, 0.9, 0.3);
+    human.visible = showHumanRef.current;
+    scene.add(human);
 
     const state = {
       renderer, scene, camera, controls,
@@ -200,6 +258,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       cameraInit: false,
       floorMat,
       wallMat,
+      ceiling,
+      human,
       hemi,
       sun,
       ambient,
@@ -219,6 +279,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     const animate = () => {
       state.raf = requestAnimationFrame(animate);
       controls.update();
+      // Silhouette toujours tournée vers la caméra (billboard sur l'axe vertical)
+      state.human.rotation.y = Math.atan2(camera.position.x - state.human.position.x, camera.position.z - state.human.position.z);
       // Animation douce des portes/tiroirs vers leur cible
       for (const it of state.interactives) {
         const open = openMapRef.current.get(it.userData.key) || false;
@@ -231,6 +293,10 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
             const target = open ? (it.userData.openRot || 0) : 0;
             it.rotation.y += (target - it.rotation.y) * 0.14;
           }
+        } else if (it.userData.action === 'slide') {
+          // Porte coulissante : glisse latéralement le long du rail
+          const target = open ? (it.userData.openX || 0) : 0;
+          it.position.x += (target - it.position.x) * 0.14;
         } else {
           const target = open ? (it.userData.openZ || 0) : 0;
           it.position.z += (target - it.position.z) * 0.14;
@@ -314,6 +380,19 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     state.scene.background = new THREE.Color(jour ? '#f3efe6' : '#3a3340');
   }, [wall, floor, floorStyle, ambiance]);
 
+  /* Plafond : positionné à la hauteur sous plafond réglée (mm → m) */
+  useEffect(() => {
+    const state = stateRef.current;
+    if (!state) return;
+    state.ceiling.position.y = (config.hauteurPlafond ?? 2500) * S;
+  }, [config.hauteurPlafond]);
+
+  /* Silhouette d'échelle : affichée ou masquée */
+  useEffect(() => {
+    const state = stateRef.current;
+    if (state) state.human.visible = showHuman;
+  }, [showHuman]);
+
   /* (Re)construction de la composition */
   useEffect(() => {
     const state = stateRef.current;
@@ -394,9 +473,22 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       const separateurs = mod.options['separateur_vertical'] ?? 0;
       const socleLegs: 'metal' | 'bois' | null =
         (mod.options['socle_pieds_metal'] ?? 0) > 0 ? 'metal' : (mod.options['socle_pieds_bois'] ?? 0) > 0 ? 'bois' : null;
+      // Penderie / module à tringle : les tiroirs se logent en bas, l'intérieur reste au-dessus
+      const isPenderie3d = type.slug === 'module_penderie';
+      const drawersAtBottom = isPenderie3d ? !((mod.options['tiroirs_haut'] ?? 0) > 0) : tringles > 0;
+      const penderieEnBas = (mod.options['penderie_bas'] ?? 0) > 0;
+      const autoDrawerZone = portes > 0 ? h * 0.4 : type.slug === 'banc_rangement' ? h * 0.75 : (isPenderie3d || tringles > 0) ? h * 0.4 : h;
+      const drawerZone = tiroirs > 0 ? Math.min(h, Math.max(0.12, mod.tiroirsHauteur != null ? mod.tiroirsHauteur * S : autoDrawerZone)) : 0;
+      // Espace intérieur libre (hors zone de tiroirs)
+      const freeBottom = drawersAtBottom ? drawerZone : 0;
+      const freeTop = drawersAtBottom ? h : h - drawerZone;
+      // Ancrage de la tringle : haut de l'espace libre (penderie haut) ou plus bas (penderie bas)
+      const penderieAnchorY = penderieEnBas ? freeBottom + Math.min(freeTop - freeBottom, 1.0) : freeTop - PANEL;
 
       const bodyMat = isFrigo && portes === 0 ? INOX() : isLV && !habillage ? INOX() : woodMaterial(mat);
-      const innerMat = DARK(mat?.colorHex || '#D4A574', 0.85);
+      // Matériau intérieur : teinte choisie (fonds, étagères) ou teinte foncée du caisson par défaut
+      const interieurSrc = mod.interieurMaterialIndex != null ? materials[mod.interieurMaterialIndex] ?? null : null;
+      const innerMat = interieurSrc ? woodMaterial(interieurSrc) : DARK(mat?.colorHex || '#D4A574', 0.85);
       // Façades : matériau dédié si choisi, style (rainuré, cannage) appliqué en texture
       const facadeSrc = mod.facadeMaterialIndex != null ? materials[mod.facadeMaterialIndex] ?? mat : mat;
       const styleF = mod.styleFacade || 'lisse';
@@ -774,20 +866,46 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         back.position.set(w / 2, h / 2, 0.012);
         mg.add(side1, side2, bottom, top, back);
 
-        // Étagères (positions réglables, visibles dans le caisson)
-        const shelfYs: number[] = shelfPositions(mod, mod.hauteur).map((pos) => pos * S);
-        for (const sy of shelfYs) {
-          const sh = box(w - PANEL * 2, PANEL, d - 0.04, bodyMat);
-          sh.position.set(w / 2, sy, d / 2 - 0.01);
-          mg.add(sh);
-        }
+        let shelfYs: number[] = [];
+        if (mod.grille && mod.grille.colonnes >= 1) {
+          // Bibliothèque à cases : colonnes régulières, étagères propres à chaque colonne
+          const cols = mod.grille.colonnes;
+          const x0 = PANEL, iw = w - PANEL * 2, colW = iw / cols;
+          const yB = PANEL, yT = h - PANEL, gh = yT - yB;
+          for (let i = 1; i < cols; i++) {
+            const sep = box(PANEL, gh, d - 0.04, bodyMat);
+            sep.position.set(x0 + colW * i, (yB + yT) / 2, d / 2 - 0.01);
+            mg.add(sep);
+          }
+          const allYs = new Set<number>();
+          for (let c = 0; c < cols; c++) {
+            const n = mod.grille.etageresParColonne[c] ?? 0;
+            const cxCenter = x0 + colW * c + colW / 2;
+            for (let k = 1; k <= n; k++) {
+              const sy = yB + (gh / (n + 1)) * k;
+              allYs.add(Math.round(sy * 1000) / 1000);
+              const sh = box(colW - PANEL, PANEL, d - 0.04, bodyMat);
+              sh.position.set(cxCenter, sy, d / 2 - 0.01);
+              mg.add(sh);
+            }
+          }
+          shelfYs = [...allYs];
+        } else {
+          // Étagères (positions réglables, visibles dans le caisson, au-dessus des tiroirs en bas)
+          shelfYs = shelfPositions(mod, mod.hauteur).map((pos) => Math.min(freeTop - 0.06, Math.max(pos * S, freeBottom + 0.06)));
+          for (const sy of shelfYs) {
+            const sh = box(w - PANEL * 2, PANEL, d - 0.04, bodyMat);
+            sh.position.set(w / 2, sy, d / 2 - 0.01);
+            mg.add(sh);
+          }
 
-        // Séparateurs verticaux : compartiments répartis sur la largeur
-        for (let i = 1; i <= separateurs; i++) {
-          const px = (w / (separateurs + 1)) * i;
-          const sep = box(PANEL, h - PANEL * 2, d - 0.04, bodyMat);
-          sep.position.set(px, h / 2, d / 2 - 0.01);
-          mg.add(sep);
+          // Séparateurs verticaux : compartiments répartis sur la largeur
+          for (let i = 1; i <= separateurs; i++) {
+            const px = (w / (separateurs + 1)) * i;
+            const sep = box(PANEL, h - PANEL * 2, d - 0.04, bodyMat);
+            sep.position.set(px, h / 2, d / 2 - 0.01);
+            mg.add(sep);
+          }
         }
 
         // Range-bouteilles : croisillons en X dans le caisson
@@ -802,12 +920,12 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
           }
         }
 
-        // Tringles : une par compartiment, du haut vers le bas — la 1re sous le dessus,
-        // la 2e sous l'étagère qui sépare les deux zones de penderie, etc.
-        const boundaries = [h - PANEL, ...shelfYs.slice().sort((a, b) => b - a)];
-        for (let i = 0; i < tringles; i++) {
-          const under = boundaries[i] ?? (boundaries[boundaries.length - 1] - 0.4 * (i - boundaries.length + 1));
-          const y = Math.max(under - 0.1, PANEL + 0.15);
+        // Tringles : disposition de penderie (simple/double, haut/bas) ; sinon empilées sous l'ancrage
+        const railYs = isPenderie3d
+          ? penderieRails(mod, freeBottom, freeTop)
+          : Array.from({ length: tringles }, (_, i) => Math.max(penderieAnchorY - 0.1 - i * 0.5, freeBottom + 0.15));
+        for (let i = 0; i < railYs.length; i++) {
+          const y = railYs[i];
           const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, w - PANEL * 2 - 0.02), handleMat);
           rod.rotation.z = Math.PI / 2;
           rod.position.set(w / 2, y, d / 2);
@@ -821,7 +939,7 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
           const nCl = w > 0.5 ? 2 + ((rcl() * 3) | 0) : 1;
           for (let k = 0; k < nCl; k++) {
             const cw = 0.15 + rcl() * 0.1;
-            const ch = Math.min(0.55 + rcl() * 0.3, y - PANEL - 0.12);
+            const ch = Math.min(0.55 + rcl() * 0.3, y - freeBottom - 0.12);
             if (ch < 0.25) break;
             const cx = PANEL + 0.1 + rcl() * Math.max(w - PANEL * 2 - 0.2, 0.05);
             const cloth = box(cw, ch, 0.035, clothMats[(rcl() * clothMats.length) | 0]);
@@ -1041,21 +1159,33 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         }
         addDoors(1, llH + 0.01, h, 'll');
       } else {
-        // Tiroirs coulissants (clic pour ouvrir)
-        const autoZone = portes > 0 ? h * 0.4 : type.slug === 'banc_rangement' ? h * 0.75 : h;
-        const drawerZone = tiroirs > 0 ? Math.min(h, Math.max(0.12, mod.tiroirsHauteur != null ? mod.tiroirsHauteur * S : autoZone)) : 0;
+        // Tiroirs coulissants (clic pour ouvrir) — en bas pour une penderie, en haut sinon.
+        // Si une porte fermée recouvre entièrement la zone de tiroirs, on encastre les
+        // façades DERRIÈRE le plan de la porte et on retire la poignée saillante : sinon
+        // poignées/cadres traverseraient la porte (la 3D n'a pas l'ordre de dessin de la 2D).
+        const dBottom = drawersAtBottom ? 0 : h - drawerZone;
+        const dTop = drawersAtBottom ? drawerZone : h;
+        const within = (y0: number, y1: number) => dBottom >= y0 - 1e-4 && dTop <= y1 + 1e-4;
+        const drawersCovered = tiroirs > 0 && (
+          (pPleine > 0 && within(0, h)) ||
+          (pBasse > 0 && within(0, h / 2)) ||
+          (pHaute > 0 && within(h / 2, h))
+        );
+        const frontZ = drawersCovered ? d - FACADE / 2 : d + FACADE / 2;
         for (let i = 0; i < tiroirs; i++) {
           const th = drawerZone / tiroirs;
-          const yC = h - i * th - th / 2;
+          const yC = drawersAtBottom ? i * th + th / 2 : h - i * th - th / 2;
           const dg = new THREE.Group(); // glisse en Z
           const front = box(w - 0.01, th - 0.008, FACADE, facadeMat);
-          front.position.set(w / 2, yC, d + FACADE / 2);
+          front.position.set(w / 2, yC, frontZ);
           dg.add(front);
-          addCadre(front, w - 0.01, th - 0.008);
           const tub = box(w - 0.08, Math.max(th - 0.07, 0.05), d - 0.12, innerMat);
           tub.position.set(w / 2, yC - 0.02, d / 2);
           dg.add(tub);
-          addHandle(front, 0, 0, false);
+          if (!drawersCovered) {
+            addCadre(front, w - 0.01, th - 0.008);
+            addHandle(front, 0, 0, false);
+          }
           dg.userData = { action: 'drawer', key: `${mod.id}:t:${i}`, openZ: Math.min(d * 0.6, 0.45) };
           mg.add(dg);
           state.interactives.push(dg as unknown as Interactive);
@@ -1063,8 +1193,10 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         if (portes > 0) addDoors(portes, 0, h - drawerZone, 'p', isMiroir, isVitre);
         if (pPleine > 0) addDoors(pPleine, 0, h, 'pp');
         else {
-          if (pBasse > 0) addDoors(pBasse, 0, h / 2 - 0.005, 'pb');
-          if (pHaute > 0) addDoors(pHaute, h / 2 + 0.005, h, 'ph');
+          // La porte haute descend jusqu'au sommet des tiroirs (comble le vide) ; sinon coupe au milieu
+          const splitDoorY = tiroirs > 0 && drawersAtBottom ? drawerZone : h / 2;
+          if (pBasse > 0) addDoors(pBasse, 0, splitDoorY - 0.005, 'pb');
+          if (pHaute > 0) addDoors(pHaute, splitDoorY + 0.005, h, 'ph');
         }
 
         // Coiffeuse : miroir rond fixé au mur au-dessus du meuble
@@ -1081,8 +1213,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         }
       }
 
-      // Socle : plinthe (défaut) ou pieds apparents
-      if ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || isIlot) {
+      // Socle : plinthe (défaut) ou pieds apparents — jamais sous un panneau plein ni un module empilé
+      if (!isPanneauPlein && !p.stacked && ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || isIlot)) {
         if (socleLegs) {
           const legMat = socleLegs === 'metal' ? handleMat : DARK(mat?.colorHex || '#8B6F47', 0.6);
           for (const [lx, lz] of [[0.07, 0.07], [w - 0.07, 0.07], [0.07, d - 0.07], [w - 0.07, d - 0.07]]) {
@@ -1097,9 +1229,27 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
           const plMat = config.plintheMaterialIndex != null && materials[config.plintheMaterialIndex]
             ? woodMaterial(materials[config.plintheMaterialIndex])
             : DARK(mat?.colorHex || '#8B6F47');
-          const pl = box(w - 0.04, PLINTH, d - 0.06, plMat);
-          pl.position.set(w / 2, -PLINTH / 2, d / 2 - 0.02);
+          // Fusion : la plinthe court jusqu'au bord des modules collés pour rester continue
+          const li = p.mergedLeft ? 0 : 0.02;
+          const ri = p.mergedRight ? 0 : 0.02;
+          const plW = w - li - ri;
+          const pl = box(plW, PLINTH, d - 0.06, plMat);
+          pl.position.set(li + plW / 2, -PLINTH / 2, d / 2 - 0.02);
           mg.add(pl);
+        }
+      }
+
+      // Bandeau de finition en haut : panneau plein comblant le vide vers le plafond
+      if (mod.bandeau && !isDecor) {
+        const ceilY = (config.hauteurPlafond ?? 2500) * S;
+        const bandeauTopY = mod.bandeauHauteur != null ? yBottom + h + mod.bandeauHauteur * S : ceilY;
+        const bandeauH = bandeauTopY - (yBottom + h);
+        if (bandeauH > 0.01) {
+          const bandeau = box(w, bandeauH, d, bodyMat);
+          bandeau.castShadow = bandeau.receiveShadow = true;
+          // positionné dans le repère du module (origine au bas du caisson) : centre à h + bandeauH/2
+          bandeau.position.set(w / 2, h + bandeauH / 2, d / 2);
+          mg.add(bandeau);
         }
       }
 
@@ -1146,7 +1296,7 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         return m;
       };
       const eligible = (p: (typeof placed)[number]) =>
-        p.type.zone === 'bas' && !p.type.decor && !(p.module.options['suspendu'] > 0) && !((p.module.options['sans_plan'] ?? 0) > 0);
+        p.type.zone === 'bas' && !p.type.decor && !p.stacked && !(p.module.options['suspendu'] > 0) && !((p.module.options['sans_plan'] ?? 0) > 0);
       for (const rowKey of ['principal', 'retour_gauche', 'retour_droit'] as const) {
         let run: typeof placed = [];
         const flush = () => {
@@ -1183,23 +1333,64 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       }
     }
 
-    // Façade coulissante (dressing)
+    // Façade coulissante : vantaux qui glissent l'un devant l'autre (clic pour ouvrir),
+    // sens de coulisse matérialisé par une flèche et une poignée encastrée du bon côté.
     if (config.facadeCoulissante && univers?.facadeCoulissante?.disponible && linearWidth > 0) {
-      const vantaux = Math.min(4, Math.max(2, config.facadeVantaux ?? 2));
+      const maxV = Math.max(1, univers.facadeCoulissante.maxVantaux ?? 3);
+      const vantaux = Math.min(maxV, Math.max(1, config.facadeVantaux ?? 2));
       const mainMat = materials[config.materialIndex];
       const zF = maxDepth + 0.06;
       const hF = maxTop * S;
-      const rail = box(linearWidth * S + 0.08, 0.05, 0.09, DARK(mainMat?.colorHex || '#D4A574', 0.45));
-      rail.position.set((linearWidth * S) / 2, hF + 0.025, zF);
+      const totalW = linearWidth * S;
+      const panelStep = totalW / vantaux;          // emprise d'un vantail
+      const overlap = vantaux > 1 ? 0.05 : 0;      // recouvrement entre vantaux voisins
+      const pw = panelStep + overlap;
+      const finitionHexF = { noir: '#3c3c3c', inox: '#aab3b8', laiton: '#b08d57' }[config.poigneeFinition || 'inox'] ?? '#aab3b8';
+      const handleMatF = new THREE.MeshStandardMaterial({ color: finitionHexF, roughness: 0.35, metalness: 0.75 });
+      const arrowMat = new THREE.MeshStandardMaterial({ color: '#2C5F2D', roughness: 0.5, emissive: '#173d18', emissiveIntensity: 0.25 });
+      // Rail haut (sur toute la largeur)
+      const rail = box(totalW + 0.08, 0.05, 0.12, DARK(mainMat?.colorHex || '#D4A574', 0.45));
+      rail.position.set(totalW / 2, hF + 0.025, zF);
       group.add(rail);
       for (let i = 0; i < vantaux; i++) {
-        const pw = (linearWidth * S) / vantaux + 0.04;
+        const onFront = i % 2 === 1;               // un rail avant, un rail arrière
+        const z = zF + (onFront ? 0.03 : 0);
+        const baseX = panelStep * i + pw / 2 - overlap / 2;
+        // Sens de coulisse : le dernier vantail glisse vers l'intérieur, les autres alternent
+        const dir = vantaux === 1 ? 1 : i === vantaux - 1 ? -1 : i % 2 === 0 ? 1 : -1;
+        const openX = vantaux > 1 ? dir * panelStep * 0.96 : panelStep * 0.6;
+        const panelH = hF - (onFront ? 0.015 : 0);
+
+        const outer = new THREE.Group();           // emplacement fermé du vantail
+        outer.position.set(baseX, 0, z);
+        const slider = new THREE.Group();          // partie qui glisse en X (interactive)
+
         const panelMat = woodMaterial(mainMat);
         panelMat.transparent = true;
-        panelMat.opacity = 0.55;
-        const panel = box(pw, hF - (i % 2 ? 0.015 : 0), FACADE, panelMat);
-        panel.position.set((linearWidth * S / vantaux) * i + pw / 2 - 0.02, (hF - (i % 2 ? 0.015 : 0)) / 2, zF + (i % 2 ? 0.025 : 0));
-        group.add(panel);
+        panelMat.opacity = 0.6;
+        const panel = box(pw, panelH, FACADE, panelMat);
+        panel.position.set(0, panelH / 2, 0);
+        slider.add(panel);
+
+        // Poignée verticale encastrée du côté vers lequel le vantail glisse
+        const grip = box(0.022, panelH * 0.5, 0.03, handleMatF);
+        grip.position.set(dir * (pw / 2 - 0.05), panelH * 0.5, FACADE / 2 + 0.012);
+        slider.add(grip);
+
+        // Flèche du sens de coulisse (hampe + pointe) au milieu du vantail
+        const arrowX = dir * (pw * 0.18);
+        const shaft = box(0.12, 0.02, 0.02, arrowMat);
+        shaft.position.set(arrowX, panelH * 0.5, FACADE / 2 + 0.02);
+        slider.add(shaft);
+        const tip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.11, 16), arrowMat);
+        tip.rotation.z = dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+        tip.position.set(arrowX + dir * 0.09, panelH * 0.5, FACADE / 2 + 0.02);
+        slider.add(tip);
+
+        slider.userData = { action: 'slide', key: `facade:slide:${i}`, openX };
+        outer.add(slider);
+        group.add(outer);
+        state.interactives.push(slider as unknown as Interactive);
       }
     }
 
@@ -1212,6 +1403,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
     group.position.x = -(totalWidth * S) / 2;
     state.scene.add(group);
     state.group = group;
+    // Silhouette d'échelle : posée au sol, juste à droite de la composition
+    state.human.position.set(totalWidth * S / 2 + 0.7, 0.9, 0.3);
 
     // Restaure instantanément les portes/tiroirs déjà ouverts
     for (const it of state.interactives) {
@@ -1219,7 +1412,8 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
       if (it.userData.action === 'door') {
         if (it.userData.openRotX !== undefined) it.rotation.x = open ? it.userData.openRotX : 0;
         else it.rotation.y = open ? (it.userData.openRot || 0) : 0;
-      } else it.position.z = open ? (it.userData.openZ || 0) : 0;
+      } else if (it.userData.action === 'slide') it.position.x = open ? (it.userData.openX || 0) : 0;
+      else it.position.z = open ? (it.userData.openZ || 0) : 0;
     }
 
     const hasIlot = placed.some((p) => p.type.zone === 'ilot');
@@ -1344,6 +1538,13 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
             </button>
           ))}
         </div>
+        <button
+          onClick={() => setShowHuman((v) => !v)}
+          aria-pressed={showHuman}
+          className={`w-full text-xs font-semibold rounded-full py-1 transition-colors ${showHuman ? 'bg-noir text-white' : 'bg-beige/60 text-noir/60'}`}
+        >
+          🧍 Échelle 1,80 m
+        </button>
       </div>
 
       {/* Réalité augmentée */}

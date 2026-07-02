@@ -31,7 +31,7 @@ export async function Header() {
               alt="Au Format - Menuiserie sur mesure Cysoing Lille Montreuil Le Touquet"
               width={200}
               height={65}
-              className="h-12 lg:h-14 xl:h-16 w-auto object-contain"
+              className="h-14 lg:h-16 xl:h-20 w-auto object-contain"
               priority
             />
           </Link>

@@ -15,7 +15,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!quote) {
       return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 });
     }
-    if (auth.role !== 'admin' && quote.userId !== auth.userId) {
+    // Devis = argent : réservé à l'admin, jamais accessible au client.
+    if (auth.role !== 'admin') {
       return NextResponse.json({ error: 'Acces interdit' }, { status: 403 });
     }
     return NextResponse.json(quote);

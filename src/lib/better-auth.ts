@@ -23,6 +23,10 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
+    // Aucune inscription libre : les comptes sont créés en interne par un admin.
+    // Le login des comptes existants reste ouvert ; la définition du mot de passe
+    // se fait via « Mot de passe oublié » (sendResetPassword).
+    disableSignUp: true,
     requireEmailVerification: false,
     password: {
       hash: async (password) => {
@@ -109,6 +113,16 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
+        // Verrou anti-inscription : on n'autorise la création d'un utilisateur (y compris via
+        // Google) que si un profil existe déjà pour cet email (créé en interne par un admin).
+        // La liaison de compte (accountLinking) sur un email existant ne passe PAS par ce hook.
+        before: async (user) => {
+          const email = String((user as Record<string, unknown>).email || '').toLowerCase().trim();
+          if (!email) return false;
+          const { rows } = await pool.query('SELECT id FROM profiles WHERE lower(email) = $1 LIMIT 1', [email]);
+          if (rows.length === 0) return false; // inscription libre bloquée
+          return { data: user };
+        },
         after: async (user) => {
           const u = user as Record<string, unknown>;
           const name = String(u.full_name || u.name || u.email || '').split('@')[0];

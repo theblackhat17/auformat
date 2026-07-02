@@ -36,6 +36,11 @@ type Placed = {
   row: RowKey;
   /** Bas réel du caisson au-dessus du sol (mm) — utilisé par la 3D quelle que soit la rangée */
   floorBottom: number;
+  /** Fusion visuelle : collé au module suivant (droite) / précédent (gauche) de la rangée */
+  mergedRight?: boolean;
+  mergedLeft?: boolean;
+  /** Module empilé sur le dessus d'un autre (pas de plinthe ni plan de travail) */
+  stacked?: boolean;
 };
 
 export type LayoutRow = { key: RowKey; label: string; top: number; width: number };
@@ -49,6 +54,7 @@ const ROW_LABELS: Record<string, string> = {
 export function layoutModules(config: CompositionConfig, moduleTypes: ConfigurateurModuleType[]): { placed: Placed[]; totalWidth: number; linearWidth: number; maxTop: number; ilotDepth: number; rows: LayoutRow[] } {
   const placed: Placed[] = [];
   const freeModules: { mod: CompositionModule; type: ConfigurateurModuleType }[] = [];
+  const stackedMods: { mod: CompositionModule; type: ConfigurateurModuleType }[] = [];
   const rowMods: Record<RowKey, { mod: CompositionModule; type: ConfigurateurModuleType }[]> = {
     principal: [], retour_gauche: [], retour_droit: [], ilot: [],
   };
@@ -56,6 +62,11 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
   for (const mod of config.modules) {
     const type = getModuleType(moduleTypes, mod.typeSlug);
     if (!type) continue;
+    if (mod.empileSur) {
+      // Module empilé : placé après ses supports (résolution en cascade)
+      stackedMods.push({ mod, type });
+      continue;
+    }
     if (type.zone === 'haut') {
       // Suspendu : position libre, ne consomme pas de linéaire (placé après les modules posés)
       freeModules.push({ mod, type });
@@ -67,24 +78,34 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
     rowMods[row].push({ mod, type });
   }
 
+  // Fileurs et joues de finition sont des panneaux pleins posés à ras du sol (pas de plinthe)
+  const isPanelFloor = (type: ConfigurateurModuleType) => type.slug === 'fileur' || type.slug === 'joue_finition';
   // Les éléments d'environnement posés (porte de pièce…) partent du sol ; l'îlot repose sur sa plinthe
   const realBottom = (mod: CompositionModule, type: ConfigurateurModuleType) =>
     type.zone === 'ilot' ? PLINTH
-      : type.zone === 'bas' ? (type.decor ? 0 : mod.options['suspendu'] > 0 ? SUSPENDU_BOTTOM : PLINTH) : 0;
+      : type.zone === 'bas' ? (type.decor || isPanelFloor(type) ? 0 : mod.options['suspendu'] > 0 ? SUSPENDU_BOTTOM : PLINTH) : 0;
+  // Sommet occupé par un bandeau de finition (auto = jusqu'au plafond) — sert à cadrer le dessin
+  const ceilingH = config.hauteurPlafond ?? 2500;
+  const bandeauTopMm = (mod: CompositionModule, bottom: number) =>
+    mod.bandeau ? (mod.bandeauHauteur != null ? bottom + mod.hauteur + mod.bandeauHauteur : ceilingH) : 0;
 
   // Rangée principale : l'élévation du mur
   let cursor = 0;
   let lastLinearX = 0;
   let lastBasX: number | null = null;
   let maxTop = 1000;
-  for (const { mod, type } of rowMods.principal) {
-    cursor += mod.ecartGauche || 0; // décalage libre dans la rangée
+  for (let i = 0; i < rowMods.principal.length; i++) {
+    const { mod, type } = rowMods.principal[i];
+    const prev = rowMods.principal[i - 1]?.mod;
+    const mergedLeft = !!prev?.fusionSuivant;
+    const mergedRight = !!mod.fusionSuivant && i < rowMods.principal.length - 1;
+    if (!mergedLeft) cursor += mod.ecartGauche || 0; // décalage libre dans la rangée (ignoré si collé au précédent)
     const bottom = realBottom(mod, type);
-    placed.push({ module: mod, type, x: cursor, bottom, free: false, row: 'principal', floorBottom: bottom });
+    placed.push({ module: mod, type, x: cursor, bottom, free: false, row: 'principal', floorBottom: bottom, mergedLeft, mergedRight });
     lastLinearX = cursor;
     if (type.zone === 'bas') lastBasX = cursor;
-    maxTop = Math.max(maxTop, bottom + mod.hauteur);
-    cursor += mod.largeur + GAP;
+    maxTop = Math.max(maxTop, bottom + mod.hauteur, bandeauTopMm(mod, bottom));
+    cursor += mod.largeur + (mergedRight ? 0 : GAP);
   }
   const linearWidth = Math.max(cursor - GAP, 0);
 
@@ -105,11 +126,15 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
     for (const { mod, type } of freeInRow) bandH = Math.max(bandH, (mod.posY ?? type.posYDefaut ?? HAUT_BOTTOM_DEFAULT) + mod.hauteur);
     const rowFloor = bandTop - bandH; // « sol » de cette élévation, en coordonnées du dessin
     let rcursor = 0;
-    for (const { mod, type } of mods) {
-      rcursor += mod.ecartGauche || 0;
+    for (let i = 0; i < mods.length; i++) {
+      const { mod, type } = mods[i];
+      const prev = mods[i - 1]?.mod;
+      const mergedLeft = !!prev?.fusionSuivant;
+      const mergedRight = !!mod.fusionSuivant && i < mods.length - 1;
+      if (!mergedLeft) rcursor += mod.ecartGauche || 0;
       const fb = realBottom(mod, type);
-      placed.push({ module: mod, type, x: rcursor, bottom: rowFloor + fb, free: false, row: key, floorBottom: fb });
-      rcursor += mod.largeur + GAP;
+      placed.push({ module: mod, type, x: rcursor, bottom: rowFloor + fb, free: false, row: key, floorBottom: fb, mergedLeft, mergedRight });
+      rcursor += mod.largeur + (mergedRight ? 0 : GAP);
     }
     let width = Math.max(rcursor - GAP, 0);
     for (const { mod, type } of freeInRow) {
@@ -132,8 +157,57 @@ export function layoutModules(config: CompositionConfig, moduleTypes: Configurat
     maxTop = Math.max(maxTop, bottom + mod.hauteur);
   }
 
+  // Modules empilés : posés sur le dessus de leur support, résolus en cascade (support d'abord)
+  const placedById = new Map(placed.map((p) => [p.module.id, p]));
+  let stackedRight = 0;
+  const pending = [...stackedMods];
+  let progress = true;
+  while (progress && pending.length) {
+    progress = false;
+    for (let i = pending.length - 1; i >= 0; i--) {
+      const { mod, type } = pending[i];
+      const base = placedById.get(mod.empileSur as string);
+      if (!base) continue; // support pas encore placé (autre empilé) : on réessaie
+      const p: Placed = {
+        module: mod, type,
+        x: base.x + (mod.empileOffset || 0),
+        bottom: base.bottom + base.module.hauteur,
+        free: false, row: base.row,
+        floorBottom: base.floorBottom + base.module.hauteur,
+        stacked: true,
+      };
+      placed.push(p);
+      placedById.set(mod.id, p);
+      stackedRight = Math.max(stackedRight, p.x + mod.largeur);
+      maxTop = Math.max(maxTop, p.floorBottom + mod.hauteur, bandeauTopMm(mod, p.floorBottom));
+      pending.splice(i, 1);
+      progress = true;
+    }
+  }
+  // Supports introuvables (supprimés / cycle) : repli au sol dans la rangée principale
+  for (const { mod, type } of pending) {
+    const bottom = realBottom(mod, type);
+    placed.push({ module: mod, type, x: 0, bottom, free: false, row: 'principal', floorBottom: bottom });
+    stackedRight = Math.max(stackedRight, mod.largeur);
+    maxTop = Math.max(maxTop, bottom + mod.hauteur);
+  }
+
   const freeRight = placed.filter((p) => p.free).reduce((m, p) => Math.max(m, p.x + p.module.largeur), 0);
-  return { placed, totalWidth: Math.max(linearWidth, freeRight, rowsWidth), linearWidth, maxTop, ilotDepth: below, rows };
+  return { placed, totalWidth: Math.max(linearWidth, freeRight, rowsWidth, stackedRight), linearWidth, maxTop, ilotDepth: below, rows };
+}
+
+/** Hauteurs des tringles de penderie selon la disposition choisie (simple/double, haut/bas).
+ *  Renvoie les Y (dans l'unité de freeBottom/freeTop) où poser chaque tringle, de haut en bas. */
+export function penderieRails(mod: CompositionModule, freeBottom: number, freeTop: number): number[] {
+  const o = mod.options;
+  const Hf = Math.max(freeTop - freeBottom, 0);
+  const topY = freeTop - Hf * 0.06;
+  const midY = freeBottom + Hf * 0.5;
+  if ((o['penderie_simple_bas'] ?? 0) > 0) return [midY];
+  if ((o['penderie_double'] ?? 0) > 0) return [topY, midY];
+  if ((o['penderie_double_haut'] ?? 0) > 0) return [topY, topY - Hf * 0.3];
+  if ((o['penderie_double_bas'] ?? 0) > 0) return [midY, freeBottom + Hf * 0.24];
+  return [topY]; // simple en haut (défaut)
 }
 
 /** Positions des étagères (mm depuis le bas du module) : personnalisées ou réparties automatiquement */
@@ -249,7 +323,7 @@ export function CompoCanvas({ config, moduleTypes, materials, univers, selectedI
 
   // Plans de travail : une bande par suite contiguë de modules « bas » posés, rangée par rangée
   const planEligible = (p: Placed) =>
-    p.type.zone === 'bas' && !p.type.decor && !(p.module.options['suspendu'] > 0) && !((p.module.options['sans_plan'] ?? 0) > 0);
+    p.type.zone === 'bas' && !p.type.decor && !p.stacked && !(p.module.options['suspendu'] > 0) && !((p.module.options['sans_plan'] ?? 0) > 0);
   const planRuns: { x: number; width: number; top: number }[] = [];
   if (config.planTravail && univers?.planTravail?.disponible) {
     for (const rowKey of ['principal', 'retour_gauche', 'retour_droit'] as RowKey[]) {
@@ -377,9 +451,12 @@ export function CompoCanvas({ config, moduleTypes, materials, univers, selectedI
 
       {/* Façade coulissante d'ensemble (par-dessus les modules) */}
       {coulissante && (() => {
-        const vantaux = Math.min(4, Math.max(2, config.facadeVantaux ?? 2));
+        const maxV = Math.max(1, univers?.facadeCoulissante?.maxVantaux ?? 3);
+        const vantaux = Math.min(maxV, Math.max(1, config.facadeVantaux ?? 2));
         const panelW = linearWidth / vantaux;
         const fill = mainMaterial?.colorHex || '#D4A574';
+        // Sens de coulisse : le dernier vantail glisse vers l'intérieur, les autres alternent
+        const slideDir = (i: number) => (vantaux === 1 ? 1 : i === vantaux - 1 ? -1 : i % 2 === 0 ? 1 : -1);
         return (
           <g pointerEvents="none">
             {/* Rail */}
@@ -399,19 +476,38 @@ export function CompoCanvas({ config, moduleTypes, materials, univers, selectedI
                 strokeWidth={4}
               />
             ))}
-            {/* Poignées */}
-            {Array.from({ length: vantaux }, (_, i) => (
-              <line
-                key={`h${i}`}
-                x1={MARGIN_X + panelW * (i + 1) - 50}
-                y1={Y(maxLinearTop * 0.62)}
-                x2={MARGIN_X + panelW * (i + 1) - 50}
-                y2={Y(maxLinearTop * 0.38)}
-                stroke={darken(fill, 0.55)}
-                strokeWidth={9}
-                strokeLinecap="round"
-              />
-            ))}
+            {/* Poignées encastrées du côté du sens de glisse */}
+            {Array.from({ length: vantaux }, (_, i) => {
+              const dir = slideDir(i);
+              const hx = MARGIN_X + panelW * i + (dir > 0 ? panelW - 40 : 40);
+              return (
+                <line
+                  key={`h${i}`}
+                  x1={hx}
+                  y1={Y(maxLinearTop * 0.62)}
+                  x2={hx}
+                  y2={Y(maxLinearTop * 0.38)}
+                  stroke={darken(fill, 0.55)}
+                  strokeWidth={9}
+                  strokeLinecap="round"
+                />
+              );
+            })}
+            {/* Flèches indiquant le sens de coulisse de chaque vantail */}
+            {Array.from({ length: vantaux }, (_, i) => {
+              const dir = slideDir(i);
+              const cx = MARGIN_X + panelW * i + panelW / 2;
+              const cy = Y(maxLinearTop * 0.5);
+              const len = Math.min(panelW * 0.3, 120);
+              const x1 = cx - (dir * len) / 2;
+              const x2 = cx + (dir * len) / 2;
+              return (
+                <g key={`a${i}`} stroke="#2C5F2D" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" fill="none" opacity={0.85}>
+                  <line x1={x1} y1={cy} x2={x2} y2={cy} />
+                  <path d={`M ${x2} ${cy} l ${-dir * 22} -16 M ${x2} ${cy} l ${-dir * 22} 16`} />
+                </g>
+              );
+            })}
           </g>
         );
       })()}
@@ -487,11 +583,14 @@ function ModuleShape({
   offsetX: number;
 }) {
   const { unit } = useUnit();
-  const { module: mod, type, x, bottom, free } = placed;
+  const { module: mod, type, x, bottom, free, mergedLeft, mergedRight, stacked } = placed;
   const material = moduleMaterial(materials, config, mod.materialIndex);
   const fill = material?.colorHex || '#D4A574';
   const stroke = darken(fill, 0.35);
   const inner = darken(fill, 0.12);
+  // Matériau intérieur distinct de l'extérieur (fonds, étagères, niches). null = assorti au caisson.
+  const interieurMat = mod.interieurMaterialIndex != null ? materials[mod.interieurMaterialIndex] : null;
+  const innerFill = interieurMat ? interieurMat.colorHex : fill;
 
   const X = offsetX + x;
   const top = bottom + mod.hauteur;
@@ -521,6 +620,8 @@ function ModuleShape({
   const isVitre = type.slug === 'meuble_haut_vitre';
   const isBouteilles = type.slug === 'range_bouteilles';
   const isCoiffeuse = type.slug === 'coiffeuse';
+  /** Penderie : les tiroirs se logent en bas, sous l'espace de tringle */
+  const isPenderie = type.slug === 'module_penderie';
   /** Panneaux pleins sans caisson ni façade : dalle, fileur, joue de finition */
   const isPanneauPlein = isPlanLibre || type.slug === 'fileur' || type.slug === 'joue_finition';
   const isDecor = !!type.decor;
@@ -826,12 +927,21 @@ function ModuleShape({
       </g>
     );
   } else {
-    // Répartition façade : zone de tiroirs réglable (sinon automatique, en partie haute)
-    const autoZone = portes > 0 ? innerH * 0.4 : isBanc ? innerH * 0.75 : innerH;
+    // Répartition façade : zone de tiroirs réglable (sinon automatique).
+    // Pour la penderie, position des tiroirs ET de la tringle réglables (haut/bas) ;
+    // ailleurs, modules à tringle → tiroirs en bas par défaut.
+    const drawersAtBottom = isPenderie ? !((mod.options['tiroirs_haut'] ?? 0) > 0) : tringles > 0;
+    const penderieEnBas = (mod.options['penderie_bas'] ?? 0) > 0;
+    const autoZone = portes > 0 ? innerH * 0.4 : isBanc ? innerH * 0.75 : (isPenderie || tringles > 0) ? innerH * 0.4 : innerH;
     const drawerZoneH = tiroirs > 0 ? Math.min(innerH, Math.max(120, mod.tiroirsHauteur ?? autoZone)) : 0;
+    // Espace intérieur libre (hors zone de tiroirs) où logent penderie + étagères
+    const freeBottom = drawersAtBottom ? innerBottom + drawerZoneH : innerBottom;
+    const freeTop = drawersAtBottom ? innerTop : innerTop - drawerZoneH;
+    // Tringle ancrée en haut de l'espace libre (penderie haut) ou plus bas (penderie bas)
+    const penderieAnchor = penderieEnBas ? freeBottom + Math.min(freeTop - freeBottom, 1000) : freeTop;
     for (let i = 0; i < tiroirs; i++) {
       const th = drawerZoneH / tiroirs;
-      const ty = innerTop - i * th;
+      const ty = drawersAtBottom ? innerBottom + (i + 1) * th : innerTop - i * th;
       elements.push(
         <g key={`t${i}`}>
           <rect x={innerX} y={Y(ty)} width={innerW} height={th - 6} fill={facadeFill} stroke={facadeStroke} strokeWidth={2} rx={3} />
@@ -856,25 +966,41 @@ function ModuleShape({
 
     // Intérieur visible : étagères, tringles (masqués par les portes pleines/positionnelles ensuite)
     const interiorHidden = portes > 0 && !isVitre;
-    if (!interiorHidden) {
-      // Séparateurs verticaux : compartiments répartis sur la largeur
+    if (!interiorHidden && mod.grille && mod.grille.colonnes >= 1) {
+      // Bibliothèque à cases : colonnes régulières, étagères propres à chaque colonne
+      const cols = mod.grille.colonnes;
+      const colW = innerW / cols;
+      for (let i = 1; i < cols; i++) {
+        const sx = innerX + colW * i;
+        elements.push(<line key={`gd${i}`} x1={sx} y1={Y(freeTop)} x2={sx} y2={Y(freeBottom)} stroke={stroke} strokeWidth={5} />);
+      }
+      for (let c = 0; c < cols; c++) {
+        const n = mod.grille.etageresParColonne[c] ?? 0;
+        const cx0 = innerX + colW * c;
+        for (let k = 1; k <= n; k++) {
+          const gy = freeBottom + ((freeTop - freeBottom) / (n + 1)) * k;
+          elements.push(<line key={`gs${c}-${k}`} x1={cx0 + 2} y1={Y(gy)} x2={cx0 + colW - 2} y2={Y(gy)} stroke={stroke} strokeWidth={4} />);
+        }
+      }
+    } else if (!interiorHidden) {
+      // Séparateurs verticaux : compartiments répartis sur la largeur (dans l'espace libre)
       for (let i = 1; i <= separateurs; i++) {
         const sx = innerX + (innerW / (separateurs + 1)) * i;
-        elements.push(<line key={`sep${i}`} x1={sx} y1={Y(innerTop)} x2={sx} y2={Y(innerBottom)} stroke={stroke} strokeWidth={4} />);
+        elements.push(<line key={`sep${i}`} x1={sx} y1={Y(freeTop)} x2={sx} y2={Y(freeBottom)} stroke={stroke} strokeWidth={4} />);
       }
-      // Positions personnalisées ou réparties (mm depuis le bas du module)
-      const shelfYs = shelfPositions(mod, h).map((pos) => bottom + pos);
+      // Positions personnalisées ou réparties (mm depuis le bas), bornées à l'espace libre
+      const shelfYs = shelfPositions(mod, h).map((pos) => Math.min(freeTop - 60, Math.max(bottom + pos, freeBottom + 60)));
       shelfYs.forEach((ey, idx) => {
         // Étagères inclinées pour le meuble à chaussures
         const tilt = isChaussures ? 35 : 0;
         elements.push(<line key={`e${idx}`} x1={innerX} y1={Y(ey + tilt)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
       });
       {
-        // Tringles : une par compartiment, sous le dessus puis sous chaque étagère
-        const shelfBounds = [innerTop, ...shelfYs.slice().sort((a, b) => b - a)];
-        for (let i = 0; i < tringles; i++) {
-          const under = shelfBounds[i] ?? (shelfBounds[shelfBounds.length - 1] - 400 * (i - shelfBounds.length + 1));
-          const ry = Math.max(under - 120, innerBottom + 150);
+        // Tringles : disposition de penderie (simple/double, haut/bas) ; sinon empilées sous l'ancrage
+        const rails = isPenderie
+          ? penderieRails(mod, freeBottom, freeTop)
+          : Array.from({ length: tringles }, (_, i) => Math.max(penderieAnchor - 120 - i * 500, freeBottom + 150));
+        rails.forEach((ry, i) => {
           elements.push(
             <g key={`r${i}`} stroke={stroke}>
               <line x1={innerX} y1={Y(ry)} x2={innerX + innerW} y2={Y(ry)} strokeWidth={6} strokeLinecap="round" />
@@ -883,7 +1009,7 @@ function ModuleShape({
               ))}
             </g>
           );
-        }
+        });
       }
     }
 
@@ -893,7 +1019,8 @@ function ModuleShape({
     // Portes par position (dressing) — dessinées par-dessus l'intérieur
     if (portesPleines > 0) drawDoors(portesPleines, innerBottom, innerTop, 'pp');
     else {
-      const midY = innerBottom + innerH / 2;
+      // La porte haute descend jusqu'au sommet des tiroirs (comble le vide) ; sinon coupe au milieu
+      const midY = tiroirs > 0 && drawersAtBottom ? freeBottom : innerBottom + innerH / 2;
       if (portesBasses > 0) drawDoors(portesBasses, innerBottom, midY - 8, 'pb');
       if (portesHautes > 0) drawDoors(portesHautes, midY + 8, innerTop, 'ph');
     }
@@ -943,13 +1070,14 @@ function ModuleShape({
       role="button"
       aria-label={`${type.nom}, ${mod.largeur} par ${mod.hauteur} mm${free ? ' (déplaçable)' : ''}${selected ? ' (sélectionné)' : ''}`}
     >
-      {/* Socle : plinthe (défaut) ou pieds apparents (modules posés et îlot, matériau dédié si choisi) */}
-      {!isDecor && ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || type.zone === 'ilot') && (
+      {/* Socle : plinthe (défaut) ou pieds apparents (modules posés et îlot, matériau dédié si choisi).
+          Fusion : la plinthe court d'un bord à l'autre sur les modules collés pour rester continue. */}
+      {!isDecor && !isPanneauPlein && !stacked && ((type.zone === 'bas' && !(mod.options['suspendu'] > 0)) || type.zone === 'ilot') && (
         socle === 'plinthe' ? (
           <rect
-            x={X + 20}
+            x={X + (mergedLeft ? 0 : 20)}
             y={Y(bottom)}
-            width={w - 40}
+            width={w - (mergedLeft ? 0 : 20) - (mergedRight ? 0 : 20)}
             height={PLINTH - 4}
             fill={config.plintheMaterialIndex != null && materials[config.plintheMaterialIndex]
               ? materials[config.plintheMaterialIndex].colorHex
@@ -994,7 +1122,34 @@ function ModuleShape({
         strokeDasharray={isDecor && !selected ? '14 10' : undefined}
         rx={4}
       />
+      {/* Intérieur teinté (matériau intérieur distinct) : visible dans les rangements ouverts */}
+      {interieurMat && !isDecor && !isPanneauPlein && (
+        <rect x={innerX} y={Y(innerTop)} width={innerW} height={innerH} fill={innerFill} rx={2} pointerEvents="none" />
+      )}
+      {/* Fusion : masque le joint vertical avec le module précédent pour un rendu « un seul meuble » */}
+      {mergedLeft && !isDecor && (
+        <rect x={X - 3} y={Y(top)} width={6} height={h} fill={fill} pointerEvents="none" />
+      )}
       {elements}
+      {/* Bandeau de finition en haut (cache-trou vers le plafond) */}
+      {mod.bandeau && !isDecor && (() => {
+        const bTop = mod.bandeauHauteur != null
+          ? top + mod.bandeauHauteur
+          : (placed.row === 'principal' && !free ? (config.hauteurPlafond ?? 2500) : top + 400);
+        if (bTop <= top) return null;
+        return (
+          <rect
+            x={X}
+            y={Y(bTop)}
+            width={w}
+            height={bTop - top}
+            fill={facadeMatl ? facadeMatl.colorHex : fill}
+            stroke={selected ? '#2C5F2D' : stroke}
+            strokeWidth={2.5}
+            rx={3}
+          />
+        );
+      })()}
       {vasqueEls}
       {/* Bandeau LED */}
       {(led || sousMeubleLed) && (

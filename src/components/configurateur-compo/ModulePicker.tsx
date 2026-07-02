@@ -1,8 +1,9 @@
 'use client';
 
+import { useMemo, useState } from 'react';
 import type { ConfigurateurModuleType, ConfigurateurUnivers } from '@/lib/types';
 
-const ZONE_LABELS: Record<string, string> = {
+export const ZONE_LABELS: Record<string, string> = {
   bas: 'Posé au sol',
   haut: 'Suspendu',
   colonne: 'Toute hauteur',
@@ -24,7 +25,7 @@ const CLOTHES = ['#7d8a9b', '#a86b5a', '#5a7d6b', '#8a7a9b'];
  * Vignette en vue 3/4 : un volume isométrique avec le détail explicite du module
  * (portes, tiroirs, four, hublot, livres, plantes…) — lisible d'un coup d'œil.
  */
-function ModuleThumb({ type }: { type: ConfigurateurModuleType }) {
+export function ModuleThumb({ type }: { type: ConfigurateurModuleType }) {
   const W = 128, H = 106;
   const DX = 13, DY = 9; // profondeur de la vue 3/4
   const slug = type.slug;
@@ -403,32 +404,70 @@ export function ModulePicker({
   onAdd: (type: ConfigurateurModuleType) => void;
   onClose: () => void;
 }) {
+  const [query, setQuery] = useState('');
+  // Recherche insensible à la casse/accents sur le nom, la description et la zone
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const q = norm(query.trim());
+  const matches = (t: ConfigurateurModuleType) =>
+    !q || norm(`${t.nom} ${t.description ?? ''} ${ZONE_LABELS[t.zone] ?? ''}`).includes(q);
+
   // Sections groupées par univers, l'univers courant d'abord
-  const sections = [...universList]
+  const sections = useMemo(() => [...universList]
     .filter((u) => u.actif)
     .sort((a, b) => (a.slug === universSlug ? -1 : b.slug === universSlug ? 1 : a.sortOrder - b.sortOrder))
     .map((u) => ({
       univers: u,
       modules: moduleTypes
-        .filter((t) => t.actif && t.univers.includes(u.slug))
+        .filter((t) => t.actif && t.univers.includes(u.slug) && matches(t))
         .sort((a, b) => a.sortOrder - b.sortOrder),
     }))
-    .filter((s) => s.modules.length > 0);
+    .filter((s) => s.modules.length > 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [universList, universSlug, moduleTypes, q]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="fixed inset-0 bg-noir/45 animate-fade-in" onClick={onClose} aria-hidden="true" />
       <div className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-[0_24px_64px_-16px_rgba(43,43,43,0.35)] w-full max-w-3xl max-h-[85vh] overflow-y-auto animate-scale-in">
-        <div className="sticky top-0 bg-white z-10 flex items-center justify-between px-6 py-4 border-b border-noir/8">
-          <div>
-            <h2 className="font-display text-xl text-noir">Galerie de modules</h2>
-            <p className="text-xs text-noir/55 mt-0.5">Tout le catalogue, quel que soit votre univers — mélangez librement.</p>
+        <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-noir/8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl text-noir">Galerie de modules</h2>
+              <p className="text-xs text-noir/55 mt-0.5">Tout le catalogue, quel que soit votre univers — mélangez librement.</p>
+            </div>
+            <button onClick={onClose} aria-label="Fermer" className="p-1.5 rounded-full hover:bg-beige/70 text-noir/55 hover:text-noir transition-colors shrink-0">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button onClick={onClose} aria-label="Fermer" className="p-1.5 rounded-full hover:bg-beige/70 text-noir/55 hover:text-noir transition-colors">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          {/* Recherche dans tout le catalogue */}
+          <div className="relative mt-3">
+            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-noir/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
-          </button>
+            <input
+              type="search"
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Rechercher un module (penderie, tiroirs, four…)"
+              aria-label="Rechercher un module"
+              className="w-full pl-9 pr-9 py-2.5 rounded-xl border border-noir/12 bg-beige/40 text-sm text-noir placeholder:text-noir/40 focus:outline-none focus:border-vert-foret focus:bg-white transition-colors"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                aria-label="Effacer la recherche"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-noir/8 text-noir/45 hover:text-noir transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="p-5 space-y-7">
@@ -458,7 +497,11 @@ export function ModulePicker({
               </div>
             </section>
           ))}
-          {sections.length === 0 && <p className="text-center text-sm text-noir/55 py-8">Aucun module disponible.</p>}
+          {sections.length === 0 && (
+            <p className="text-center text-sm text-noir/55 py-8">
+              {q ? <>Aucun module ne correspond à « {query.trim()} ».</> : 'Aucun module disponible.'}
+            </p>
+          )}
         </div>
       </div>
     </div>

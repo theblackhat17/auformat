@@ -1,8 +1,6 @@
-import type { Metadata } from 'next';
-import { AdminDashboardClient } from './AdminDashboardClient';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Administration' };
-
-export default function AdminDashboardPage() {
-  return <AdminDashboardClient />;
+// La gestion de projet est le cœur de l'admin : l'accueil ouvre directement le hub Projets.
+export default function AdminHomePage() {
+  redirect('/admin/projets');
 }

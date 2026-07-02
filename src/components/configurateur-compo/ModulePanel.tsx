@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import type { CompositionConfig, CompositionModule, ConfigurateurMaterial, ConfigurateurModuleType, ConfigurateurUnivers, PoigneeFinition, StyleFacade } from '@/lib/types';
 import { HAUT_BOTTOM_DEFAULT, shelfPositions } from './CompoCanvas';
+import { getModuleType } from './pricingCompo';
 import { useUnit, toDisplay, fromDisplay, fmtLen, unitLabel } from './units';
 
 const STYLE_FACADE_LABELS: Record<StyleFacade, string> = {
@@ -110,20 +111,24 @@ function MaterialSwatches({
             onClick={() => onChange(i)}
             aria-pressed={value === i}
             aria-label={m.name}
-            className={`relative block w-11 h-11 rounded-lg border-2 overflow-hidden transition-transform ${
+            className={`relative block w-12 h-12 rounded-lg border-2 overflow-hidden transition-transform ${
               value === i ? 'border-vert-foret scale-110 shadow-md' : 'border-noir/15 hover:scale-105'
             }`}
             style={{ backgroundColor: m.colorHex }}
           >
-            {/* Veinage suggéré pour les décors bois */}
-            {m.renderType === 'bois' && (
-              <span
-                aria-hidden="true"
-                className="absolute inset-0"
-                style={{ background: `repeating-linear-gradient(100deg, transparent 0 3px, ${m.grainHex || '#8B6F47'}33 3px 4px, transparent 4px 9px)` }}
-              />
+            {/* Photo du matériau dès qu'elle existe (sélection type « échantillon ») */}
+            {m.image ? (
+              <Image src={m.image} alt="" fill sizes="48px" className="object-cover" />
+            ) : (
+              /* Sinon veinage suggéré pour les décors bois */
+              m.renderType === 'bois' && (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0"
+                  style={{ background: `repeating-linear-gradient(100deg, transparent 0 3px, ${m.grainHex || '#8B6F47'}33 3px 4px, transparent 4px 9px)` }}
+                />
+              )
             )}
-            {!m.renderType && m.image && <Image src={m.image} alt="" fill sizes="44px" className="object-cover" />}
           </button>
           {/* Nom au survol */}
           <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 px-2 py-1 rounded-md bg-noir text-white text-[11px] whitespace-nowrap opacity-0 group-hover/swatch:opacity-100 transition-opacity z-20">
@@ -135,7 +140,7 @@ function MaterialSwatches({
   );
 }
 
-function Counter({ label, value, max, onChange, hint }: { label: string; value: number; max: number; onChange: (v: number) => void; hint?: string }) {
+function Counter({ label, value, max, onChange, hint, min = 0 }: { label: string; value: number; max: number; onChange: (v: number) => void; hint?: string; min?: number }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5">
       <div>
@@ -145,8 +150,8 @@ function Counter({ label, value, max, onChange, hint }: { label: string; value: 
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => onChange(Math.max(0, value - 1))}
-          disabled={value <= 0}
+          onClick={() => onChange(Math.max(min, value - 1))}
+          disabled={value <= min}
           aria-label={`Retirer ${label}`}
           className="w-8 h-8 rounded-full border border-noir/20 text-noir flex items-center justify-center hover:border-noir disabled:opacity-30 transition-colors"
         >
@@ -203,18 +208,28 @@ export function ModulePanel({
   onDuplicate,
   onRemove,
   onPos,
-  onEcart,
   onTiroirsHauteur,
   onEtagerePos,
   onFacadeMaterial,
+  onInterieurMaterial,
   onStyleFacade,
   onApplyMaterialAll,
   onMur,
+  onFusion,
+  onBandeau,
+  onBandeauHauteur,
+  onGrille,
+  onGrilleColonnes,
+  onGrilleEtageres,
+  onEmpile,
+  onEmpileOffset,
+  moduleTypes,
 }: {
   module: CompositionModule;
   type: ConfigurateurModuleType;
   config: CompositionConfig;
   materials: ConfigurateurMaterial[];
+  moduleTypes: ConfigurateurModuleType[];
   moduleCount: number;
   totalWidth: number;
   showPrices: boolean;
@@ -225,16 +240,43 @@ export function ModulePanel({
   onDuplicate: () => void;
   onRemove: () => void;
   onPos: (posX: number | null, posY: number | null) => void;
-  onEcart: (value: number) => void;
   onTiroirsHauteur: (value: number | null) => void;
   onEtagerePos: (index: number, value: number | null) => void;
   onFacadeMaterial: (index: number | null) => void;
+  onInterieurMaterial: (index: number | null) => void;
   onStyleFacade: (value: StyleFacade) => void;
   onApplyMaterialAll: (index: number) => void;
   onMur: (value: 'principal' | 'retour_gauche' | 'retour_droit') => void;
+  onFusion: (value: boolean) => void;
+  onBandeau: (value: boolean) => void;
+  onBandeauHauteur: (value: number | null) => void;
+  onGrille: (value: { colonnes: number; etageresParColonne: number[] } | null) => void;
+  onGrilleColonnes: (value: number) => void;
+  onGrilleEtageres: (col: number, value: number) => void;
+  onEmpile: (baseId: string | null) => void;
+  onEmpileOffset: (value: number) => void;
 }) {
   const { unit } = useUnit();
   const isFree = type.zone === 'haut';
+  const isPosed = type.zone === 'bas' || type.zone === 'colonne';
+  /** Modules à rayonnage ouvert : éligibles au mode « bibliothèque à cases » */
+  const canGrid = type.options.some((o) => o.slug === 'etagere');
+  /** Empilement : un module posé peut se poser sur un autre (hors suspendu, îlot, décor) */
+  const canStack = !type.decor && type.zone !== 'haut' && type.zone !== 'ilot';
+  // Descendants (modules empilés sur celui-ci, en cascade) exclus pour éviter les cycles
+  const stackDescendants = new Set<string>();
+  {
+    const stack = [mod.id];
+    while (stack.length) {
+      const cur = stack.pop() as string;
+      for (const m of config.modules) if (m.empileSur === cur && !stackDescendants.has(m.id)) { stackDescendants.add(m.id); stack.push(m.id); }
+    }
+  }
+  const baseCandidates = config.modules
+    .map((m, idx) => ({ m, idx, t: getModuleType(moduleTypes, m.typeSlug) }))
+    .filter(({ m, t }) => m.id !== mod.id && !stackDescendants.has(m.id) && t && !t.decor);
+  const baseModule = mod.empileSur ? config.modules.find((m) => m.id === mod.empileSur) : null;
+  const baseW = baseModule?.largeur ?? null;
   const posX = mod.posX ?? 0;
   const posY = mod.posY ?? HAUT_BOTTOM_DEFAULT;
   const nbTiroirs = mod.options['tiroir'] ?? 0;
@@ -363,19 +405,57 @@ export function ModulePanel({
         </div>
       )}
 
-      {/* Décalage dans la rangée (modules posés) */}
-      {!isFree && (
+      {/* Pose : au sol ou empilé sur un autre module (caissons superposés) */}
+      {canStack && baseCandidates.length > 0 && (
         <div className="mt-4">
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-sm font-medium text-noir">Écart à gauche</label>
-            <span className="text-sm tabular-nums text-noir/70">
-              <NumField value={mod.ecartGauche || 0} min={0} max={3000} onCommit={onEcart} ariaLabel="Écart à gauche" /> {unitLabel(unit)}
-            </span>
-          </div>
-          <input type="range" min={0} max={1500} step={10} value={mod.ecartGauche || 0} onChange={(e) => onEcart(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Écart à gauche" />
-          <p className="text-xs text-noir/55 mt-0.5">Décale ce module dans la rangée — glissez-le aussi directement sur le dessin.</p>
+          <p className="text-sm font-medium text-noir mb-1.5">Pose</p>
+          <select
+            value={mod.empileSur ?? ''}
+            onChange={(e) => onEmpile(e.target.value || null)}
+            aria-label="Pose du module"
+            className="w-full px-2.5 py-2 text-sm border border-noir/20 rounded-lg focus:outline-none focus:border-vert-foret bg-white"
+          >
+            <option value="">Posé au sol</option>
+            {baseCandidates.map(({ m, idx, t }) => (
+              <option key={m.id} value={m.id}>Posé sur : #{idx + 1} {t?.nom}</option>
+            ))}
+          </select>
+          {mod.empileSur && baseW != null && (
+            <div className="mt-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-noir/80">Position horizontale</label>
+                <span className="text-xs tabular-nums text-noir/70">
+                  <NumField value={mod.empileOffset ?? 0} min={Math.min(0, baseW - mod.largeur) - 300} max={Math.max(0, baseW - mod.largeur) + 300} onCommit={onEmpileOffset} ariaLabel="Décalage horizontal" className="w-16 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> {unitLabel(unit)}
+                </span>
+              </div>
+              <div className="flex gap-1.5 mb-2" role="group" aria-label="Alignement">
+                {([['Gauche', 0], ['Centré', Math.round((baseW - mod.largeur) / 2)], ['Droite', baseW - mod.largeur]] as const).map(([label, val]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => onEmpileOffset(val)}
+                    className={`flex-1 px-2 py-1 rounded-full text-xs font-medium border transition-colors ${(mod.empileOffset ?? 0) === val ? 'bg-noir text-white border-noir' : 'bg-transparent text-noir/70 border-noir/20 hover:border-noir'}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="range"
+                min={Math.min(0, baseW - mod.largeur) - 300}
+                max={Math.max(0, baseW - mod.largeur) + 300}
+                step={10}
+                value={mod.empileOffset ?? 0}
+                onChange={(e) => onEmpileOffset(Number(e.target.value))}
+                className="w-full accent-vert-foret"
+                aria-label="Décalage horizontal du module empilé"
+              />
+              <p className="text-xs text-noir/55 mt-0.5">Ce module est posé sur le dessus du module choisi. Glisse-le à gauche, à droite, ou n&apos;importe où.</p>
+            </div>
+          )}
         </div>
       )}
+
 
       {/* Hauteur de la zone tiroirs */}
       {nbTiroirs > 0 && (
@@ -468,6 +548,95 @@ export function ModulePanel({
         </div>
       )}
 
+      {/* Matériau intérieur : distinct de l'extérieur (fonds, étagères, niches) */}
+      {!isDecor && (
+        <div className="mt-5">
+          <p className="text-sm font-medium text-noir mb-2">Matériau intérieur</p>
+          <MaterialSwatches materials={materials} value={mod.interieurMaterialIndex ?? null} onChange={onInterieurMaterial} allowInherit showPrices={showPrices} />
+          <p className="text-xs text-noir/55 mt-1.5">
+            {mod.interieurMaterialIndex == null
+              ? 'Assorti au caisson — choisissez une teinte pour contraster l’intérieur.'
+              : `Intérieur en ${materials[mod.interieurMaterialIndex]?.name}`}
+          </p>
+        </div>
+      )}
+
+      {/* Bibliothèque à cases : grille de colonnes, étagères réglables par colonne */}
+      {!isDecor && canGrid && (
+        <div className="mt-5 border-t border-noir/8 pt-4">
+          <Toggle
+            label="Bibliothèque à cases"
+            hint="Crée une grille de colonnes ; règle le nombre d'étagères de chaque colonne indépendamment."
+            value={!!mod.grille}
+            onChange={(v) => onGrille(v ? { colonnes: 3, etageresParColonne: [3, 3, 3] } : null)}
+          />
+          {mod.grille && (
+            <div className="mt-1 space-y-3">
+              <Counter label="Nombre de colonnes" value={mod.grille.colonnes} min={1} max={8} onChange={onGrilleColonnes} />
+              <div>
+                <p className="text-sm font-medium text-noir mb-2">Étagères par colonne <span className="text-xs text-noir/55 font-normal">(intérieures)</span></p>
+                <div className="flex flex-wrap gap-2">
+                  {mod.grille.etageresParColonne.map((n, c) => (
+                    <div key={c} className="flex items-center gap-1.5 border border-noir/15 rounded-lg pl-2 pr-1 py-1">
+                      <span className="text-xs font-medium text-noir/60">C{c + 1}</span>
+                      <button type="button" onClick={() => onGrilleEtageres(c, n - 1)} disabled={n <= 0} aria-label={`Retirer une étagère colonne ${c + 1}`} className="w-6 h-6 rounded-full border border-noir/20 text-noir flex items-center justify-center hover:border-noir disabled:opacity-30">−</button>
+                      <span className="w-4 text-center text-sm font-semibold tabular-nums">{n}</span>
+                      <button type="button" onClick={() => onGrilleEtageres(c, n + 1)} disabled={n >= 12} aria-label={`Ajouter une étagère colonne ${c + 1}`} className="w-6 h-6 rounded-full border border-noir/20 text-noir flex items-center justify-center hover:border-noir disabled:opacity-30">+</button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-noir/55 mt-1.5">En mode « cases », les réglages d&apos;étagères et de séparateurs ci-dessous sont ignorés.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Fusion visuelle avec le module suivant (modules posés d'une même rangée) */}
+      {!isDecor && isPosed && (
+        <div className="mt-4 border-t border-noir/8">
+          <Toggle
+            label="Fusionner avec le module suivant"
+            hint="Colle ce module au suivant : socle continu, pas de séparation visible — pour n'en faire qu'un seul meuble."
+            value={mod.fusionSuivant ?? false}
+            onChange={onFusion}
+          />
+        </div>
+      )}
+
+      {/* Bandeau de finition : cache-trou entre le haut du module et le plafond */}
+      {!isDecor && (
+        <div className="mt-1 border-t border-noir/8">
+          <Toggle
+            label="Bandeau de finition en haut"
+            hint="Panneau plein au-dessus du module pour combler le vide jusqu'au plafond."
+            value={mod.bandeau ?? false}
+            onChange={onBandeau}
+          />
+          {mod.bandeau && (
+            <div className="pb-2.5">
+              <Pills
+                label="Hauteur du bandeau"
+                options={{ auto: 'Jusqu’au plafond', manuel: 'Hauteur définie' } as Record<'auto' | 'manuel', string>}
+                value={mod.bandeauHauteur == null ? 'auto' : 'manuel'}
+                onChange={(v) => onBandeauHauteur(v === 'auto' ? null : Math.max(20, Math.round((config.hauteurPlafond ?? 2500) - mod.hauteur)))}
+              />
+              {mod.bandeauHauteur != null && (
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-medium text-noir/80">Hauteur</label>
+                    <span className="text-xs tabular-nums text-noir/70">
+                      <NumField value={mod.bandeauHauteur} min={20} max={1200} onCommit={onBandeauHauteur} ariaLabel="Hauteur du bandeau" className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret" /> {unitLabel(unit)}
+                    </span>
+                  </div>
+                  <input type="range" min={20} max={1200} step={10} value={mod.bandeauHauteur} onChange={(e) => onBandeauHauteur(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Hauteur du bandeau" />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {isDecor && (
         <p className="mt-4 text-xs text-noir/60 bg-beige/60 rounded-xl p-3.5 leading-relaxed">
           Élément d&apos;environnement : il situe votre pièce (fenêtre, porte, radiateur…) sur le plan et n&apos;est jamais compté dans le devis.
@@ -503,7 +672,7 @@ export function ModulePanel({
           {/* Groupes de choix exclusifs (ex. style de poignée) */}
           {Array.from(new Set(type.options.filter((o) => o.type === 'choix').map((o) => o.groupe || 'choix'))).map((groupe) => {
             const members = type.options.filter((o) => o.type === 'choix' && (o.groupe || 'choix') === groupe);
-            const groupLabels: Record<string, string> = { poignee: 'Style de poignées', sens_ouverture: "Sens d'ouverture (porte seule)", socle: 'Socle' };
+            const groupLabels: Record<string, string> = { poignee: 'Style de poignées', sens_ouverture: "Sens d'ouverture (porte seule)", socle: 'Socle', penderie_disposition: 'Disposition de la penderie', penderie_position: 'Position de la penderie', tiroirs_position: 'Position des tiroirs' };
             return (
               <div key={groupe} className="py-2.5">
                 <p className="text-sm font-medium text-noir mb-2">{groupLabels[groupe] || 'Finition'}</p>
@@ -551,6 +720,7 @@ export function GlobalPanel({
   onPlanChant,
   onPlintheMaterial,
   onLineaireMax,
+  onHauteurPlafond,
   onPlanDims,
   onPoigneeFinition,
   onLedTemp,
@@ -568,6 +738,7 @@ export function GlobalPanel({
   onPlanChant: (index: number | null) => void;
   onPlintheMaterial: (index: number | null) => void;
   onLineaireMax: (value: number | null) => void;
+  onHauteurPlafond: (value: number) => void;
   onPlanDims: (dims: { debord?: number; epaisseur?: number }) => void;
   onPoigneeFinition: (value: PoigneeFinition) => void;
   onLedTemp: (value: 'chaud' | 'neutre') => void;
@@ -664,6 +835,25 @@ export function GlobalPanel({
             Votre composition ({fmtLen(totalWidth, unit)}) dépasse le mur de {fmtLen(totalWidth - (config.lineaireMax || 0), unit)}.
           </p>
         )}
+        {/* Hauteur sous plafond : plafond dessiné en 3D, cible des bandeaux « jusqu'au plafond » */}
+        <div className="flex items-center justify-between gap-3 mt-4">
+          <div>
+            <p className="text-sm font-medium text-noir">Hauteur sous plafond</p>
+            <p className="text-xs text-noir/55">Dessine le plafond en 3D et cadre les bandeaux de finition.</p>
+          </div>
+          <span className="text-sm tabular-nums text-noir/70 flex-shrink-0">
+            <input
+              type="number"
+              aria-label={`Hauteur sous plafond en ${unit === 'cm' ? 'centimètres' : 'millimètres'}`}
+              value={toDisplay(config.hauteurPlafond ?? 2500, unit)}
+              min={unit === 'cm' ? 200 : 2000}
+              max={unit === 'cm' ? 350 : 3500}
+              step={unit === 'cm' ? 1 : 10}
+              onChange={(e) => onHauteurPlafond(e.target.value ? fromDisplay(Number(e.target.value), unit) : 2500)}
+              className="w-24 px-2 py-1 text-right border border-noir/20 rounded-md text-sm focus:outline-none focus:border-vert-foret"
+            /> {unitLabel(unit)}
+          </span>
+        </div>
       </div>
 
       {(univers?.planTravail?.disponible || univers?.facadeCoulissante?.disponible) && (
@@ -722,15 +912,19 @@ export function GlobalPanel({
                 value={config.facadeCoulissante ?? false}
                 onChange={onFacadeCoulissante}
               />
-              {config.facadeCoulissante && (
-                <Counter
-                  label="Nombre de vantaux"
-                  hint="De 2 à 4 portes coulissantes"
-                  value={Math.min(4, Math.max(2, config.facadeVantaux ?? 2))}
-                  max={4}
-                  onChange={(v) => onFacadeVantaux(Math.max(2, v))}
-                />
-              )}
+              {config.facadeCoulissante && (() => {
+                const maxV = Math.max(1, univers.facadeCoulissante.maxVantaux ?? 3);
+                return (
+                  <Counter
+                    label="Nombre de portes coulissantes"
+                    hint={`De 1 à ${maxV} ${maxV > 1 ? 'vantaux' : 'vantail'} qui glissent l'un devant l'autre`}
+                    value={Math.min(maxV, Math.max(1, config.facadeVantaux ?? 2))}
+                    min={1}
+                    max={maxV}
+                    onChange={(v) => onFacadeVantaux(Math.min(maxV, Math.max(1, v)))}
+                  />
+                );
+              })()}
             </>
           )}
         </div>

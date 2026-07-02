@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import type { Project, ProjectFolder, ProjectUpdate } from '@/lib/types';
-import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, PROJECT_STATUS_FLOW, PROJECT_TYPE_ICONS } from '@/lib/constants';
+import type { Project, ProjectFolder, ProjectDocument, ProjectEvent } from '@/lib/types';
+import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -11,10 +11,6 @@ import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ChatPanel } from '@/components/chat/ChatPanel';
-import { Timeline } from '@/components/projects/Timeline';
-
-/** Statuts au-delà du brouillon : le projet a une histoire à raconter */
-const TRACKABLE: readonly string[] = PROJECT_STATUS_FLOW.filter((s) => s !== 'draft');
 
 type Unread = { projects: Record<string, number>; folders: Record<string, number> };
 type ChatTarget = { projectId?: string; folderId?: string; title: string };
@@ -24,11 +20,9 @@ export function MesProjetsClient() {
   const [folders, setFolders] = useState<ProjectFolder[]>([]);
   const [unread, setUnread] = useState<Unread>({ projects: {}, folders: {} });
   const [loading, setLoading] = useState(true);
-  const [quoteModal, setQuoteModal] = useState<Project | null>(null);
-  const [quoteMessage, setQuoteMessage] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [configurateurEnabled, setConfigurateurEnabled] = useState(false);
-  const [timelineModal, setTimelineModal] = useState<Project | null>(null);
+  const [documentsModal, setDocumentsModal] = useState<Project | null>(null);
+  const [eventsModal, setEventsModal] = useState<Project | null>(null);
   const [chatTarget, setChatTarget] = useState<ChatTarget | null>(null);
 
   const refreshUnread = useCallback(() => {
@@ -55,22 +49,6 @@ export function MesProjetsClient() {
     if (!confirm(`Supprimer le projet "${project.name}" ?`)) return;
     const res = await fetch(`/api/projects/${project.id}`, { method: 'DELETE' });
     if (res.ok) setProjects((prev) => prev.filter((p) => p.id !== project.id));
-  }
-
-  async function handleRequestQuote() {
-    if (!quoteModal) return;
-    setSubmitting(true);
-    const res = await fetch(`/api/projects/${quoteModal.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'quote_requested', notes: quoteMessage }),
-    });
-    if (res.ok) {
-      setProjects((prev) => prev.map((p) => p.id === quoteModal.id ? { ...p, status: 'quote_requested' as const, notes: quoteMessage } : p));
-      setQuoteModal(null);
-      setQuoteMessage('');
-    }
-    setSubmitting(false);
   }
 
   /* ── Dossiers de chantier ── */
@@ -153,18 +131,16 @@ export function MesProjetsClient() {
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{unreadCount}</span>
             )}
           </Button>
-          {TRACKABLE.includes(project.status) && (
-            <Button variant="secondary" size="sm" onClick={() => setTimelineModal(project)} className="flex-1">
-              Suivi
-            </Button>
-          )}
+          <Button variant="secondary" size="sm" onClick={() => setDocumentsModal(project)} className="flex-1">
+            Documents
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setEventsModal(project)} className="flex-1">
+            Rendez-vous
+          </Button>
           {configurateurEnabled && (
             <Link href={`/configurateur?project=${project.id}`} className="flex-1">
               <Button variant="outline" size="sm" className="w-full">Modifier</Button>
             </Link>
-          )}
-          {project.status === 'draft' && (
-            <Button variant="secondary" size="sm" onClick={() => setQuoteModal(project)}>Devis</Button>
           )}
           <Button variant="ghost" size="sm" onClick={() => handleDelete(project)} className="text-red-500 hover:bg-red-50">
             🗑
@@ -241,24 +217,12 @@ export function MesProjetsClient() {
         </div>
       )}
 
-      {/* Quote request modal */}
-      <Modal isOpen={!!quoteModal} onClose={() => setQuoteModal(null)} title="Demander un devis" footer={
-        <>
-          <Button variant="ghost" onClick={() => setQuoteModal(null)}>Annuler</Button>
-          <Button onClick={handleRequestQuote} isLoading={submitting}>Envoyer la demande</Button>
-        </>
-      }>
-        <div className="space-y-4">
-          <p className="text-sm text-noir/60">Projet : <strong>{quoteModal?.name}</strong></p>
-          <div>
-            <label className="block text-sm font-medium text-noir/70 mb-1.5">Message (optionnel)</label>
-            <textarea value={quoteMessage} onChange={(e) => setQuoteMessage(e.target.value)} rows={4} placeholder="Précisions sur votre projet..." className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10 resize-none" />
-          </div>
-        </div>
-      </Modal>
-
       {/* Suivi de fabrication */}
-      {timelineModal && <TimelineModal project={timelineModal} onClose={() => setTimelineModal(null)} />}
+      {/* Documents partagés */}
+      {documentsModal && <DocumentsModal project={documentsModal} onClose={() => setDocumentsModal(null)} />}
+
+      {/* Rendez-vous planifiés */}
+      {eventsModal && <RendezVousModal project={eventsModal} onClose={() => setEventsModal(null)} />}
 
       {/* Discussion avec l'atelier */}
       {chatTarget && (
@@ -275,51 +239,130 @@ export function MesProjetsClient() {
   );
 }
 
-/** Timeline de fabrication : les grandes étapes + les nouvelles de l'atelier (notes, photos) */
-function TimelineModal({ project, onClose }: { project: Project; onClose: () => void }) {
-  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
+/** Documents partagés par l'atelier (plans, visuels…) — consultation uniquement */
+function DocumentsModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/projects/${project.id}/updates`)
-      .then((r) => r.json())
-      .then((d) => setUpdates(Array.isArray(d) ? d : []))
+    fetch(`/api/projects/${project.id}/documents`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setDocuments(Array.isArray(d) ? d : []))
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [project.id]);
 
-  const currentIdx = TRACKABLE.indexOf(project.status);
-
   return (
-    <Modal isOpen onClose={onClose} title={`Suivi — ${project.name}`}>
-      {/* Frise des grandes étapes */}
-      <div className="flex items-center gap-0 mb-6 overflow-x-auto pb-1">
-        {TRACKABLE.map((s, i) => {
-          const done = i <= currentIdx;
-          return (
-            <div key={s} className="flex items-center flex-shrink-0">
-              {i > 0 && <span className={`w-5 h-0.5 ${i <= currentIdx ? 'bg-vert-foret' : 'bg-gray-200'}`} />}
-              <span
-                title={PROJECT_STATUS_LABELS[s]}
-                className={`px-2 py-1 rounded-full text-[10px] font-semibold whitespace-nowrap ${
-                  i === currentIdx ? 'bg-vert-foret text-white' : done ? 'bg-vert-foret/15 text-vert-foret' : 'bg-gray-100 text-gray-400'
-                }`}
-              >
-                {PROJECT_STATUS_LABELS[s]}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Nouvelles de l'atelier */}
+    <Modal isOpen onClose={onClose} title={`Documents — ${project.name}`}>
       <div className="max-h-[55vh] overflow-y-auto pr-1">
         {loading ? (
           <p className="text-sm text-noir/40 py-4">Chargement…</p>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-4">Impossible de charger les documents. Réessayez plus tard.</p>
+        ) : documents.length === 0 ? (
+          <p className="text-sm text-noir/40 py-4">Aucun document partagé pour l&apos;instant.</p>
         ) : (
-          <Timeline
-            updates={updates}
-            emptyLabel="Votre projet est entre les mains de l'atelier — les nouvelles (photos de fabrication, étapes) apparaîtront ici."
-          />
+          <ul className="space-y-1">
+            {documents.map((doc) => (
+              <li key={doc.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50">
+                <span aria-hidden className="text-lg flex-shrink-0">📄</span>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener"
+                  className="text-sm font-medium text-vert-foret hover:underline flex-1 break-all"
+                >
+                  {doc.name}
+                </a>
+                <span className="text-xs text-noir/40 whitespace-nowrap">{formatDate(doc.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Rendez-vous planifiés avec l'atelier (RDV découverte, technique, pose) — consultation uniquement */
+function RendezVousModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const [events, setEvents] = useState<ProjectEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/projects/${project.id}/events`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setEvents(Array.isArray(d) ? d : []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [project.id]);
+
+  const now = Date.now();
+  const isPast = (ev: ProjectEvent) => {
+    const ref = new Date(ev.endAt || ev.startAt).getTime();
+    // Un événement « journée entière » reste « à venir » jusqu'à la fin de la journée
+    return ev.allDay ? ref + 24 * 60 * 60 * 1000 < now : ref < now;
+  };
+  const sorted = [...events].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime());
+  const upcoming = sorted.filter((ev) => !isPast(ev));
+  const past = sorted.filter(isPast);
+
+  const renderEvent = (ev: ProjectEvent, greyed: boolean) => {
+    const eventType = PROJECT_EVENT_TYPES.find((t) => t.key === ev.type);
+    const dateLabel = new Date(ev.startAt).toLocaleString('fr-FR', {
+      dateStyle: 'long',
+      ...(ev.allDay ? {} : { timeStyle: 'short' as const }),
+    });
+    return (
+      <li key={ev.id} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg ${greyed ? 'opacity-50' : 'hover:bg-gray-50'}`}>
+        <span
+          aria-hidden
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0 mt-1.5"
+          style={{ backgroundColor: eventType?.color || '#9ca3af' }}
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-noir">{eventType?.label || ev.title || 'Rendez-vous'}</p>
+          <p className="text-xs text-noir/50">{dateLabel}</p>
+          {ev.notes && <p className="text-xs text-noir/40 mt-1 whitespace-pre-line">{ev.notes}</p>}
+        </div>
+      </li>
+    );
+  };
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Rendez-vous — ${project.name}`}>
+      <div className="max-h-[55vh] overflow-y-auto pr-1">
+        {loading ? (
+          <p className="text-sm text-noir/40 py-4">Chargement…</p>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-4">Impossible de charger les rendez-vous. Réessayez plus tard.</p>
+        ) : sorted.length === 0 ? (
+          <p className="text-sm text-noir/40 py-4">Aucun rendez-vous planifié pour l&apos;instant.</p>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-xs font-semibold text-noir/60 uppercase tracking-wide mb-1">À venir</h4>
+              {upcoming.length === 0 ? (
+                <p className="text-sm text-noir/40 px-3 py-2">Aucun rendez-vous à venir.</p>
+              ) : (
+                <ul className="space-y-1">{upcoming.map((ev) => renderEvent(ev, false))}</ul>
+              )}
+            </div>
+            {past.length > 0 && (
+              <div>
+                <h4 className="text-xs font-semibold text-noir/60 uppercase tracking-wide mb-1">Passés</h4>
+                <ul className="space-y-1">{past.map((ev) => renderEvent(ev, true))}</ul>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </Modal>

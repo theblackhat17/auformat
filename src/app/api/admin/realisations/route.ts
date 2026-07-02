@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, materialId, location, features, published, date, sortOrder } = body;
+    const { title, slug, categoryId, description, body: bodyText, image, gallery, duration, surface, material, materialId, location, features, serviceTags, published, date, sortOrder } = body;
 
     if (!title) {
       return NextResponse.json({ error: 'Le titre est requis' }, { status: 400 });
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
       materialId: materialId || null,
       location: location || null,
       features: JSON.stringify(features || []),
+      serviceTags: JSON.stringify(Array.isArray(serviceTags) ? serviceTags : []),
       published: published ?? false,
       date: date || new Date().toISOString(),
       sortOrder: sortOrder ?? 0,

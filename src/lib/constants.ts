@@ -44,6 +44,47 @@ export const PROJECT_STATUS_FLOW = [
   'completed',
 ] as const;
 
+/**
+ * Jalons du cycle de vie d'un projet (gestion admin).
+ * `financial: true` = jalon lié à l'argent, ne sera JAMAIS montré au client.
+ */
+export const PROJECT_MILESTONES: { key: string; label: string; financial: boolean }[] = [
+  { key: 'configure', label: 'Projet configuré', financial: false },
+  { key: 'envoye_3d', label: 'Projet envoyé en 3D au client', financial: false },
+  { key: 'devis_realise', label: 'Devis réalisé', financial: true },
+  { key: 'devis_envoye', label: 'Devis envoyé', financial: true },
+  { key: 'devis_accepte', label: 'Devis accepté', financial: true },
+  { key: 'acompte', label: "Demande d'acompte", financial: true },
+  { key: 'production', label: 'Production', financial: false },
+  { key: 'pose', label: 'Pose', financial: false },
+  { key: 'facture_solde', label: 'Facture de solde', financial: true },
+  { key: 'avis_google', label: 'Avis Google demandé', financial: false },
+  { key: 'photos', label: 'Photos de réalisation', financial: false },
+  { key: 'publie_insta', label: 'Publié sur Insta', financial: false },
+  { key: 'publie_site', label: 'Publié sur le site', financial: false },
+];
+
+/**
+ * Types d'événements de l'agenda projet (RDV + jours d'atelier).
+ * `clientVisible: true` = visible par le client propriétaire du projet ;
+ * les jours d'atelier restent internes (jamais montrés au client).
+ */
+export const PROJECT_EVENT_TYPES: { key: string; label: string; color: string; clientVisible: boolean }[] = [
+  { key: 'rdv_decouverte', label: 'RDV découverte', color: '#2C5F2D', clientVisible: true },
+  { key: 'rdv_technique', label: 'RDV technique', color: '#2563eb', clientVisible: true },
+  { key: 'rdv_pose', label: 'RDV de pose', color: '#7c3aed', clientVisible: true },
+  { key: 'jour_coupe', label: 'Jour de coupe', color: '#d97706', clientVisible: false },
+  { key: 'jour_usinage', label: "Jour d'usinage", color: '#0891b2', clientVisible: false },
+  { key: 'jour_montage', label: 'Jour de montage', color: '#dc2626', clientVisible: false },
+];
+
+/** Checklist de production d'un projet (gestion admin) */
+export const PROJECT_PRODUCTION_TASKS: { key: string; label: string }[] = [
+  { key: 'choix_decors', label: 'Choix des décors' },
+  { key: 'commande_panneaux', label: 'Commande panneaux' },
+  { key: 'specificites_materiaux', label: 'Spécificités matériaux (poignées / pieds)' },
+];
+
 // Quote status
 export const QUOTE_STATUS_LABELS: Record<string, string> = {
   draft: 'Brouillon',
@@ -245,14 +286,13 @@ export const NAV_LINKS = [
   { href: '/about', label: 'À propos' },
 ];
 
-// Admin navigation
+// Admin navigation — la gestion de projet est le cœur : « Projets » est mis en avant en tête
+// de barre (voir AdminSidebar). Le chat et les devis ne sont plus des entrées séparées :
+// le chat vit dans chaque fiche projet, les devis se gèrent depuis le projet.
 export const ADMIN_NAV_CRM = [
-  { href: '/admin', label: 'Dashboard', icon: '📊' },
   { href: '/admin/analytics', label: 'Analytics', icon: '📈' },
   { href: '/admin/clients', label: 'Clients', icon: '👥' },
-  { href: '/admin/devis', label: 'Devis', icon: '📄' },
-  { href: '/admin/projets', label: 'Projets', icon: '🛠️' },
-  { href: '/admin/chat', label: 'Chat', icon: '💬' },
+  { href: '/admin/agenda', label: 'Agenda', icon: '📅' },
   { href: '/admin/logs', label: 'Logs', icon: '📋' },
 ];
 

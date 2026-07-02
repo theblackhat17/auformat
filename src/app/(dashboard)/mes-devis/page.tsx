@@ -1,12 +1,7 @@
-import type { Metadata } from 'next';
-import { MesDevisClient } from './MesDevisClient';
+import { redirect } from 'next/navigation';
 
-export const metadata: Metadata = { title: 'Mes devis' };
-
+// Les devis (et tout montant) sont désormais gérés uniquement en interne par l'atelier :
+// le client ne voit jamais de prix. On redirige vers ses projets.
 export default function MesDevisPage() {
-  return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-10">
-      <MesDevisClient />
-    </div>
-  );
+  redirect('/mes-projets');
 }

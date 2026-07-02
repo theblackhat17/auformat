@@ -11,21 +11,16 @@ export async function GET(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
 
   try {
-    if (auth.role === 'admin') {
-      // Admin: get all quotes with client info
-      const quotes = await query<Quote & { clientName?: string; clientEmail?: string }>(
-        `SELECT q.*, p.full_name as client_name, p.email as client_email, p.company_name as client_company
-         FROM quotes q
-         LEFT JOIN profiles p ON q.user_id = p.id
-         ORDER BY q.created_at DESC`
-      );
-      return NextResponse.json(quotes);
+    // Les devis (et donc les montants) sont strictement réservés à l'admin : un client
+    // ne voit jamais de prix. Toute requête non-admin est refusée.
+    if (auth.role !== 'admin') {
+      return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
     }
-
-    // Client: get own quotes
-    const quotes = await query<Quote>(
-      'SELECT * FROM quotes WHERE user_id = $1 ORDER BY created_at DESC',
-      [auth.userId]
+    const quotes = await query<Quote & { clientName?: string; clientEmail?: string }>(
+      `SELECT q.*, p.full_name as client_name, p.email as client_email, p.company_name as client_company
+       FROM quotes q
+       LEFT JOIN profiles p ON q.user_id = p.id
+       ORDER BY q.created_at DESC`
     );
     return NextResponse.json(quotes);
   } catch (err) {

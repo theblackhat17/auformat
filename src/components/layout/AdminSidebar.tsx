@@ -96,6 +96,23 @@ export function AdminSidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto">
+          {/* Hub central : gestion de projet, mis en avant tout en haut */}
+          <Link
+            href="/admin/projets"
+            onClick={closeSidebar}
+            className={`flex items-center gap-3 mx-3 mb-3 px-3 py-3 rounded-xl text-sm font-semibold transition-colors ${
+              pathname.startsWith('/admin/projets') || pathname === '/admin'
+                ? 'bg-vert-foret text-white'
+                : 'bg-white/10 text-white hover:bg-white/15'
+            }`}
+          >
+            <span className="text-lg">🗂️</span>
+            <span className="flex-1">Projets</span>
+            {chatUnread > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[11px] font-bold rounded-full flex items-center justify-center">{chatUnread}</span>
+            )}
+          </Link>
+
           <p className="px-6 pb-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">CRM</p>
           {ADMIN_NAV_CRM.map((item) => (
             <NavItem key={item.href} item={item} pathname={pathname} onClick={closeSidebar} badge={item.href === '/admin/chat' ? chatUnread : undefined} />

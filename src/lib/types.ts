@@ -44,8 +44,24 @@ export interface Project {
   folderId?: string | null;
   /** Demande d'avis Google envoyée après la fin du chantier */
   reviewRequestSentAt?: string | null;
+  /** Notes internes admin (jamais visibles côté client) */
+  adminNotes?: string | null;
+  /** Jalons du cycle de vie : { [key]: { done, date, by } } (clés dans PROJECT_MILESTONES) */
+  milestones?: Record<string, { done: boolean; date?: string | null; by?: string | null }>;
+  /** Checklist de production : { [key]: { done, note } } (clés dans PROJECT_PRODUCTION_TASKS) */
+  production?: Record<string, { done: boolean; note?: string | null }>;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Jalon configurable du cycle de vie d'un projet (catalogue stocké dans project_settings) */
+export interface ProjectMilestone {
+  key: string;
+  label: string;
+  /** Étape interne liée à l'argent (devis, acompte, facture…) */
+  financial: boolean;
+  /** Prévenir le client quand cette étape est franchie */
+  clientNotify: boolean;
 }
 
 /** Dossier de chantier : regroupe plusieurs projets qui vont ensemble */
@@ -82,6 +98,33 @@ export interface ProjectUpdate {
   photos: string[];
   createdBy: string | null;
   createdAt: string;
+}
+
+/** Document rattaché à un projet (plan, devis signé…) — visibilité client ou admin */
+export interface ProjectDocument {
+  id: string;
+  projectId: string;
+  name: string;
+  url: string;
+  visibility: 'client' | 'admin';
+  uploadedBy: string | null;
+  createdAt: string;
+}
+
+/** Événement d'agenda rattaché à un projet (RDV client, jour d'atelier…) */
+export interface ProjectEvent {
+  id: string;
+  projectId: string;
+  type: string;
+  title: string | null;
+  startAt: string;
+  endAt: string | null;
+  allDay: boolean;
+  notes: string | null;
+  googleEventId: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Quote {
@@ -447,6 +490,8 @@ export interface Realisation {
   materialName?: string;
   location?: string;
   features?: { feature: string }[];
+  /** Slugs de services associés (pour l'affichage sur les sous-pages « savoir-faire ») */
+  serviceTags?: string[];
   published: boolean;
   sortOrder?: number;
 }
@@ -732,8 +777,9 @@ export interface ConfigurateurUnivers {
   starterModules: string[];
   /** Plan de travail automatique au-dessus des modules bas (cuisine/sdb), prix HT au mètre linéaire */
   planTravail?: { disponible: boolean; prixMl: number };
-  /** Façade coulissante couvrant toute la composition (dressing), prix HT au mètre linéaire */
-  facadeCoulissante?: { disponible: boolean; prixMl: number };
+  /** Façade coulissante couvrant toute la composition (dressing…), prix HT au mètre linéaire.
+   *  `maxVantaux` borne le nombre de portes coulissantes réglable par le client (défaut 3). */
+  facadeCoulissante?: { disponible: boolean; prixMl: number; maxVantaux?: number };
 }
 
 export type ModuleZone = 'bas' | 'haut' | 'colonne' | 'ilot';
@@ -792,10 +838,25 @@ export interface CompositionModule {
   etageresPos?: (number | null)[];
   /** Matériau des façades (portes, tiroirs) — null = même matériau que le caisson */
   facadeMaterialIndex?: number | null;
+  /** Matériau intérieur (fonds, étagères, niches) — null = teinte foncée du caisson */
+  interieurMaterialIndex?: number | null;
   /** Style des façades : lisse (défaut), cadre (shaker), rainurée verticale, cannage */
   styleFacade?: StyleFacade;
   /** Mur sur lequel le module est posé : principal (défaut) ou retour en L à gauche/droite */
   mur?: 'principal' | 'retour_gauche' | 'retour_droit';
+  /** Colle ce module au suivant de la même rangée : socle continu, joint masqué (fusion visuelle) */
+  fusionSuivant?: boolean;
+  /** Bandeau de finition plein au-dessus du module (cache-trou vers le plafond) */
+  bandeau?: boolean;
+  /** Hauteur du bandeau en mm ; null = auto jusqu'au plafond (hauteurPlafond de la composition) */
+  bandeauHauteur?: number | null;
+  /** Bibliothèque à cases : grille de colonnes, chaque colonne ayant son propre nombre d'étagères.
+   *  Quand défini (colonnes ≥ 1), remplace le rendu séparateurs/étagères standard. */
+  grille?: { colonnes: number; etageresParColonne: number[] };
+  /** Empilement : id du module support sur lequel celui-ci est posé (null/absent = posé au sol). */
+  empileSur?: string | null;
+  /** Décalage horizontal (mm) du module empilé, depuis le bord gauche de son support. */
+  empileOffset?: number;
 }
 
 export interface CompositionConfig {
@@ -805,7 +866,7 @@ export interface CompositionConfig {
   planTravail: boolean;
   /** Façade coulissante sur toute la composition (dressing) */
   facadeCoulissante?: boolean;
-  /** Nombre de vantaux de la façade coulissante (2 à 4, défaut 2) */
+  /** Nombre de vantaux de la façade coulissante (1 au maxVantaux de l'univers, défaut 2) */
   facadeVantaux?: number;
   /** Matériau du plan de travail (null = teinte foncée du matériau principal) */
   planMaterialIndex?: number | null;
@@ -819,6 +880,8 @@ export interface CompositionConfig {
   plintheMaterialIndex?: number | null;
   /** Largeur de mur disponible (mm) — alerte si la composition dépasse. null = libre. */
   lineaireMax?: number | null;
+  /** Hauteur sous plafond (mm) — plafond dessiné en 3D, cible des bandeaux « auto ». Défaut 2500. */
+  hauteurPlafond?: number;
   /** Finition des poignées et de la quincaillerie visible (défaut : noir) */
   poigneeFinition?: PoigneeFinition;
   /** Température des éclairages LED (défaut : chaud) */

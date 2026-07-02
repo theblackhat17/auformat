@@ -96,8 +96,10 @@ export default async function HomePage() {
         )}
         <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 w-full">
           <div className="max-w-2xl">
-            <p className="animate-hero-rise text-bois-clair font-semibold uppercase tracking-[0.25em] text-lg md:text-xl mb-4" style={{ ['--rise-delay' as string]: '80ms' }}>
-              {hero.subtitle_top || 'Au Format'}
+            <p className="animate-hero-rise mb-4" style={{ ['--rise-delay' as string]: '80ms' }}>
+              <span className="inline-block bg-beige text-noir font-semibold uppercase tracking-[0.25em] text-lg md:text-xl px-3 py-1">
+                {hero.subtitle_top || 'Au Format'}
+              </span>
             </p>
             <h1 className="animate-hero-rise font-display text-[clamp(2.5rem,4.5vw+1rem,4.25rem)] leading-[1.02] text-white mb-7" style={{ ['--rise-delay' as string]: '180ms' }}>
               {hero.title_line1 || 'Franchissons ensemble,'}<br />
@@ -335,7 +337,7 @@ export default async function HomePage() {
                 <ArrowIcon className="w-4 h-4" />
               </Link>
               <Link href={cta.cta_secondary_link || '/processus'} className="btn-ghost-dark">
-                {cta.cta_secondary || 'Découvrir notre processus'}
+                {cta.cta_secondary || 'Configurer vous même votre projet'}
               </Link>
             </div>
           </Reveal>

@@ -95,14 +95,10 @@ export function ProfileClient() {
       </Card>
 
       {/* Quick links */}
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-4">
         <a href="/mes-projets" className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
           <span className="text-2xl">📁</span>
-          <div><p className="font-medium text-noir">Mes projets</p><p className="text-xs text-noir/40">Voir mes configurations</p></div>
-        </a>
-        <a href="/mes-devis" className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
-          <span className="text-2xl">📄</span>
-          <div><p className="font-medium text-noir">Mes devis</p><p className="text-xs text-noir/40">Consulter mes devis</p></div>
+          <div><p className="font-medium text-noir">Mes projets</p><p className="text-xs text-noir/40">Voir mes configurations et échanger avec l&apos;atelier</p></div>
         </a>
       </div>
 

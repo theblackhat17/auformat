@@ -18,6 +18,26 @@ export async function getRealisations(): Promise<Realisation[]> {
   }));
 }
 
+/** Réalisations associées à un service (via service_tags), les plus récentes d'abord. */
+export async function getRealisationsByService(serviceSlug: string, limit = 6): Promise<Realisation[]> {
+  const rows = await query<Realisation & { categorySlug: string; categoryLabel: string; matName: string | null }>(
+    `SELECT r.*, c.slug as category_slug, c.label as category_label, mat.name as mat_name
+     FROM realisations r
+     LEFT JOIN categories c ON r.category_id = c.id
+     LEFT JOIN materiaux mat ON r.material_id = mat.id
+     WHERE r.published = true AND r.service_tags @> $1::jsonb
+     ORDER BY r.date DESC
+     LIMIT $2`,
+    [JSON.stringify([serviceSlug]), limit]
+  );
+  return rows.map((r) => ({
+    ...r,
+    category: r.categorySlug || '',
+    categoryLabel: r.categoryLabel || '',
+    materialName: r.matName || r.material || '',
+  }));
+}
+
 export async function getRealisationBySlug(slug: string): Promise<Realisation | null> {
   const r = await queryOne<Realisation & { categorySlug: string; categoryLabel: string; matName: string | null }>(
     `SELECT r.*, c.slug as category_slug, c.label as category_label, mat.name as mat_name

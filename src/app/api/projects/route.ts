@@ -4,7 +4,23 @@ import { requireAuth } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { toCamelCase } from '@/lib/db';
+import { PROJECT_MILESTONES } from '@/lib/constants';
 import type { Project } from '@/lib/types';
+
+/** Retire les données internes (notes admin, production, jalons financiers) avant l'envoi à un client */
+function sanitizeForClient(project: Project): Project {
+  const clean: Project = { ...project };
+  delete clean.adminNotes;
+  delete clean.production;
+  if (clean.milestones) {
+    const visible: NonNullable<Project['milestones']> = {};
+    for (const m of PROJECT_MILESTONES) {
+      if (!m.financial && clean.milestones[m.key]) visible[m.key] = clean.milestones[m.key];
+    }
+    clean.milestones = visible;
+  }
+  return clean;
+}
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request);
@@ -15,7 +31,7 @@ export async function GET(request: NextRequest) {
       `SELECT * FROM projects WHERE user_id = $1 ORDER BY updated_at DESC`,
       [auth.userId]
     );
-    return NextResponse.json(projects);
+    return NextResponse.json(auth.role === 'admin' ? projects : projects.map(sanitizeForClient));
   } catch (err) {
     console.error('List projects error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

@@ -24,6 +24,7 @@ interface Realisation {
   materialId: string | null;
   location: string | null;
   features: { feature: string }[];
+  serviceTags: string[];
   published: boolean;
   date: string;
   sortOrder: number;
@@ -33,6 +34,8 @@ interface MateriauOption { id: string; name: string; }
 
 interface Category { id: string; label: string; slug: string; }
 
+interface ServiceOption { slug: string; title: string; }
+
 function slugify(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
@@ -40,13 +43,14 @@ function slugify(text: string): string {
 const EMPTY: Omit<Realisation, 'id'> = {
   title: '', slug: '', categoryId: null, description: '', body: null,
   image: null, gallery: [], duration: null, surface: null, material: null, materialId: null,
-  location: null, features: [], published: false, date: new Date().toISOString(), sortOrder: 0,
+  location: null, features: [], serviceTags: [], published: false, date: new Date().toISOString(), sortOrder: 0,
 };
 
 export function AdminRealisationsClient() {
   const [items, setItems] = useState<Realisation[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [materiaux, setMateriaux] = useState<MateriauOption[]>([]);
+  const [services, setServices] = useState<ServiceOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Realisation | null>(null);
@@ -56,18 +60,21 @@ export function AdminRealisationsClient() {
 
   const load = useCallback(async () => {
     try {
-      const [realRes, catRes, matRes] = await Promise.all([
+      const [realRes, catRes, matRes, svcRes] = await Promise.all([
         fetch('/api/admin/realisations'),
         fetch('/api/admin/categories?type=realisation'),
         fetch('/api/admin/materiaux'),
+        fetch('/api/admin/services'),
       ]);
       if (!realRes.ok || !catRes.ok || !matRes.ok) throw new Error();
       const realData = await realRes.json();
       const catData = await catRes.json();
       const matData = await matRes.json();
+      const svcData = svcRes.ok ? await svcRes.json() : [];
       setItems(Array.isArray(realData) ? realData : []);
       setCategories(Array.isArray(catData) ? catData : []);
       setMateriaux(Array.isArray(matData) ? matData.map((m: MateriauOption) => ({ id: m.id, name: m.name })) : []);
+      setServices(Array.isArray(svcData) ? svcData.map((s: ServiceOption) => ({ slug: s.slug, title: s.title })) : []);
     } catch {
       toast.error('Erreur chargement');
     } finally {
@@ -92,6 +99,7 @@ export function AdminRealisationsClient() {
       duration: item.duration, surface: item.surface, material: item.material,
       materialId: item.materialId, location: item.location,
       features: Array.isArray(item.features) ? item.features : [],
+      serviceTags: Array.isArray(item.serviceTags) ? item.serviceTags : [],
       published: item.published, date: item.date, sortOrder: item.sortOrder,
     });
     setModalOpen(true);
@@ -202,6 +210,27 @@ export function AdminRealisationsClient() {
               {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
             </select>
           </div>
+
+          {services.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Savoir-faire associés <span className="text-xs font-normal text-gray-400">(cette réalisation s&apos;affichera sur ces sous-pages)</span></label>
+              <div className="flex flex-wrap gap-2">
+                {services.map((s) => {
+                  const active = form.serviceTags.includes(s.slug);
+                  return (
+                    <button
+                      key={s.slug}
+                      type="button"
+                      onClick={() => setForm({ ...form, serviceTags: active ? form.serviceTags.filter((t) => t !== s.slug) : [...form.serviceTags, s.slug] })}
+                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${active ? 'bg-vert-foret text-white border-vert-foret' : 'bg-white text-gray-600 border-gray-300 hover:border-vert-foret'}`}
+                    >
+                      {s.title}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Description courte</label>
