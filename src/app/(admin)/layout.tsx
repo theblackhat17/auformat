@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { AdminSearch } from '@/components/admin/AdminSearch';
 import { AdminFocusScroll } from '@/components/admin/AdminFocusScroll';
+import { DisableAnalytics } from '@/components/admin/DisableAnalytics';
 import { ToastProvider } from '@/components/ui/Toast';
 import { AuthProvider } from '@/contexts/AuthContext';
 
@@ -17,6 +18,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <AuthProvider>
       <ToastProvider>
+        {/* Le trafic des administrateurs n'est jamais compté dans les analytics */}
+        <DisableAnalytics />
         <div className="flex min-h-screen bg-gray-50">
           <AdminSidebar />
           <main className="flex-1 min-w-0 lg:ml-64 overflow-x-hidden">

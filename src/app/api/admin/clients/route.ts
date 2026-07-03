@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
         COALESCE(q.accepted_quotes, 0)::int as accepted_quotes,
         COALESCE(q.total_revenue, 0)::float as total_revenue,
         COALESCE(s.total_logins, 0)::int as total_logins,
-        s.last_login
+        s.last_login,
+        GREATEST(p.last_seen_at, s.last_activity) as last_seen
       FROM profiles p
       LEFT JOIN (
         SELECT user_id, COUNT(*)::int as total_projects
@@ -34,7 +35,8 @@ export async function GET(request: NextRequest) {
       LEFT JOIN (
         SELECT "userId" as user_id,
           COUNT(*)::int as total_logins,
-          MAX("createdAt") as last_login
+          MAX("createdAt") as last_login,
+          MAX("updatedAt") as last_activity
         FROM session GROUP BY "userId"
       ) s ON s.user_id = p.id
       ORDER BY p.role ASC, p.created_at DESC

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import { Young_Serif, Hanken_Grotesk } from 'next/font/google';
 import { JsonLd } from '@/components/seo/JsonLd';
+import { UmamiScript } from '@/components/layout/UmamiScript';
 import { organizationJsonLd, websiteJsonLd } from '@/lib/jsonld';
 import { getSettings } from '@/lib/content';
 import { DEFAULT_THEME_COLORS } from '@/lib/types';
@@ -128,14 +128,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         {children}
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={websiteJsonLd()} />
-        {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
-          <Script
-            defer
-            src={`${process.env.NEXT_PUBLIC_UMAMI_URL || '/umami'}/stats.js`}
-            data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-            strategy="afterInteractive"
-          />
-        )}
+        {/* Tracking analytics — jamais chargé sur /admin, admins exclus (voir UmamiScript) */}
+        <UmamiScript />
       </body>
     </html>
   );

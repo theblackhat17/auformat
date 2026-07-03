@@ -104,7 +104,7 @@ export function AdminClientsClient() {
               <th className="px-4 py-3 text-center">Projets</th>
               <th className="px-4 py-3 text-center">Devis</th>
               <th className="px-4 py-3 text-right">CA</th>
-              <th className="px-4 py-3">Derniere connexion</th>
+              <th className="px-4 py-3">Dernière visite</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -150,7 +150,7 @@ export function AdminClientsClient() {
                   {client.totalRevenue > 0 ? formatPrice(client.totalRevenue) : '—'}
                 </td>
                 <td className="px-4 py-3 text-noir/40 text-xs">
-                  {client.lastLogin ? timeAgo(client.lastLogin) : 'Jamais'}
+                  {client.lastSeen ? timeAgo(client.lastSeen) : 'Jamais'}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">

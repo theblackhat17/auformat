@@ -1,11 +1,13 @@
-const UMAMI_URL = process.env.UMAMI_INTERNAL_URL || 'http://localhost:3001/umami';
+const UMAMI_URL = process.env.UMAMI_INTERNAL_URL || 'http://localhost:3001';
 const UMAMI_USERNAME = process.env.UMAMI_USERNAME || 'admin';
-const UMAMI_PASSWORD = process.env.UMAMI_PASSWORD || 'umami';
+// Compat : UMAMI_PASSWORD (nom canonique) ou UMAMI_PASS (ancien nom dans .env.local),
+// avec repli sur le défaut Umami pour ne pas casser une installation existante.
+const UMAMI_PASSWORD = process.env.UMAMI_PASSWORD || process.env.UMAMI_PASS || 'umami';
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
-async function getToken(): Promise<string> {
-  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+async function getToken(force = false): Promise<string> {
+  if (!force && cachedToken && cachedToken.expiresAt > Date.now()) {
     return cachedToken.token;
   }
 
@@ -15,7 +17,10 @@ async function getToken(): Promise<string> {
     body: JSON.stringify({ username: UMAMI_USERNAME, password: UMAMI_PASSWORD }),
   });
 
-  if (!res.ok) throw new Error(`Umami auth failed: ${res.status}`);
+  if (!res.ok) {
+    cachedToken = null;
+    throw new Error(`Umami auth failed: ${res.status}`);
+  }
 
   const { token } = await res.json();
   cachedToken = { token, expiresAt: Date.now() + 55 * 60 * 1000 };
@@ -23,13 +28,40 @@ async function getToken(): Promise<string> {
 }
 
 async function umamiGet<T>(path: string): Promise<T> {
-  const token = await getToken();
-  const res = await fetch(`${UMAMI_URL}${path}`, {
+  let token = await getToken();
+  let res = await fetch(`${UMAMI_URL}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
     next: { revalidate: 0 },
   });
+  // Token caché révoqué (redémarrage Umami, rotation du secret…) : on ré-authentifie une fois
+  if (res.status === 401) {
+    token = await getToken(true);
+    res = await fetch(`${UMAMI_URL}${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 0 },
+    });
+  }
   if (!res.ok) throw new Error(`Umami API error: ${res.status} ${path}`);
   return res.json();
+}
+
+/**
+ * État de la connexion Umami : service joignable (heartbeat) et authentification OK.
+ * Utilisé par la page Analytics pour afficher un statut clair au lieu d'une erreur brute.
+ */
+export async function getUmamiHealth(): Promise<{ up: boolean; auth: boolean }> {
+  try {
+    const hb = await fetch(`${UMAMI_URL}/api/heartbeat`, { next: { revalidate: 0 }, signal: AbortSignal.timeout(4000) });
+    if (!hb.ok) return { up: false, auth: false };
+  } catch {
+    return { up: false, auth: false };
+  }
+  try {
+    await getToken(true);
+    return { up: true, auth: true };
+  } catch {
+    return { up: true, auth: false };
+  }
 }
 
 // --- Types ---

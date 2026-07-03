@@ -7,6 +7,7 @@ import {
 import {
   S3Client,
   HeadObjectCommand,
+  PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import {
   SSMClient,
@@ -346,6 +347,27 @@ async function triggerFinalBackup() {
 }
 
 /**
+ * Écrit le marqueur de fin de failover que le serveur maison surveille pour
+ * réimporter, exactement une fois, les écritures faites sur l'EC2. Écrit
+ * UNIQUEMENT après un backup final réussi → jamais de réimport d'un dump partiel.
+ */
+async function writeFailoverFinalMarker(endedAt) {
+  try {
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: "db/failover-final.json",
+        Body: JSON.stringify({ endedAt, dumpKey: "db/failover-latest.sql.gz" }),
+        ContentType: "application/json",
+      })
+    );
+    console.log(`Marqueur failover-final écrit (endedAt=${endedAt})`);
+  } catch (error) {
+    console.error("Erreur écriture marqueur failover-final:", error.message);
+  }
+}
+
+/**
  * Arrête le failover : backup final + DNS A → CNAME tunnel + EC2 stop
  */
 async function stopFailover() {
@@ -353,8 +375,11 @@ async function stopFailover() {
 
   // 1. Backup final de la DB avant de couper
   const backupOk = await triggerFinalBackup();
-  if (!backupOk) {
-    console.warn("ATTENTION: le backup final a échoué, on continue quand même");
+  if (backupOk) {
+    // Signale au serveur maison qu'un failover vient de se terminer → réimport fiable
+    await writeFailoverFinalMarker(new Date().toISOString());
+  } else {
+    console.warn("ATTENTION: le backup final a échoué, pas de marqueur écrit (le serveur maison ne réimportera pas un dump incomplet)");
   }
 
   // 2. Remettre le DNS vers le Cloudflare Tunnel

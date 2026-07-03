@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { headers } from 'next/headers';
 import { auth } from './better-auth';
+import { touchLastSeen } from './middleware-auth';
 import type { Profile } from './types';
 
 /**
@@ -30,6 +31,7 @@ export async function getCurrentUser(): Promise<Profile | null> {
     if (!session || !session.user) return null;
 
     const user = session.user;
+    touchLastSeen(user.id);
     return {
       id: user.id,
       email: user.email,

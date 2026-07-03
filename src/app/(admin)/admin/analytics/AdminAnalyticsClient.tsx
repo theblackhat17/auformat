@@ -291,6 +291,7 @@ export function AdminAnalyticsClient() {
   const [period, setPeriod] = useState<string>('today');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [health, setHealth] = useState<{ up: boolean; auth: boolean } | null>(null);
 
   const fetchData = useCallback(async (p: string) => {
     setLoading(true);
@@ -309,11 +310,21 @@ export function AdminAnalyticsClient() {
     }
   }, []);
 
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/analytics/status');
+      setHealth(res.ok ? await res.json() : { up: false, auth: false });
+    } catch {
+      setHealth({ up: false, auth: false });
+    }
+  }, []);
+
   useEffect(() => {
     fetchData(period);
-    const interval = setInterval(() => fetchData(period), 30000);
+    fetchHealth();
+    const interval = setInterval(() => { fetchData(period); fetchHealth(); }, 30000);
     return () => clearInterval(interval);
-  }, [period, fetchData]);
+  }, [period, fetchData, fetchHealth]);
 
   const bounceRate = data && data.stats.visits.value > 0
     ? Math.round((data.stats.bounces.value / data.stats.visits.value) * 100)
@@ -341,6 +352,24 @@ export function AdminAnalyticsClient() {
                 <span className="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse" />
                 {data.active} en ligne
               </span>
+            )}
+            {health && (
+              health.up && health.auth ? (
+                <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mr-1.5" />
+                  Umami connecté
+                </span>
+              ) : health.up ? (
+                <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5" />
+                  Umami : authentification échouée
+                </span>
+              ) : (
+                <span className="inline-flex items-center ml-2 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5" />
+                  Umami injoignable
+                </span>
+              )
             )}
           </p>
         </div>

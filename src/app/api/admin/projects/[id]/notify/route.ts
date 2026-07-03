@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { logAdminAction } from '@/lib/activity-logger';
-import { sendMail } from '@/lib/mailer';
+import { sendMail, resolveTemplate } from '@/lib/mailer';
 import { getStageTemplate, PROJECT_MAIL_SIGNATURE } from '@/lib/project-mail-templates';
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com';
@@ -82,7 +82,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const clientName = project.clientName || project.clientEmail.split('@')[0];
-    let bodyHtml = template.body({ clientName: esc(clientName), projectName: esc(project.name) });
+    // Sujet + corps : override admin (« Mails ») s'il existe, sinon le modèle du code
+    const { subject, body: templateBody } = await resolveTemplate(`stage_${template.key}`, {
+      clientName: esc(clientName),
+      projectName: esc(project.name),
+    });
+    let bodyHtml = templateBody;
 
     // Message personnalisé + bouton, insérés avant la signature « L'atelier Au Format »
     const insertion = `${
@@ -96,8 +101,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const sent = await sendMail(
       project.clientEmail,
-      `${template.subject} — Au Format`,
-      wrap(template.subject, bodyHtml)
+      `${subject} — Au Format`,
+      wrap(subject, bodyHtml)
     );
     if (!sent) {
       return NextResponse.json(

@@ -298,6 +298,7 @@ export const ADMIN_NAV_CRM = [
 
 export const ADMIN_NAV_CONTENT = [
   { href: '/admin/parametres', label: 'Paramètres', icon: '⚙️' },
+  { href: '/admin/mails', label: 'Mails', icon: '✉️' },
   { href: '/admin/contenu', label: 'Pages', icon: '📝' },
   { href: '/admin/categories', label: 'Catégories', icon: '🏷️' },
   { href: '/admin/services', label: 'Services', icon: '🔧' },

@@ -97,7 +97,7 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
             <div><span className="text-noir/40 text-xs block">Telephone</span>{client.phone || '—'}</div>
             <div><span className="text-noir/40 text-xs block">Adresse</span>{client.address || '—'}</div>
             <div><span className="text-noir/40 text-xs block">Remise</span>{client.discountRate > 0 ? `${client.discountRate}%` : 'Aucune'}</div>
-            <div><span className="text-noir/40 text-xs block">Derniere connexion</span>{client.lastLogin ? timeAgo(client.lastLogin) : 'Jamais'}</div>
+            <div><span className="text-noir/40 text-xs block">Dernière visite</span>{client.lastSeen ? timeAgo(client.lastSeen) : 'Jamais'}</div>
           </div>
         </Card>
       )}

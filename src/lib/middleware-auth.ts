@@ -1,7 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from './better-auth';
 import { headers } from 'next/headers';
+import { rawQuery } from './db';
 import type { Profile } from './types';
+
+/**
+ * Marque l'utilisateur comme « vu à l'instant » (profiles.last_seen_at).
+ * Throttlé côté SQL (au plus une écriture / 10 min) et fire-and-forget :
+ * n'ajoute aucune latence et ne fait jamais échouer la requête appelante.
+ */
+export function touchLastSeen(userId: string): void {
+  void rawQuery(
+    `UPDATE profiles SET last_seen_at = NOW()
+     WHERE id = $1 AND (last_seen_at IS NULL OR last_seen_at < NOW() - INTERVAL '10 minutes')`,
+    [userId]
+  ).catch(() => { /* best effort */ });
+}
 
 export interface AuthenticatedRequest {
   userId: string;
@@ -38,6 +52,7 @@ export async function requireAuth(request: NextRequest): Promise<AuthenticatedRe
       updatedAt: user.updatedAt?.toISOString?.() || String(user.updatedAt),
     };
 
+    touchLastSeen(user.id);
     return { userId: user.id, role: profile.role, profile };
   } catch (error) {
     console.error('Auth error:', error);

@@ -66,6 +66,12 @@ resource "aws_iam_role_policy" "lambda_s3" {
           "s3:HeadObject"
         ]
         Resource = "${aws_s3_bucket.backups.arn}/heartbeat.txt"
+      },
+      {
+        # Marqueur de fin de failover écrit au failback (réimport fiable côté maison)
+        Effect   = "Allow"
+        Action   = ["s3:PutObject"]
+        Resource = "${aws_s3_bucket.backups.arn}/db/failover-final.json"
       }
     ]
   })

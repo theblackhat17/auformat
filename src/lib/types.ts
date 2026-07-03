@@ -1009,6 +1009,8 @@ export interface ClientWithStats extends Profile {
   totalRevenue: number;
   totalLogins: number;
   lastLogin: string | null;
+  /** Dernier passage réel sur le site (last_seen_at throttlé + activité de session) */
+  lastSeen: string | null;
   draftProjects: number;
   quoteRequestedProjects: number;
 }
