@@ -79,6 +79,8 @@ export function ConfigurateurCompo({
   const router = useRouter();
   const { isAuthenticated, profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
+  /** Aperçu admin : simule ce que voit un client (prix masqués) sans se déconnecter. */
+  const [previewClient, setPreviewClient] = useState(false);
   /* Attribution du projet à un client (commercial en RDV) */
   const [clients, setClients] = useState<{ id: string; email: string; fullName: string | null }[]>([]);
   const [clientSearch, setClientSearch] = useState('');
@@ -89,11 +91,12 @@ export function ConfigurateurCompo({
 
   const compo = useComposition(initialConfig);
   const univers = (settings.univers || []).find((u) => u.slug === compo.config.univers);
-  /** Les prix ne sont JAMAIS montrés au client : seul un admin (commercial) voit le chiffrage. */
-  const showPrices = isAdmin;
+  /** Les prix ne sont JAMAIS montrés au client : seul un admin (commercial) voit le chiffrage.
+   *  En mode « aperçu client », l'admin masque volontairement les prix pour vérifier le rendu. */
+  const showPrices = isAdmin && !previewClient;
   /** Un client connecté ne demande pas de devis (son commercial pilote tout) ; on garde la
    *  demande pour les prospects (visiteurs non connectés) et pour l'admin. */
-  const canRequestQuote = isAdmin || !isAuthenticated;
+  const canRequestQuote = (isAdmin && !previewClient) || !isAuthenticated;
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
@@ -701,10 +704,39 @@ export function ConfigurateurCompo({
                   )}
                 </>
               )}
+
+              {/* Aperçu admin : basculer sur la vue client (prix masqués) */}
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setPreviewClient((v) => !v)}
+                  className="mt-4 w-full flex items-center justify-center gap-2 text-xs font-medium text-white/70 hover:text-white border-t border-white/15 pt-3 transition-colors"
+                >
+                  {previewClient ? (
+                    <>← Revenir à la vue admin (prix visibles)</>
+                  ) : (
+                    <>👁 Voir comme un client (masquer les prix)</>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Bandeau d'aperçu client (admin uniquement) */}
+      {isAdmin && previewClient && (
+        <div className="fixed top-0 left-0 right-0 z-50 bg-vert-foret text-white text-xs sm:text-sm text-center py-2 px-4 flex items-center justify-center gap-3">
+          <span>👁 Aperçu client — les prix sont masqués, comme pour un client.</span>
+          <button
+            type="button"
+            onClick={() => setPreviewClient(false)}
+            className="underline underline-offset-2 hover:no-underline font-medium"
+          >
+            Quitter l&apos;aperçu
+          </button>
+        </div>
+      )}
 
       {/* Barre mobile fixe */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-white border-t border-noir/10 px-4 py-3 flex items-center justify-between gap-3 z-40">

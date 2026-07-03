@@ -740,8 +740,16 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         continue;
       }
 
-      if (isPanneauPlein) {
-        // Dalles, fileurs et joues : volume plein — le plan libre reçoit ses chants dédiés
+      if (type.slug === 'fileur') {
+        // Fileur de finition : bande fine dont la FACE AVANT est à champ (affleurante) avec
+        // la façade des modules voisins — plan de façade = avant caisson (d) + épaisseur façade.
+        // Derrière le fileur, tout est vide jusqu'au mur (ce n'est PAS une joue pleine profondeur).
+        const fd = FACADE;
+        const caisson = box(w, h, fd, bodyMat);
+        caisson.position.set(w / 2, h / 2, d + FACADE - fd / 2);
+        mg.add(caisson);
+      } else if (isPanneauPlein) {
+        // Dalles et joues de finition : volume plein — le plan libre reçoit ses chants dédiés
         const chantSrc = config.planChantMaterialIndex != null ? materials[config.planChantMaterialIndex] : null;
         if (isPlanLibre && chantSrc) {
           const chantM = woodMaterial(chantSrc);

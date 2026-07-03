@@ -12,7 +12,10 @@ import type { ProjectEvent } from '@/lib/types';
 
 export const GOOGLE_CAL_SCOPES = ['https://www.googleapis.com/auth/calendar', 'openid', 'email'];
 
-export const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com'}/api/admin/google/callback`;
+// Origine canonique de prod (BETTER_AUTH_URL = https://auformat.com). On évite NEXT_PUBLIC_APP_URL
+// qui peut valoir http://localhost:3000 → sinon redirect_uri_mismatch côté Google.
+export const APP_ORIGIN = (process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com').replace(/\/$/, '');
+export const REDIRECT_URI = `${APP_ORIGIN}/api/admin/google/callback`;
 
 const SETTINGS_KEY = 'google_calendar';
 const TIMEZONE = 'Europe/Paris';
@@ -106,6 +109,28 @@ export async function exchangeCodeAndStore(code: string): Promise<void> {
   await saveGoogleConfig({ refreshToken, email, calendarId: existing?.calendarId || 'primary' });
 }
 
+/** Liste les agendas accessibles par le compte connecté (pour choisir la cible, ex. « AU FORMAT ») */
+export async function listCalendars(): Promise<{ id: string; summary: string; primary: boolean }[]> {
+  try {
+    const client = await getCalendarClient();
+    if (!client) return [];
+    const res = await client.calendar.calendarList.list({ maxResults: 250, showHidden: false });
+    return (res.data.items || [])
+      .filter((c) => !!c.id && (c.accessRole === 'owner' || c.accessRole === 'writer'))
+      .map((c) => ({ id: c.id as string, summary: c.summaryOverride || c.summary || (c.id as string), primary: !!c.primary }));
+  } catch (err) {
+    console.error('Google Calendar list error:', err instanceof Error ? err.message : err);
+    return [];
+  }
+}
+
+/** Change l'agenda cible (ex. bascule de « primary » vers l'agenda « AU FORMAT ») */
+export async function setCalendarId(calendarId: string): Promise<void> {
+  const cfg = await getGoogleConfig();
+  if (!cfg) throw new Error('Google Agenda non connecté');
+  await saveGoogleConfig({ ...cfg, calendarId: calendarId || 'primary' });
+}
+
 /** Client Calendar authentifié, ou null si non connecté */
 async function getCalendarClient(): Promise<{ calendar: calendar_v3.Calendar; calendarId: string } | null> {
   const cfg = await getGoogleConfig();
@@ -173,6 +198,55 @@ export async function pushEventToGoogle(ev: ProjectEvent, projectName: string): 
   } catch (err) {
     console.error('Google Calendar push error:', err instanceof Error ? err.message : err);
     return null;
+  }
+}
+
+export interface GoogleAgendaEvent {
+  id: string;
+  summary: string;
+  startAt: string;
+  endAt: string | null;
+  allDay: boolean;
+  htmlLink: string | null;
+}
+
+/** Lit les événements de l'agenda cible sur une plage (sens Google → site). Best effort. */
+export async function listGoogleEvents(fromISO: string, toISO: string): Promise<GoogleAgendaEvent[]> {
+  try {
+    const client = await getCalendarClient();
+    if (!client) return [];
+    const res = await client.calendar.events.list({
+      calendarId: client.calendarId,
+      timeMin: fromISO,
+      timeMax: toISO,
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 2500,
+    });
+    return (res.data.items || [])
+      .filter((e) => e.status !== 'cancelled' && (e.start?.dateTime || e.start?.date))
+      .map((e) => {
+        const allDay = !!e.start?.date && !e.start?.dateTime;
+        // Google : end.date des événements « journée entière » est exclusif → on retire 1 jour
+        let endAt: string | null = e.end?.dateTime || null;
+        if (allDay && e.end?.date) {
+          const d = new Date(`${e.end.date}T00:00:00Z`);
+          d.setUTCDate(d.getUTCDate() - 1);
+          endAt = `${d.toISOString().slice(0, 10)}T00:00:00`;
+        }
+        return {
+          id: e.id || '',
+          summary: e.summary || '(Sans titre)',
+          startAt: e.start?.dateTime || (e.start?.date ? `${e.start.date}T00:00:00` : ''),
+          endAt,
+          allDay,
+          htmlLink: e.htmlLink || null,
+        };
+      })
+      .filter((e) => e.id && e.startAt);
+  } catch (err) {
+    console.error('Google Calendar list events error:', err instanceof Error ? err.message : err);
+    return [];
   }
 }
 

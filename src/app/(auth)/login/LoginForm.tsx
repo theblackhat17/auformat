@@ -70,6 +70,11 @@ export function LoginForm() {
         Continuer avec Google
       </button>
 
+      <p className="text-xs text-noir/45 text-center px-2">
+        Connectez-vous avec l&apos;adresse e-mail que vous avez communiquée à Au&nbsp;Format.
+        Les comptes sont créés par l&apos;atelier — pas d&apos;inscription en ligne.
+      </p>
+
       {/* Separator */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

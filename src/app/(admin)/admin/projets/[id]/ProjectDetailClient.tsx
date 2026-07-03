@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type {
@@ -13,17 +13,22 @@ import type {
   ProjectDocument,
   ProjectEvent,
   ProjectMilestone,
+  Quote,
 } from '@/lib/types';
 import {
   PROJECT_STATUS_LABELS,
   PROJECT_STATUS_COLORS,
   PROJECT_TYPE_ICONS,
   PROJECT_EVENT_TYPES,
+  QUOTE_STATUS_LABELS,
+  QUOTE_STATUS_COLORS,
 } from '@/lib/constants';
 import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress } from '@/lib/project-config';
 import { PROJECT_STAGE_TEMPLATES } from '@/lib/project-mail-templates';
 import { getModuleType, moduleMaterial } from '@/components/configurateur-compo/pricingCompo';
-import { formatDate } from '@/lib/utils';
+import { computeDebit } from '@/lib/debit';
+import { CuttingPlan } from '@/components/debit/CuttingPlan';
+import { formatDate, formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
@@ -35,6 +40,7 @@ const TABS = [
   { key: 'apercu', label: 'Aperçu' },
   { key: 'etapes', label: 'Étapes' },
   { key: 'production', label: 'Production' },
+  { key: 'devis', label: 'Devis' },
   { key: 'agenda', label: 'Agenda' },
   { key: 'documents', label: 'Documents' },
   { key: 'messagerie', label: 'Messagerie' },
@@ -67,24 +73,28 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     }
   }
 
+  /** (Re)charge le projet et les coordonnées de son client propriétaire. */
+  const refresh = useCallback(async () => {
+    const res = await fetch(`/api/projects/${projectId}`);
+    if (!res.ok) throw new Error();
+    const p: Project = await res.json();
+    setProject(p);
+    if (p.userId) {
+      const cRes = await fetch(`/api/admin/clients/${p.userId}`);
+      if (cRes.ok) {
+        const d = await cRes.json();
+        setClient(d.client ? { fullName: d.client.fullName || null, email: d.client.email, phone: d.client.phone || null } : null);
+      }
+    } else {
+      setClient(null);
+    }
+  }, [projectId]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch(`/api/projects/${projectId}`);
-        if (!res.ok) throw new Error();
-        const p: Project = await res.json();
-        if (cancelled) return;
-        setProject(p);
-        if (p.userId) {
-          const cRes = await fetch(`/api/admin/clients/${p.userId}`);
-          if (cRes.ok) {
-            const d = await cRes.json();
-            if (!cancelled && d.client) {
-              setClient({ fullName: d.client.fullName || null, email: d.client.email, phone: d.client.phone || null });
-            }
-          }
-        }
+        await refresh();
       } catch {
         if (!cancelled) toast.error('Erreur chargement du projet');
       } finally {
@@ -147,9 +157,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         ))}
       </div>
 
-      {activeTab === 'apercu' && <ApercuTab project={project} client={client} />}
+      {activeTab === 'apercu' && <ApercuTab project={project} client={client} onChanged={refresh} />}
       {activeTab === 'etapes' && <EtapesTab project={project} onUpdated={(milestones) => setProject((prev) => prev ? { ...prev, milestones } : prev)} />}
       {activeTab === 'production' && <ProductionTab project={project} />}
+      {activeTab === 'devis' && <DevisTab project={project} />}
       {activeTab === 'agenda' && <AgendaTab projectId={project.id} />}
       {activeTab === 'documents' && <DocumentsTab projectId={project.id} />}
       {activeTab === 'messagerie' && (
@@ -165,8 +176,8 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   );
 }
 
-/** Aperçu : coordonnées du client, accès rapides */
-function ApercuTab({ project, client }: { project: Project; client: ClientInfo | null }) {
+/** Aperçu : coordonnées du client, attribution/création de compte, accès rapides */
+function ApercuTab({ project, client, onChanged }: { project: Project; client: ClientInfo | null; onChanged: () => Promise<void> }) {
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
 
@@ -184,7 +195,7 @@ function ApercuTab({ project, client }: { project: Project; client: ClientInfo |
         toast.error(data?.error || "Erreur lors de l'envoi de l'invitation");
         return;
       }
-      toast.success("E-mail d'accès envoyé");
+      toast.success("E-mail d'accès renvoyé à " + client.email);
     } catch {
       toast.error('Erreur réseau');
     } finally {
@@ -205,11 +216,21 @@ function ApercuTab({ project, client }: { project: Project; client: ClientInfo |
         ) : (
           <p className="text-sm text-noir/45">Aucun client associé à ce projet.</p>
         )}
-        {project.userId && (
-          <Link href={`/admin/clients/${project.userId}`} className="inline-block text-sm text-vert-foret hover:underline mt-3">
-            Voir la fiche client →
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-3 mt-3">
+          {project.userId && (
+            <Link href={`/admin/clients/${project.userId}`} className="text-sm text-vert-foret hover:underline">
+              Voir la fiche client →
+            </Link>
+          )}
+          {client?.email && (
+            <button onClick={handleInvite} disabled={inviting} className="text-sm text-noir/50 hover:text-vert-foret disabled:opacity-50 transition-colors">
+              {inviting ? 'Envoi…' : "Renvoyer l'accès"}
+            </button>
+          )}
+        </div>
+
+        {/* Attribuer / changer le client propriétaire du projet */}
+        <AssignClientForm project={project} currentEmail={client?.email || null} onChanged={onChanged} />
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
@@ -223,12 +244,115 @@ function ApercuTab({ project, client }: { project: Project; client: ClientInfo |
           <Link href={`/configurateur?project=${project.id}`}>
             <Button size="sm" className="w-full">Ouvrir dans le configurateur</Button>
           </Link>
-          {client?.email && (
-            <Button variant="outline" size="sm" className="w-full" onClick={handleInvite} isLoading={inviting}>
-              Inviter le client (envoyer son accès)
-            </Button>
-          )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Attribue le projet à un client : crée le compte (email + nom + tél) s'il n'existe pas,
+ * envoie l'e-mail de définition du mot de passe, puis réattribue le projet à ce compte.
+ * Le client pourra aussi se connecter via Google (même e-mail) sans définir de mot de passe.
+ */
+function AssignClientForm({ project, currentEmail, onChanged }: { project: Project; currentEmail: string | null; onChanged: () => Promise<void> }) {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [sendInvite, setSendInvite] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    const mail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
+      toast.error('E-mail client invalide');
+      return;
+    }
+    setBusy(true);
+    try {
+      // 1) Créer (ou compléter) le compte client et envoyer l'accès
+      const cRes = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: mail, fullName: name.trim(), phone: phone.trim() || undefined, sendInvite }),
+      });
+      const cData = await cRes.json().catch(() => null);
+      if (!cRes.ok || !cData?.id) {
+        toast.error(cData?.error || 'Impossible de créer le compte client');
+        return;
+      }
+      // 2) Réattribuer le projet à ce client
+      const pRes = await fetch(`/api/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientUserId: cData.id }),
+      });
+      if (!pRes.ok) {
+        const pData = await pRes.json().catch(() => null);
+        toast.error(pData?.error || 'Compte créé, mais réattribution du projet impossible');
+        return;
+      }
+      toast.success(
+        sendInvite
+          ? `Projet attribué à ${mail} — e-mail d'accès envoyé (mot de passe ou Google).`
+          : `Projet attribué à ${mail}.`
+      );
+      setOpen(false);
+      setEmail(''); setName(''); setPhone('');
+      await onChanged();
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="mt-4 w-full text-sm font-medium px-3 py-2 rounded-lg border border-dashed border-gray-300 text-noir/60 hover:border-vert-foret hover:text-vert-foret transition-colors"
+      >
+        {currentEmail ? '↳ Changer le client / réattribuer' : '+ Attribuer à un client'}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
+      <p className="text-sm font-semibold text-noir">Attribuer à un client</p>
+      <div className="space-y-2">
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="E-mail du client *"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:bg-white"
+        />
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Nom du client"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:bg-white"
+        />
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Téléphone (optionnel)"
+          className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-vert-foret focus:bg-white"
+        />
+      </div>
+      <label className="flex items-start gap-2 text-sm text-noir/70 cursor-pointer">
+        <input type="checkbox" checked={sendInvite} onChange={(e) => setSendInvite(e.target.checked)} className="mt-0.5" />
+        <span>Envoyer l&apos;e-mail d&apos;accès (définition du mot de passe). Le client pourra aussi se connecter avec Google (même e-mail), sans mot de passe.</span>
+      </label>
+      <div className="flex items-center gap-2">
+        <Button size="sm" onClick={submit} isLoading={busy}>Créer le compte et attribuer</Button>
+        <button onClick={() => setOpen(false)} disabled={busy} className="text-sm text-noir/50 hover:text-noir px-2 py-1.5 disabled:opacity-50">Annuler</button>
       </div>
     </div>
   );
@@ -445,6 +569,10 @@ function ProductionTab({ project }: { project: Project }) {
   // Linéaire total : largeurs cumulées des modules posés (les modules empilés ne s'ajoutent pas)
   const lineaireMm = chiffrables.reduce((sum, mod) => (mod.empileSur ? sum : sum + mod.largeur), 0);
   const lineaireM = (lineaireMm / 1000).toFixed(2).replace('.', ',');
+  // Débit atelier estimatif (panneaux + quincaillerie), sans prix
+  const debit = computeDebit(config, moduleTypes, materials);
+  const totalM2 = Math.round(debit.surfaces.reduce((sum, s) => sum + s.m2, 0) * 100) / 100;
+  const formatM2 = (m2: number) => m2.toFixed(2).replace('.', ',');
 
   return (
     <div className="space-y-4 max-w-3xl">
@@ -527,6 +655,102 @@ function ProductionTab({ project }: { project: Project }) {
           </table>
         </div>
       </div>
+
+      {/* Débit atelier estimatif */}
+      {debit.panels.length > 0 && (
+        <div id="debit-print" className="bg-white rounded-xl border border-gray-200 p-5">
+          {/* À l'impression, seul le bloc débit est visible */}
+          <style>{`@media print {
+            body * { visibility: hidden; }
+            #debit-print, #debit-print * { visibility: visible; }
+            #debit-print { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
+            #debit-print .no-print { display: none; }
+          }`}</style>
+          <div className="flex items-start justify-between gap-3 mb-1">
+            <p className="text-sm font-semibold text-noir">Débit atelier (estimatif)</p>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="no-print shrink-0 text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-noir/70 hover:border-vert-foret hover:text-vert-foret transition-colors"
+            >
+              🖨 Imprimer le débit
+            </button>
+          </div>
+          <p className="text-xs text-noir/50 mb-4">
+            Débit estimatif — épaisseur 18 mm, assemblage à valider par l&apos;atelier.
+          </p>
+
+          {/* Panneaux à commander */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-noir/40 mb-2">Panneaux à commander</p>
+          <div className="space-y-1 text-sm text-noir/70 mb-5">
+            {debit.surfaces.map((s) => (
+              <p key={s.materiau} className="flex justify-between gap-4 max-w-sm">
+                <span>{s.materiau}</span>
+                <span className="font-medium text-noir" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatM2(s.m2)} m²</span>
+              </p>
+            ))}
+            <p className="flex justify-between gap-4 max-w-sm border-t border-gray-200 pt-1 mt-1">
+              <span className="font-semibold text-noir">Total</span>
+              <span className="font-semibold text-noir" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatM2(totalM2)} m²</span>
+            </p>
+          </div>
+
+          {/* Liste de débit */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-noir/40 mb-2">Liste de débit</p>
+          <div className="overflow-x-auto -mx-5 px-5 mb-5">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead>
+                <tr className="text-left text-xs text-noir/40 uppercase tracking-wide border-b border-gray-200">
+                  <th className="py-2 pr-3 font-semibold">Module</th>
+                  <th className="py-2 pr-3 font-semibold">Pièce</th>
+                  <th className="py-2 pr-3 font-semibold">L (mm)</th>
+                  <th className="py-2 pr-3 font-semibold">H (mm)</th>
+                  <th className="py-2 pr-3 font-semibold">Qté</th>
+                  <th className="py-2 font-semibold">Matériau</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {debit.panels.map((panel, i) => {
+                  const firstOfModule = i === 0 || debit.panels[i - 1].moduleLabel !== panel.moduleLabel;
+                  return (
+                    <tr key={i} className="align-top">
+                      <td className="py-2 pr-3 text-noir/70">{firstOfModule ? <span className="font-medium text-noir">{panel.moduleLabel}</span> : ''}</td>
+                      <td className="py-2 pr-3 text-noir/70">{panel.piece}</td>
+                      <td className="py-2 pr-3 text-noir/70" style={{ fontVariantNumeric: 'tabular-nums' }}>{panel.largeur}</td>
+                      <td className="py-2 pr-3 text-noir/70" style={{ fontVariantNumeric: 'tabular-nums' }}>{panel.hauteur}</td>
+                      <td className="py-2 pr-3 text-noir/70" style={{ fontVariantNumeric: 'tabular-nums' }}>{panel.quantite}</td>
+                      <td className="py-2 text-noir/70">{panel.materiau}</td>
+                    </tr>
+                  );
+                })}
+                <tr className="border-t border-gray-200">
+                  <td colSpan={4} className="py-2 pr-3 font-semibold text-noir">Total panneaux</td>
+                  <td className="py-2 pr-3 font-semibold text-noir" style={{ fontVariantNumeric: 'tabular-nums' }}>{debit.totalPanels}</td>
+                  <td className="py-2" />
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Quincaillerie */}
+          <p className="text-xs font-semibold uppercase tracking-wide text-noir/40 mb-2">Quincaillerie</p>
+          {debit.hardware.length > 0 ? (
+            <div className="space-y-1 text-sm text-noir/70">
+              {debit.hardware.map((h) => (
+                <p key={h.label} className="flex justify-between gap-4 max-w-sm">
+                  <span>{h.label}</span>
+                  <span className="font-medium text-noir" style={{ fontVariantNumeric: 'tabular-nums' }}>{h.quantite}</span>
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-noir/45">Aucune quincaillerie détectée.</p>
+          )}
+
+          {/* Plan de découpe 2D (calepinage façon MaxCut) */}
+          <CuttingPlan panels={debit.panels} />
+        </div>
+      )}
     </div>
   );
 }
@@ -726,6 +950,94 @@ function EventForm({
         )}
       </div>
     </form>
+  );
+}
+
+/** Devis : génération depuis la config 3D + liste des devis du projet (admin uniquement, prix visibles) */
+function DevisTab({ project }: { project: Project }) {
+  const toast = useToast();
+  const router = useRouter();
+  const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/projects/${project.id}/quotes`)
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled) setQuotes(Array.isArray(d.quotes) ? d.quotes : []); })
+      .catch(() => { if (!cancelled) toast.error('Erreur chargement des devis'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project.id]);
+
+  async function handleGenerate() {
+    setGenerating(true);
+    try {
+      const res = await fetch(`/api/admin/projects/${project.id}/quote`, { method: 'POST' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error || 'Erreur lors de la génération du devis');
+        setGenerating(false);
+        return;
+      }
+      toast.success(`Devis ${data.quoteNumber} créé`);
+      router.push(`/admin/devis/${data.id}`);
+    } catch {
+      toast.error('Erreur réseau');
+      setGenerating(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4 max-w-4xl">
+      <div className="bg-white rounded-xl border border-gray-200 p-5 flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <p className="text-sm font-semibold text-noir">Devis du projet</p>
+          <p className="text-xs text-noir/45 mt-0.5">Chiffrage depuis la configuration, puis édition dans l&apos;éditeur de devis. Les prix restent invisibles côté client.</p>
+        </div>
+        <Button onClick={handleGenerate} disabled={generating}>
+          {generating ? 'Génération…' : 'Générer un devis depuis la config'}
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-vert-foret border-t-transparent rounded-full animate-spin" /></div>
+      ) : quotes.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50/70 rounded-2xl">
+          <p className="text-sm text-noir/45">Aucun devis pour ce projet — générez-en un depuis la configuration.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-gray-100 text-left text-xs text-noir/45">
+                <th className="px-4 py-3 font-medium">Numéro</th>
+                <th className="px-4 py-3 font-medium">Statut</th>
+                <th className="px-4 py-3 font-medium text-right">Total TTC</th>
+                <th className="px-4 py-3 font-medium">Créé le</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quotes.map((q) => (
+                <tr key={q.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                  <td className="px-4 py-3 font-medium text-noir">{q.quoteNumber}</td>
+                  <td className="px-4 py-3"><Badge variant={QUOTE_STATUS_COLORS[q.status]}>{QUOTE_STATUS_LABELS[q.status]}</Badge></td>
+                  <td className="px-4 py-3 text-right tabular-nums text-noir">{formatPrice(q.totalTtc)}</td>
+                  <td className="px-4 py-3 text-noir/60">{formatDate(q.createdAt)}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link href={`/admin/devis/${q.id}`} className="text-vert-foret hover:underline font-medium">Éditer</Link>
+                    <a href={`/api/quotes/${q.id}/pdf`} target="_blank" rel="noopener noreferrer" className="ml-3 text-noir/60 hover:text-vert-foret hover:underline font-medium">PDF</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 

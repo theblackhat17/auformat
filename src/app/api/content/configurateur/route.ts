@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { getMateriauxForConfigurateur } from '@/lib/content';
+import { getOptionalRole } from '@/lib/middleware-auth';
+import { stripPrices } from '@/lib/strip-prices';
 import type { ConfigurateurSettingsRow } from '@/lib/types';
 
 export async function GET() {
   try {
-    const [rows, dbMaterials] = await Promise.all([
+    const [rows, dbMaterials, role] = await Promise.all([
       query<ConfigurateurSettingsRow>(
         'SELECT key, value, updated_at FROM configurateur_settings'
       ),
       getMateriauxForConfigurateur(),
+      getOptionalRole(),
     ]);
 
     const settings: Record<string, unknown> = {};
@@ -31,7 +34,11 @@ export async function GET() {
     // L'assistant IA n'est proposé que si la clé API est configurée côté serveur
     settings.ai_enabled = !!process.env.ANTHROPIC_API_KEY;
 
-    return NextResponse.json(settings);
+    // Les prix ne quittent JAMAIS le serveur pour un non-admin (le chiffrage est
+    // réservé au commercial). On les retire avant sérialisation.
+    const payload = role === 'admin' ? settings : (stripPrices(settings) as Record<string, unknown>);
+
+    return NextResponse.json(payload);
   } catch (err) {
     console.error('Error fetching configurateur settings:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

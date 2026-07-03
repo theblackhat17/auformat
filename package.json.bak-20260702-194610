@@ -1,0 +1,48 @@
+{
+  "name": "auformat-next",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && cp -r .next/static .next/standalone/.next/static && ln -sfn $(pwd)/public .next/standalone/public",
+    "deploy": "next build && cp -r .next/static .next/standalone/.next/static && ln -sfn $(pwd)/public .next/standalone/public && pm2 delete auformat && pm2 start ecosystem.config.js",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.104.1",
+    "@google/model-viewer": "^4.3.1",
+    "@types/pdfkit": "^0.17.6",
+    "@types/three": "^0.184.1",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.6.17",
+    "chart.js": "^4.5.1",
+    "googleapis": "^173.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^16.2.9",
+    "nodemailer": "^8.0.0",
+    "pdfkit": "^0.19.1",
+    "pg": "^8.18.0",
+    "react": "19.2.3",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
+    "rehype-sanitize": "^6.0.0",
+    "remark-gfm": "^4.0.1",
+    "three": "^0.184.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20",
+    "@types/nodemailer": "^7.0.9",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

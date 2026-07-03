@@ -153,6 +153,8 @@ export interface Quote {
   revisionMessage?: string | null;
   pdfUrl: string | null;
   configData: QuoteConfigData | null;
+  /** Projet d'origine (devis généré depuis la config 3D de la fiche projet) */
+  projectId?: string | null;
   clientName: string | null;
   clientEmail: string | null;
   clientPhone: string | null;

@@ -372,6 +372,27 @@ export async function notifyAdminsQuoteRevision(
   await sendMail(NOTIFY_EMAIL, `Modification demandée sur ${esc(quoteNumber)} — ${esc(clientName)}`, html);
 }
 
+/** Rappel J-1 : le client a un rendez-vous demain (RDV découverte, technique ou pose) */
+export async function sendRdvReminderEmail(
+  to: string,
+  opts: { clientName: string; typeLabel: string; projectName: string; whenLabel: string }
+): Promise<boolean> {
+  const html = wrap('À demain !', `
+    <p>Bonjour ${esc(opts.clientName)},</p>
+    <p>Petit rappel : nous avons rendez-vous <strong>demain</strong> pour votre projet
+    <strong>${esc(opts.projectName)}</strong>.</p>
+    <blockquote style="margin: 12px 0; padding: 12px; background: #f9f9f9; border-left: 3px solid #2C5F2D; border-radius: 4px; color: #555;">
+      <strong style="color: #2C5F2D;">${esc(opts.typeLabel)}</strong><br/>
+      ${esc(opts.whenLabel)}
+    </blockquote>
+    <p>Un empêchement ou une question ? Répondez simplement à cet email ou appelez-nous,
+    nous trouverons un autre créneau.</p>
+    ${btn(`${SITE}/mes-projets`, 'Voir mon projet')}
+    <p style="margin: 16px 0 0; color: #555;">À demain,<br/><strong>L'atelier Au Format</strong></p>
+  `);
+  return sendMail(to, 'Rappel : votre rendez-vous demain — Au Format', html);
+}
+
 /** Le chantier est terminé : on invite le client à laisser un avis Google */
 export async function sendReviewRequestEmail(
   to: string,

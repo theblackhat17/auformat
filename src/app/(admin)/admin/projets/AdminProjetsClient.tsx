@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Project, ProjectMilestone } from '@/lib/types';
+import type { AgendaEvent } from '@/app/api/admin/agenda/route';
 import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress } from '@/lib/project-config';
-import { PROJECT_TYPE_ICONS } from '@/lib/constants';
+import { PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { timeAgo } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 
@@ -21,9 +22,38 @@ type AdminProject = Project & {
 const FILTER_ALL = '__all__';
 const FILTER_NONE = '__none__';
 
+/* ————— Cockpit : constantes et helpers de dates ————— */
+
+/** Un projet sans aucune activité depuis N jours est considéré « bloqué » */
+const STALLED_DAYS = 14;
+
+/** Types d'événements visibles côté client (les 3 rdv_*) */
+const RDV_KEYS = new Set(PROJECT_EVENT_TYPES.filter((t) => t.clientVisible).map((t) => t.key));
+/** Jours d'atelier (charge de production de la semaine) */
+const WORKSHOP_KEYS = ['jour_coupe', 'jour_usinage', 'jour_montage'] as const;
+/** Libellé + couleur par type d'événement (catalogue des constantes) */
+const EVENT_TYPE_BY_KEY = new Map(PROJECT_EVENT_TYPES.map((t) => [t.key, t]));
+
+/** Lundi 00:00 de la semaine du jour donné */
+function mondayOfWeek(d: Date): Date {
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  day.setDate(day.getDate() - ((day.getDay() + 6) % 7));
+  return day;
+}
+
+const COCKPIT_DAY_FMT = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+const COCKPIT_TIME_FMT = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+/** « mar. 7 juil. à 09:30 » — heure omise pour les événements « journée entière » */
+function formatEventDate(e: Pick<AgendaEvent, 'startAt' | 'allDay'>): string {
+  const d = new Date(e.startAt);
+  return e.allDay ? COCKPIT_DAY_FMT.format(d) : `${COCKPIT_DAY_FMT.format(d)} à ${COCKPIT_TIME_FMT.format(d)}`;
+}
+
 export function AdminProjetsClient() {
   const [projects, setProjects] = useState<AdminProject[]>([]);
   const [milestones, setMilestones] = useState<ProjectMilestone[]>(DEFAULT_MILESTONES);
+  const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>(FILTER_ALL);
   const [search, setSearch] = useState('');
@@ -31,6 +61,10 @@ export function AdminProjetsClient() {
 
   useEffect(() => {
     let cancelled = false;
+    // Fenêtre du cockpit : lundi de la semaine courante → +21 jours (RDV, poses, charge atelier)
+    const monday = mondayOfWeek(new Date());
+    const windowEnd = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 21, 23, 59, 59);
+    const agendaQuery = `from=${encodeURIComponent(monday.toISOString())}&to=${encodeURIComponent(windowEnd.toISOString())}`;
     Promise.all([
       fetch('/api/admin/projects')
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error('projects'))))
@@ -38,7 +72,10 @@ export function AdminProjetsClient() {
       fetch('/api/admin/project-settings')
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error('settings'))))
         .catch(() => null),
-    ]).then(([projectsData, settingsData]) => {
+      fetch(`/api/admin/agenda?${agendaQuery}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('agenda'))))
+        .catch(() => null),
+    ]).then(([projectsData, settingsData, agendaData]) => {
       if (cancelled) return;
       if (Array.isArray(projectsData)) {
         setProjects(projectsData);
@@ -47,6 +84,9 @@ export function AdminProjetsClient() {
       }
       if (settingsData && Array.isArray(settingsData.milestones) && settingsData.milestones.length > 0) {
         setMilestones(settingsData.milestones);
+      }
+      if (agendaData && Array.isArray(agendaData.events)) {
+        setEvents(agendaData.events);
       }
       setLoading(false);
     });
@@ -84,6 +124,63 @@ export function AdminProjetsClient() {
     }
     return { total: projects.length, enCours, nonDemarres, termines, unread };
   }, [projects, stageById, lastKey]);
+
+  /** Cockpit : tout ce qui demande une action aujourd'hui / cette semaine */
+  const cockpit = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const monday = mondayOfWeek(now);
+    const weekEnd = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6, 23, 59, 59);
+
+    // RDV client (rdv_*) restant d'ici la fin de la semaine courante
+    const rdvSemaine = events.filter((e) => {
+      if (!RDV_KEYS.has(e.type)) return false;
+      const start = new Date(e.startAt);
+      return start >= todayStart && start <= weekEnd;
+    });
+
+    // Charge atelier de la semaine (lun → dim) : coupe / usinage / montage
+    const atelier: Record<(typeof WORKSHOP_KEYS)[number], number> = { jour_coupe: 0, jour_usinage: 0, jour_montage: 0 };
+    let atelierTotal = 0;
+    for (const e of events) {
+      if (!(WORKSHOP_KEYS as readonly string[]).includes(e.type)) continue;
+      const start = new Date(e.startAt);
+      if (start >= monday && start <= weekEnd) {
+        atelier[e.type as (typeof WORKSHOP_KEYS)[number]]++;
+        atelierTotal++;
+      }
+    }
+
+    // Poses à venir (fenêtre chargée : jusqu'à lundi + 21 jours)
+    const poses = events.filter((e) => e.type === 'rdv_pose' && new Date(e.startAt) >= todayStart);
+
+    // Messages clients non lus, par projet
+    const unreadProjects = projects
+      .filter((p) => p.unreadCount > 0)
+      .sort((a, b) => b.unreadCount - a.unreadCount);
+    const unreadTotal = unreadProjects.reduce((sum, p) => sum + p.unreadCount, 0);
+
+    // Projets « bloqués » : ni terminés, ni brouillons/modèles, sans activité depuis 14 jours
+    const bloques = projects
+      .filter((p) => !p.isTemplate && p.status !== 'completed' && p.status !== 'draft')
+      .map((p) => ({ project: p, days: Math.floor((now.getTime() - new Date(p.updatedAt).getTime()) / 86_400_000) }))
+      .filter((x) => x.days >= STALLED_DAYS)
+      .sort((a, b) => b.days - a.days);
+
+    // Alerte financière : devis accepté mais demande d'acompte pas encore faite
+    const sansAcompte = projects.filter(
+      (p) =>
+        !p.isTemplate &&
+        p.status !== 'completed' &&
+        p.milestones?.devis_accepte?.done === true &&
+        p.milestones?.acompte?.done !== true
+    );
+
+    return { rdvSemaine, atelier, atelierTotal, poses, unreadProjects, unreadTotal, bloques, sansAcompte };
+  }, [projects, events]);
+
+  const rienATraiter =
+    cockpit.unreadTotal === 0 && cockpit.rdvSemaine.length === 0 && cockpit.bloques.length === 0 && cockpit.sansAcompte.length === 0;
 
   /** Répartition du pipeline : combien de projets à chaque étape courante */
   const stageCounts = useMemo(() => {
@@ -154,6 +251,166 @@ export function AdminProjetsClient() {
         <DashboardSkeleton />
       ) : (
         <>
+          {/* Cockpit — le coup d'œil du matin : à traiter + semaine d'atelier */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">
+            {/* À traiter : uniquement ce qui demande une action */}
+            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <p className="text-sm font-semibold text-noir">À traiter</p>
+                <p className="text-xs text-noir/45">Aujourd&apos;hui et cette semaine</p>
+              </div>
+              {rienATraiter ? (
+                <p className="rounded-lg bg-green-50 px-3 py-2.5 text-sm font-medium text-green-700">Tout est à jour ✅</p>
+              ) : (
+                <div className="space-y-4">
+                  {cockpit.unreadTotal > 0 && (
+                    <CockpitSection label={`Messages non lus · ${cockpit.unreadTotal}`}>
+                      <div className="flex flex-wrap gap-1.5">
+                        {cockpit.unreadProjects.slice(0, 6).map((p) => (
+                          <Link
+                            key={p.id}
+                            href={`/admin/projets/${p.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 transition-colors hover:bg-red-100"
+                          >
+                            <span className="max-w-[180px] truncate">{p.name}</span>
+                            <span className="font-bold tabular-nums">{p.unreadCount}</span>
+                          </Link>
+                        ))}
+                        {cockpit.unreadProjects.length > 6 && (
+                          <span className="self-center text-xs text-noir/45">+ {cockpit.unreadProjects.length - 6} autres</span>
+                        )}
+                      </div>
+                    </CockpitSection>
+                  )}
+
+                  {cockpit.rdvSemaine.length > 0 && (
+                    <CockpitSection label="RDV cette semaine">
+                      <ul className="space-y-1">
+                        {cockpit.rdvSemaine.map((e) => {
+                          const type = EVENT_TYPE_BY_KEY.get(e.type);
+                          return (
+                            <li key={e.id}>
+                              <Link
+                                href={`/admin/projets/${e.projectId}`}
+                                className="group/rdv flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 text-sm transition-colors hover:bg-beige/50"
+                              >
+                                <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: type?.color || '#2C5F2D' }} aria-hidden="true" />
+                                <span className="shrink-0 font-medium tabular-nums text-noir">{formatEventDate(e)}</span>
+                                <span className="shrink-0 text-noir/55">{type?.label || e.type}</span>
+                                <span className="min-w-0 truncate text-noir/70 transition-colors group-hover/rdv:text-vert-foret">{e.projectName}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </CockpitSection>
+                  )}
+
+                  {cockpit.sansAcompte.length > 0 && (
+                    <CockpitSection label="Devis accepté — acompte à demander">
+                      <ul className="space-y-1">
+                        {cockpit.sansAcompte.slice(0, 5).map((p) => (
+                          <li key={p.id}>
+                            <Link
+                              href={`/admin/projets/${p.id}`}
+                              className="group/acompte flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 text-sm transition-colors hover:bg-beige/50"
+                            >
+                              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">Acompte</span>
+                              <span className="min-w-0 truncate font-medium text-noir transition-colors group-hover/acompte:text-vert-foret">{p.name}</span>
+                              <span className="min-w-0 truncate text-noir/55">{p.clientName || p.clientEmail || 'Sans client'}</span>
+                            </Link>
+                          </li>
+                        ))}
+                        {cockpit.sansAcompte.length > 5 && (
+                          <li className="px-2 text-xs text-noir/45">+ {cockpit.sansAcompte.length - 5} autres projets</li>
+                        )}
+                      </ul>
+                    </CockpitSection>
+                  )}
+
+                  {cockpit.bloques.length > 0 && (
+                    <CockpitSection label="Projets sans activité">
+                      <ul className="space-y-1">
+                        {cockpit.bloques.slice(0, 5).map(({ project: p, days }) => (
+                          <li key={p.id}>
+                            <Link
+                              href={`/admin/projets/${p.id}`}
+                              className="group/stall flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 text-sm transition-colors hover:bg-beige/50"
+                            >
+                              <span className="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-orange-700">
+                                inactif depuis {days} j
+                              </span>
+                              <span className="min-w-0 truncate font-medium text-noir transition-colors group-hover/stall:text-vert-foret">{p.name}</span>
+                              <span className="min-w-0 truncate text-noir/55">{p.clientName || p.clientEmail || 'Sans client'}</span>
+                            </Link>
+                          </li>
+                        ))}
+                        {cockpit.bloques.length > 5 && (
+                          <li className="px-2 text-xs text-noir/45">+ {cockpit.bloques.length - 5} autres projets</li>
+                        )}
+                      </ul>
+                    </CockpitSection>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Cette semaine : charge d'atelier + poses à venir */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <p className="text-sm font-semibold text-noir">Cette semaine</p>
+                <Link href="/admin/agenda" className="text-xs font-medium text-vert-foret hover:underline">
+                  Agenda →
+                </Link>
+              </div>
+              <div className="space-y-4">
+                <CockpitSection label="Charge atelier">
+                  {cockpit.atelierTotal === 0 ? (
+                    <p className="text-sm text-noir/50">Aucun jour d&apos;atelier planifié cette semaine.</p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-bold tabular-nums text-noir leading-none">{cockpit.atelierTotal}</span>
+                      <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-noir/70">
+                        {WORKSHOP_KEYS.filter((k) => cockpit.atelier[k] > 0).map((k, i, arr) => (
+                          <span key={k} className="inline-flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: EVENT_TYPE_BY_KEY.get(k)?.color }} aria-hidden="true" />
+                            <span className="tabular-nums">
+                              {cockpit.atelier[k]} {WORKSHOP_SHORT_LABELS[k]}
+                            </span>
+                            {i < arr.length - 1 && <span className="text-noir/30">·</span>}
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+                  )}
+                </CockpitSection>
+
+                <CockpitSection label="Poses à venir (21 jours)">
+                  {cockpit.poses.length === 0 ? (
+                    <p className="text-sm text-noir/50">Aucune pose planifiée.</p>
+                  ) : (
+                    <ul className="space-y-1">
+                      {cockpit.poses.slice(0, 5).map((e) => (
+                        <li key={e.id}>
+                          <Link
+                            href={`/admin/projets/${e.projectId}`}
+                            className="group/pose flex items-center gap-2.5 rounded-lg px-2 py-1.5 -mx-2 text-sm transition-colors hover:bg-beige/50"
+                          >
+                            <span className="shrink-0 font-medium tabular-nums text-noir">{formatEventDate(e)}</span>
+                            <span className="min-w-0 truncate text-noir/70 transition-colors group-hover/pose:text-vert-foret">{e.projectName}</span>
+                          </Link>
+                        </li>
+                      ))}
+                      {cockpit.poses.length > 5 && (
+                        <li className="px-2 text-xs text-noir/45">+ {cockpit.poses.length - 5} autres poses</li>
+                      )}
+                    </ul>
+                  )}
+                </CockpitSection>
+              </div>
+            </div>
+          </div>
+
           {/* Chiffres clés */}
           <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-6">
             <StatCard label="Projets au total" value={stats.total} tone="bg-beige text-noir" icon={ICONS.total} />
@@ -271,6 +528,23 @@ const ICONS = {
   termines: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
   messages: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z',
 } as const;
+
+/** Libellés courts pour le récap de charge atelier (« 2 coupe · 1 usinage ») */
+const WORKSHOP_SHORT_LABELS: Record<(typeof WORKSHOP_KEYS)[number], string> = {
+  jour_coupe: 'coupe',
+  jour_usinage: 'usinage',
+  jour_montage: 'montage',
+};
+
+/** Sous-bloc du cockpit : petit intitulé en capitales + contenu */
+function CockpitSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-noir/45">{label}</p>
+      {children}
+    </div>
+  );
+}
 
 /** Carte de chiffre clé */
 function StatCard({ label, value, tone, icon }: { label: string; value: number; tone: string; icon: string }) {
@@ -407,6 +681,10 @@ function EmptyState({ title, text, children }: { title: string; text: string; ch
 function DashboardSkeleton() {
   return (
     <div aria-busy="true" aria-label="Chargement des projets">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-6">
+        <div className="lg:col-span-2 h-[180px] rounded-xl bg-gray-100 animate-pulse" />
+        <div className="h-[180px] rounded-xl bg-gray-100 animate-pulse" />
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 mb-6">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="h-[74px] rounded-xl bg-gray-100 animate-pulse" />

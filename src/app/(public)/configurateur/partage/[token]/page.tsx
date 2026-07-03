@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { queryOne, query } from '@/lib/db';
 import { getMateriauxForConfigurateur } from '@/lib/content';
+import { stripPrices } from '@/lib/strip-prices';
 import type { CompositionConfig, ConfigurateurSettings, ConfigurateurSettingsRow } from '@/lib/types';
 import { ShareClient } from './ShareClient';
 
@@ -49,5 +50,8 @@ export default async function SharePage({ params }: { params: Promise<{ token: s
     );
   }
 
-  return <ShareClient name={project.name} config={config} settings={settings as unknown as ConfigurateurSettings} />;
+  // Page publique destinée au client : aucun prix ne doit transiter (ni à l'écran, ni dans les props/HTML).
+  const safeSettings = stripPrices(settings) as unknown as ConfigurateurSettings;
+
+  return <ShareClient name={project.name} config={config} settings={safeSettings} />;
 }

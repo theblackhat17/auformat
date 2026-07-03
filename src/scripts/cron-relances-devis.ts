@@ -1,5 +1,6 @@
 import { Pool } from 'pg';
-import { sendQuoteReminderEmail, sendQuoteExpiryEmail, sendReviewRequestEmail } from '../lib/mailer';
+import { sendQuoteReminderEmail, sendQuoteExpiryEmail, sendReviewRequestEmail, sendRdvReminderEmail } from '../lib/mailer';
+import { PROJECT_EVENT_TYPES } from '../lib/constants';
 
 /**
  * Tâches quotidiennes (lancé chaque matin par cron) :
@@ -7,7 +8,9 @@ import { sendQuoteReminderEmail, sendQuoteExpiryEmail, sendReviewRequestEmail } 
  * 2. devis qui expire dans les 5 jours → email « votre devis expire bientôt » (une seule fois) ;
  * 3. devis dont la validité est dépassée → statut 'expired' ;
  * 4. projet terminé depuis 3 jours → demande d'avis Google (si le lien est configuré
- *    dans Admin → Paramètres, une seule fois par projet).
+ *    dans Admin → Paramètres, une seule fois par projet) ;
+ * 5. RDV client demain (Europe/Paris) → rappel J-1 au client (une seule fois par événement,
+ *    types visibles client uniquement — jamais les jours d'atelier).
  * Lancement : npx tsx src/scripts/cron-relances-devis.ts (avec .env.local sourcé).
  */
 
@@ -34,6 +37,56 @@ const recipient = (q: QuoteRow) => ({
   email: (q.client_email || q.profile_email || '').toLowerCase(),
   name: q.client_name || q.profile_name || 'client',
 });
+
+// 5. Rappels J-1 : RDV client (types visibles client uniquement) qui ont lieu demain (Europe/Paris)
+async function remindRdv(pool: Pool): Promise<number> {
+  const clientVisibleTypes = PROJECT_EVENT_TYPES.filter((t) => t.clientVisible).map((t) => t.key);
+  const events = await pool.query<{
+    id: string;
+    type: string;
+    start_at: string;
+    all_day: boolean;
+    project_name: string;
+    client_name: string | null;
+    client_email: string | null;
+  }>(
+    `SELECT e.id, e.type, e.start_at, e.all_day, p.name AS project_name,
+            pr.full_name AS client_name, pr.email AS client_email
+     FROM project_events e
+     JOIN projects p ON e.project_id = p.id
+     LEFT JOIN profiles pr ON p.user_id = pr.id
+     WHERE e.reminder_sent_at IS NULL
+       AND e.type = ANY($1)
+       AND (e.start_at AT TIME ZONE 'Europe/Paris')::date = ((NOW() AT TIME ZONE 'Europe/Paris')::date + INTERVAL '1 day')`,
+    [clientVisibleTypes]
+  );
+
+  let sent = 0;
+  for (const e of events.rows) {
+    const email = (e.client_email || '').toLowerCase();
+    if (!email || email.endsWith('@anonyme.local')) continue;
+    const typeLabel = PROJECT_EVENT_TYPES.find((t) => t.key === e.type)?.label || 'Rendez-vous';
+    const start = new Date(e.start_at);
+    const dateLabel = start.toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Paris',
+    });
+    const whenLabel = e.all_day
+      ? dateLabel
+      : `${dateLabel} à ${start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })}`;
+    const ok = await sendRdvReminderEmail(email, {
+      clientName: e.client_name || 'client',
+      typeLabel,
+      projectName: e.project_name,
+      whenLabel,
+    });
+    if (ok) {
+      await pool.query(`UPDATE project_events SET reminder_sent_at = NOW() WHERE id = $1`, [e.id]);
+      console.log(`  rappel J-1 envoyé : ${typeLabel} « ${e.project_name} » (${whenLabel}) → ${email}`);
+      sent++;
+    }
+  }
+  return sent;
+}
 
 async function run() {
   const stamp = new Date().toISOString();
@@ -114,10 +167,19 @@ async function run() {
     }
   }
 
+  // 5. Rappels J-1 des rendez-vous client (une erreur ici ne bloque pas le reste)
+  let rdvCount = 0;
+  try {
+    rdvCount = await remindRdv(pool);
+    console.log(`  ${rdvCount} rappel${rdvCount > 1 ? 's' : ''} de RDV J-1 envoyé${rdvCount > 1 ? 's' : ''}`);
+  } catch (err) {
+    console.error('  échec des rappels de RDV J-1 :', err);
+  }
+
   // Ménage du rate limiting persistant
   await pool.query(`DELETE FROM rate_limit_hits WHERE ts < NOW() - interval '1 day'`);
 
-  console.log(`  terminé (${toRemind.rows.length} relances, ${toWarn.rows.length} alertes, ${reviewCount} demandes d'avis)`);
+  console.log(`  terminé (${toRemind.rows.length} relances, ${toWarn.rows.length} alertes, ${reviewCount} demandes d'avis, ${rdvCount} rappels RDV)`);
   await pool.end();
 }
 

@@ -61,6 +61,20 @@ export async function requireAdmin(request: NextRequest): Promise<AuthenticatedR
 }
 
 /**
+ * Rôle de la session courante sans bloquer la requête (null si non connecté).
+ * Utile pour adapter une réponse publique selon admin/client sans renvoyer 401.
+ */
+export async function getOptionalRole(): Promise<string | null> {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return null;
+    return ((session.user as Record<string, unknown>).role as string) || 'client';
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Extract client IP from request headers (set by Nginx)
  */
 export function getClientIp(request: NextRequest): string {
