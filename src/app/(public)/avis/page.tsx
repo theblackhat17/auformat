@@ -7,6 +7,7 @@ import { buildPageMetadata, SITE_URL, SITE_NAME } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PageHero } from '@/components/layout/PageHero';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/avis', {
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AvisPage() {
+  await assertPageEnabled('/avis');
   const [avis, avisStats, sections] = await Promise.all([getAvis(), getAvisStats(), getPageContent('avis')]);
 
   const hero = (sections.find((s) => s.sectionKey === 'hero')?.content || {}) as Record<string, string>;

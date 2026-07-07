@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   images: {
     formats: ["image/avif", "image/webp"],
+    // Cache des images optimisées : 30 jours (au lieu de 4 h par défaut).
+    // Les uploads ont des noms uniques (immuables) ; les autres assets changent
+    // au pire à un déploiement. Permet au navigateur ET au CDN Cloudflare
+    // (avec la Cache Rule /_next/image) de servir les images sans revenir à l'origine.
+    minimumCacheTTL: 2678400,
     remotePatterns: [
       {
         protocol: "https",

@@ -16,6 +16,7 @@ const IP_CONFIG: RateLimitConfig = { maxAttempts: 15, windowMs: 15 * 60 * 1000 }
 const EMAIL_CONFIG: RateLimitConfig = { maxAttempts: 5, windowMs: 15 * 60 * 1000 };
 const CONTACT_CONFIG: RateLimitConfig = { maxAttempts: 3, windowMs: 60 * 60 * 1000 };
 const QUOTE_CONFIG: RateLimitConfig = { maxAttempts: 5, windowMs: 60 * 60 * 1000 };
+const ASSISTANT_CONFIG: RateLimitConfig = { maxAttempts: 10, windowMs: 10 * 60 * 1000 };
 
 export type RateLimitResult = { allowed: boolean; retryAfterSeconds: number };
 
@@ -65,4 +66,9 @@ export function checkContactRateLimit(ip: string): Promise<RateLimitResult> {
 
 export function checkQuoteRateLimit(ip: string): Promise<RateLimitResult> {
   return checkLimit(`quote:${ip}`, QUOTE_CONFIG);
+}
+
+/** Assistant IA du configurateur : l'inférence a un coût — 10 requêtes / 10 min par IP. */
+export function checkAssistantRateLimit(ip: string): Promise<RateLimitResult> {
+  return checkLimit(`assistant:${ip}`, ASSISTANT_CONFIG);
 }

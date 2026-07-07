@@ -1,4 +1,4 @@
-import { Pool, QueryResult, QueryResultRow } from 'pg';
+import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg';
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -96,6 +96,33 @@ export async function update<T>(table: string, id: string, data: Record<string, 
 export async function deleteById(table: string, id: string): Promise<boolean> {
   const result = await pool.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
   return (result.rowCount ?? 0) > 0;
+}
+
+/**
+ * Exécute une série d'opérations dans une transaction sur une même connexion.
+ * COMMIT si le callback réussit, ROLLBACK sinon — évite les états incohérents
+ * quand plusieurs écritures doivent réussir ou échouer ensemble.
+ *
+ *   await withTransaction(async (client) => {
+ *     await client.query('DELETE FROM a WHERE user_id = $1', [id]);
+ *     await client.query('DELETE FROM b WHERE user_id = $1', [id]);
+ *   });
+ */
+export async function withTransaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await fn(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    try {
+      await client.query('ROLLBACK');
+    } catch { /* connexion déjà cassée : rien à annuler */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /**

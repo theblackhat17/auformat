@@ -13,6 +13,8 @@ import type {
   ProjectDocument,
   ProjectEvent,
   ProjectMilestone,
+  ProjectStatus,
+  ProjectUpdate,
   Quote,
 } from '@/lib/types';
 import {
@@ -20,10 +22,11 @@ import {
   PROJECT_STATUS_COLORS,
   PROJECT_TYPE_ICONS,
   PROJECT_EVENT_TYPES,
+  PROJECT_PRODUCTION_TASKS,
   QUOTE_STATUS_LABELS,
   QUOTE_STATUS_COLORS,
 } from '@/lib/constants';
-import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress } from '@/lib/project-config';
+import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
 import { PROJECT_STAGE_TEMPLATES } from '@/lib/project-mail-templates';
 import { getModuleType, moduleMaterial } from '@/components/configurateur-compo/pricingCompo';
 import { computeDebit } from '@/lib/debit';
@@ -39,6 +42,7 @@ type ClientInfo = { fullName: string | null; email: string; phone: string | null
 const TABS = [
   { key: 'apercu', label: 'Aperçu' },
   { key: 'etapes', label: 'Étapes' },
+  { key: 'suivi', label: 'Suivi client' },
   { key: 'production', label: 'Production' },
   { key: 'devis', label: 'Devis' },
   { key: 'agenda', label: 'Agenda' },
@@ -53,6 +57,7 @@ type TabKey = (typeof TABS)[number]['key'];
 export function ProjectDetailClient({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<ClientInfo | null>(null);
+  const [catalog, setCatalog] = useState<ProjectMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('apercu');
   const [deleting, setDeleting] = useState(false);
@@ -95,6 +100,10 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
     (async () => {
       try {
         await refresh();
+        fetch('/api/admin/project-settings')
+          .then((r) => r.json())
+          .then((d) => { if (!cancelled) setCatalog(Array.isArray(d.milestones) ? d.milestones : []); })
+          .catch(() => {});
       } catch {
         if (!cancelled) toast.error('Erreur chargement du projet');
       } finally {
@@ -127,7 +136,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-2xl" aria-hidden="true">{PROJECT_TYPE_ICONS[project.type] || '🎨'}</span>
           <h1 className="text-2xl font-bold text-noir">{project.name}</h1>
-          <Badge variant={PROJECT_STATUS_COLORS[project.status]}>{PROJECT_STATUS_LABELS[project.status]}</Badge>
+          <Badge variant={PROJECT_STATUS_COLORS[project.status]}>{currentMilestone(project, catalog)?.label ?? 'Nouveau projet'}</Badge>
           <div className="ml-auto flex items-center gap-2">
             <Link href={`/configurateur?project=${project.id}`} className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-noir/70 hover:border-vert-foret hover:text-vert-foret transition-colors">
               Ouvrir le configurateur
@@ -159,6 +168,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
 
       {activeTab === 'apercu' && <ApercuTab project={project} client={client} onChanged={refresh} />}
       {activeTab === 'etapes' && <EtapesTab project={project} onUpdated={(milestones) => setProject((prev) => prev ? { ...prev, milestones } : prev)} />}
+      {activeTab === 'suivi' && <SuiviTab projectId={project.id} onStageChanged={(milestones, status) => setProject((prev) => prev ? { ...prev, milestones, status } : prev)} />}
       {activeTab === 'production' && <ProductionTab project={project} />}
       {activeTab === 'devis' && <DevisTab project={project} />}
       {activeTab === 'agenda' && <AgendaTab projectId={project.id} />}
@@ -437,7 +447,7 @@ function EtapesTab({ project, onUpdated }: { project: Project; onUpdated: (miles
         <div className="h-full bg-vert-foret rounded-full transition-all duration-500 ease-out" style={{ width: `${pct}%` }} />
       </div>
       <p className="text-xs text-noir/50 mb-6">
-        Cliquez sur une étape pour la valider (ou l&apos;annuler). Les jalons « interne » ne sont jamais visibles par le client.
+        Cliquez sur une étape pour la valider (ou l&apos;annuler). « visible client » = montrée au client ; « interne » = atelier seulement. Réglez la visibilité dans « Configuration des étapes ».
       </p>
 
       {catalog === null ? (
@@ -494,7 +504,9 @@ function EtapesTab({ project, onUpdated }: { project: Project; onUpdated: (miles
                       >
                         {m.label}
                       </span>
-                      {m.financial && (
+                      {isClientVisible(m) ? (
+                        <span className="text-[10px] font-semibold uppercase tracking-wide bg-vert-foret/10 text-vert-foret px-1.5 py-0.5 rounded">visible client</span>
+                      ) : (
                         <span className="text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">interne</span>
                       )}
                       {isCurrent && (
@@ -521,6 +533,65 @@ type ConfigurateurCatalog = {
 };
 
 /** Production : récapitulatif technique (lecture seule, sans prix) de ce que le client a configuré */
+type ProductionState = Record<string, { done: boolean; note?: string | null }>;
+
+/** Checklist de production (décors, panneaux, spécificités) — persistée dans projects.production. */
+function ProductionChecklistCard({ project }: { project: Project }) {
+  const toast = useToast();
+  const [state, setState] = useState<ProductionState>(
+    ((project as unknown as { production?: ProductionState }).production) || {}
+  );
+  const [saving, setSaving] = useState<string | null>(null);
+
+  async function toggle(key: string, done: boolean) {
+    setSaving(key);
+    setState((s) => ({ ...s, [key]: { done, note: s[key]?.note ?? null } }));
+    try {
+      const res = await fetch(`/api/admin/projects/${project.id}/production`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, done }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setState((s) => ({ ...s, [key]: { done: !done, note: s[key]?.note ?? null } }));
+      toast.error('Enregistrement impossible');
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  const doneCount = PROJECT_PRODUCTION_TASKS.filter((t) => state[t.key]?.done).length;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5 max-w-3xl">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-sm font-semibold text-noir">Checklist de production</p>
+        <span className="text-xs tabular-nums text-noir/45">{doneCount}/{PROJECT_PRODUCTION_TASKS.length}</span>
+      </div>
+      <ul className="space-y-1.5">
+        {PROJECT_PRODUCTION_TASKS.map((t) => {
+          const checked = state[t.key]?.done ?? false;
+          return (
+            <li key={t.key}>
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm text-noir/80">
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={saving === t.key}
+                  onChange={(e) => toggle(t.key, e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-vert-foret focus:ring-vert-foret"
+                />
+                <span className={checked ? 'text-noir/40 line-through' : ''}>{t.label}</span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function ProductionTab({ project }: { project: Project }) {
   const [catalog, setCatalog] = useState<ConfigurateurCatalog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -554,9 +625,12 @@ function ProductionTab({ project }: { project: Project }) {
 
   if (!config || config.modules.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 p-8 max-w-3xl text-center">
-        <p className="text-sm text-noir/45">Aucune configuration détaillée pour ce projet.</p>
-        <p className="text-xs text-noir/35 mt-1">Le récapitulatif s&apos;affiche dès que le projet contient une composition du configurateur.</p>
+      <div className="space-y-4 max-w-3xl">
+        <ProductionChecklistCard project={project} />
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <p className="text-sm text-noir/45">Aucune configuration détaillée pour ce projet.</p>
+          <p className="text-xs text-noir/35 mt-1">Le récapitulatif s&apos;affiche dès que le projet contient une composition du configurateur.</p>
+        </div>
       </div>
     );
   }
@@ -576,6 +650,8 @@ function ProductionTab({ project }: { project: Project }) {
 
   return (
     <div className="space-y-4 max-w-3xl">
+      <ProductionChecklistCard project={project} />
+
       {/* Vue d'ensemble */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <p className="text-sm font-semibold text-noir mb-1">Configuration du client</p>
@@ -1224,6 +1300,174 @@ function AgendaTab({ projectId }: { projectId: string }) {
 }
 
 /** Documents : plans, devis signés… visibles par le client ou internes */
+/**
+ * Suivi client : l'admin publie une étape de fabrication (statut, note, photos
+ * d'atelier) → le client la voit dans sa timeline et reçoit un e-mail. C'est le
+ * pendant « visible client » des jalons internes de l'onglet Étapes.
+ */
+function SuiviTab({ projectId, onStageChanged }: { projectId: string; onStageChanged: (milestones: NonNullable<Project['milestones']>, status: ProjectStatus) => void }) {
+  const toast = useToast();
+  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
+  const [catalog, setCatalog] = useState<ProjectMilestone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stageKey, setStageKey] = useState<string>('');
+  const [note, setNote] = useState('');
+  const [files, setFiles] = useState<File[]>([]);
+  const [publishing, setPublishing] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([
+      fetch(`/api/admin/projects/${projectId}/updates`).then((r) => r.json()).catch(() => null),
+      fetch('/api/admin/project-settings').then((r) => r.json()).catch(() => null),
+    ]).then(([u, s]) => {
+      if (cancelled) return;
+      setUpdates(u && Array.isArray(u.updates) ? u.updates : []);
+      setCatalog(s && Array.isArray(s.milestones) ? s.milestones : []);
+    }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  async function handlePublish() {
+    if (!stageKey && !note.trim() && files.length === 0) {
+      toast.error('Indiquez une étape, une note ou des photos.');
+      return;
+    }
+    setPublishing(true);
+    try {
+      const fd = new FormData();
+      if (stageKey) fd.append('stageKey', stageKey);
+      if (note.trim()) fd.append('note', note.trim());
+      for (const f of files) fd.append('photos', f);
+      const res = await fetch(`/api/admin/projects/${projectId}/updates`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erreur lors de la publication');
+        return;
+      }
+      if (data.update) setUpdates((prev) => [data.update, ...prev]);
+      if (data.milestones && data.status) onStageChanged(data.milestones, data.status as ProjectStatus);
+      setStageKey(''); setNote(''); setFiles([]);
+      if (fileRef.current) fileRef.current.value = '';
+      toast.success(data.emailed ? 'Publié — le client a été prévenu par e-mail.' : 'Publié.');
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  async function handleDelete(u: ProjectUpdate) {
+    if (!confirm('Supprimer cette étape de la timeline du client ?')) return;
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}/updates`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updateId: u.id }),
+      });
+      if (!res.ok) { toast.error('Erreur lors de la suppression'); return; }
+      setUpdates((prev) => prev.filter((x) => x.id !== u.id));
+      toast.success('Étape supprimée');
+    } catch {
+      toast.error('Erreur réseau');
+    }
+  }
+
+  return (
+    <div className="max-w-2xl space-y-5">
+      {/* Publier une étape */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-semibold text-noir mb-1">Publier une étape</p>
+        <p className="text-xs text-noir/50 mb-4">
+          Le client la verra dans son suivi et recevra un e-mail (jamais de prix).
+        </p>
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-noir/60 mb-1">Marquer une étape franchie (optionnel)</label>
+            <select
+              value={stageKey}
+              onChange={(e) => setStageKey(e.target.value)}
+              className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+            >
+              <option value="">— Ne pas changer l&apos;étape —</option>
+              {catalog.map((m) => (
+                <option key={m.key} value={m.key}>{m.label}{(m.clientVisible ?? m.clientNotify) ? '' : ' (interne)'}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-noir/60 mb-1">Message au client (optionnel)</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              placeholder="Ex. Vos façades chêne sont usinées, on passe au montage cette semaine."
+              className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret resize-y"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()}>
+              {files.length > 0 ? `${files.length} photo(s) sélectionnée(s)` : 'Ajouter des photos d’atelier'}
+            </Button>
+            {files.length > 0 && (
+              <button onClick={() => { setFiles([]); if (fileRef.current) fileRef.current.value = ''; }} className="text-xs text-noir/50 hover:text-red-600">
+                retirer
+              </button>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+              hidden
+              onChange={(e) => setFiles(Array.from(e.target.files || []).slice(0, 10))}
+            />
+            <Button size="sm" className="ml-auto" onClick={handlePublish} isLoading={publishing}>
+              Publier
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Timeline publiée */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-semibold text-noir mb-4">Timeline du client</p>
+        {loading ? (
+          <p className="text-sm text-noir/40">Chargement…</p>
+        ) : updates.length === 0 ? (
+          <p className="text-sm text-noir/45">Aucune étape publiée pour l’instant. La première publication lancera le suivi côté client.</p>
+        ) : (
+          <ol className="space-y-4">
+            {updates.map((u) => (
+              <li key={u.id} className="relative border-l-2 border-vert-foret/25 pl-4">
+                <span className="absolute -left-[7px] top-1 h-3 w-3 rounded-full bg-vert-foret" aria-hidden="true" />
+                <div className="flex flex-wrap items-center gap-2">
+                  {u.status && <Badge variant={PROJECT_STATUS_COLORS[u.status]}>{PROJECT_STATUS_LABELS[u.status]}</Badge>}
+                  <span className="text-xs text-noir/45">{formatDate(u.createdAt)}</span>
+                  <button onClick={() => handleDelete(u)} className="ml-auto text-xs text-red-600 hover:underline">Supprimer</button>
+                </div>
+                {u.note && <p className="mt-1.5 text-sm text-noir/80 whitespace-pre-line">{u.note}</p>}
+                {u.photos?.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {u.photos.map((src) => (
+                      <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="block h-16 w-16 overflow-hidden rounded-lg border border-gray-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="Photo d’atelier" className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DocumentsTab({ projectId }: { projectId: string }) {
   const toast = useToast();
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);

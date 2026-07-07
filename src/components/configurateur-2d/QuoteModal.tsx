@@ -19,9 +19,10 @@ interface Props {
   materials: ConfigurateurMaterial[];
   productTypes: ConfigurateurProductType[];
   labels: ConfigurateurLabels;
+  pricesVisible: boolean;
 }
 
-export function QuoteModal({ open, onClose, config, price, materials, productTypes, labels }: Props) {
+export function QuoteModal({ open, onClose, config, price, materials, productTypes, labels, pricesVisible }: Props) {
   const [form, setForm] = useState<QuoteFormData>({
     nom: '',
     email: '',
@@ -59,6 +60,8 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
           subtotalHt: price.subtotalHt,
           tva: price.tva,
           totalTtc: price.totalTtc,
+          // Config brute : le serveur rechiffre à partir d'elle et ignore les montants ci-dessus.
+          config2d: config,
           configData: {
             productType: productType?.nom || config.productSlug,
             productSlug: config.productSlug,
@@ -182,8 +185,8 @@ export function QuoteModal({ open, onClose, config, price, materials, productTyp
                   </span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                  <span className="font-medium">Total TTC</span>
-                  <span className="font-bold text-[#2C5F2D]">{formatPrice(price.totalTtc)}</span>
+                  <span className="font-medium">{pricesVisible ? 'Total TTC' : 'Tarif'}</span>
+                  <span className="font-bold text-[#2C5F2D]">{pricesVisible ? formatPrice(price.totalTtc) : 'Prix sur devis'}</span>
                 </div>
               </div>
             </div>

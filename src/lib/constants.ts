@@ -286,6 +286,13 @@ export const NAV_LINKS = [
   { href: '/about', label: 'À propos' },
 ];
 
+/**
+ * Pages de contenu qu'un admin peut activer/désactiver depuis les Paramètres.
+ * Exclut l'accueil et Contact (essentiels) et le Configurateur (interrupteur dédié).
+ */
+export const TOGGLEABLE_NAV = NAV_LINKS.filter((l) => !['/configurateur', '/contact'].includes(l.href));
+export const TOGGLEABLE_HREFS = TOGGLEABLE_NAV.map((l) => l.href);
+
 // Admin navigation — la gestion de projet est le cœur : « Projets » est mis en avant en tête
 // de barre (voir AdminSidebar). Le chat et les devis ne sont plus des entrées séparées :
 // le chat vit dans chaque fiche projet, les devis se gèrent depuis le projet.

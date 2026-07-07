@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { Reveal } from '@/components/motion/Reveal';
 import type { Article } from '@/lib/types';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export const revalidate = 60;
 
@@ -28,6 +29,7 @@ function formatDateLong(iso: string | null | undefined): string {
 }
 
 export default async function BlogIndexPage() {
+  await assertPageEnabled('/blog');
   const [articles, categories, sections] = await Promise.all([
     getArticles(),
     getBlogCategoriesWithCount(),

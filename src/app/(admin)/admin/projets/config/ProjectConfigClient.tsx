@@ -47,7 +47,7 @@ export function ProjectConfigClient() {
     setMilestones((list) => [
       ...list,
       // Clé stable générée une seule fois (ne dépend pas du libellé)
-      { key: `etape_${Date.now()}`, label: 'Nouvelle étape', financial: false, clientNotify: false },
+      { key: `etape_${Date.now()}`, label: 'Nouvelle étape', financial: false, clientNotify: false, clientVisible: true },
     ]);
 
   const save = async () => {
@@ -179,6 +179,15 @@ export function ProjectConfigClient() {
                   className="accent-vert-foret w-4 h-4"
                 />
                 Prévenir le client
+              </label>
+              <label className="flex items-center gap-2 text-sm text-noir/70 cursor-pointer whitespace-nowrap">
+                <input
+                  type="checkbox"
+                  checked={m.clientVisible ?? m.clientNotify}
+                  onChange={(e) => patch(i, { clientVisible: e.target.checked })}
+                  className="accent-vert-foret w-4 h-4"
+                />
+                Visible client
               </label>
 
               <button

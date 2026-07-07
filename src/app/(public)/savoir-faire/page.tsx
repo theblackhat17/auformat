@@ -9,6 +9,7 @@ import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion/Reveal';
 import { AnimatedCounter } from '@/components/motion/AnimatedCounter';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/savoir-faire', {
@@ -19,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomemadePage() {
+  await assertPageEnabled('/savoir-faire');
   const [sections, dbServices] = await Promise.all([
     getPageContent('homemade'),
     getServices(),

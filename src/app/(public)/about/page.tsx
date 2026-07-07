@@ -9,6 +9,7 @@ import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion/Reveal';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/about', {
@@ -19,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
+  await assertPageEnabled('/about');
   const [equipe, sections] = await Promise.all([
     getEquipe(),
     getPageContent('about'),

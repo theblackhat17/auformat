@@ -7,10 +7,26 @@ import { formatPrice } from '@/lib/utils';
 interface Props {
   price: Configurateur2DPriceBreakdown;
   label: string;
+  pricesVisible: boolean;
 }
 
-export function PriceDisplay({ price, label }: Props) {
+export function PriceDisplay({ price, label, pricesVisible }: Props) {
   const [expanded, setExpanded] = useState(false);
+
+  // Règle métier : un client ne voit jamais de prix (ni « 0 € »). Seul l'admin.
+  if (!pricesVisible) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-gray-500">{label}</span>
+          <span className="text-lg font-bold text-[#2C5F2D]">Prix sur devis</span>
+        </div>
+        <p className="text-xs text-gray-400 mt-1.5">
+          Chiffrage gratuit et détaillé transmis par l&apos;atelier sous 48h.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-4">

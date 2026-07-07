@@ -4,22 +4,30 @@ import { requireAuth } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { toCamelCase } from '@/lib/db';
-import { PROJECT_MILESTONES } from '@/lib/constants';
-import type { Project } from '@/lib/types';
+import { getProjectMilestones } from '@/lib/project-config-server';
+import { currentClientMilestone } from '@/lib/project-config';
+import type { Project, ProjectMilestone } from '@/lib/types';
 
-/** Retire les données internes (notes admin, production, jalons financiers) avant l'envoi à un client */
-function sanitizeForClient(project: Project): Project {
+type ClientProject = Project & { stageLabel: string | null };
+
+/**
+ * Prépare un projet pour le client : retire les données internes (notes admin,
+ * production, étapes non visibles), et calcule `stageLabel` = dernière étape
+ * VISIBLE atteinte, qui sert de badge de suivi côté client.
+ */
+function sanitizeForClient(project: Project, visibleMilestones: ProjectMilestone[]): ClientProject {
   const clean: Project = { ...project };
   delete clean.adminNotes;
   delete clean.production;
+  const stage = currentClientMilestone(clean, visibleMilestones);
   if (clean.milestones) {
     const visible: NonNullable<Project['milestones']> = {};
-    for (const m of PROJECT_MILESTONES) {
-      if (!m.financial && clean.milestones[m.key]) visible[m.key] = clean.milestones[m.key];
+    for (const m of visibleMilestones) {
+      if (clean.milestones[m.key]) visible[m.key] = clean.milestones[m.key];
     }
     clean.milestones = visible;
   }
-  return clean;
+  return { ...clean, stageLabel: stage?.label ?? null };
 }
 
 export async function GET(request: NextRequest) {
@@ -31,7 +39,9 @@ export async function GET(request: NextRequest) {
       `SELECT * FROM projects WHERE user_id = $1 ORDER BY updated_at DESC`,
       [auth.userId]
     );
-    return NextResponse.json(auth.role === 'admin' ? projects : projects.map(sanitizeForClient));
+    if (auth.role === 'admin') return NextResponse.json(projects);
+    const visibleMilestones = (await getProjectMilestones()).filter((m) => m.clientVisible ?? m.clientNotify);
+    return NextResponse.json(projects.map((p) => sanitizeForClient(p, visibleMilestones)));
   } catch (err) {
     console.error('List projects error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

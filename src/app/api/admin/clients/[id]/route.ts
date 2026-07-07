@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, query, rawQuery } from '@/lib/db';
+import { queryOne, query, rawQuery, withTransaction } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { logAdminAction } from '@/lib/activity-logger';
+import { extractUploadFilenames, deleteUploadedFiles } from '@/lib/upload';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireAdmin(request);
@@ -95,19 +96,37 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
     }
 
-    // Nullify references in shared tables
-    await rawQuery('UPDATE settings SET updated_by = NULL WHERE updated_by = $1', [id]);
-    await rawQuery('UPDATE uploads SET uploaded_by = NULL WHERE uploaded_by = $1', [id]);
+    // Fichiers rattachés au client, collectés AVANT de supprimer les lignes qui les référencent.
+    const [docRows, quoteRows] = await Promise.all([
+      query<{ url: string }>(
+        `SELECT pd.url FROM project_documents pd
+           JOIN projects p ON pd.project_id = p.id
+          WHERE p.user_id = $1`,
+        [id]
+      ),
+      query<{ description: string | null }>('SELECT description FROM quotes WHERE user_id = $1', [id]),
+    ]);
+    const fileRefs = [
+      ...docRows.map((d) => d.url),
+      ...quoteRows.flatMap((q) => extractUploadFilenames(q.description)),
+    ];
 
-    // Delete user-owned data
-    await rawQuery('DELETE FROM activity_logs WHERE user_id = $1', [id]);
-    await rawQuery('DELETE FROM notifications WHERE user_id = $1', [id]);
-    await rawQuery('DELETE FROM user_sessions WHERE user_id = $1', [id]);
-    await rawQuery('DELETE FROM quotes WHERE user_id = $1', [id]);
-    await rawQuery('DELETE FROM projects WHERE user_id = $1', [id]);
+    // Suppression atomique : tout réussit ou rien (plus d'état incohérent en cas d'échec au milieu).
+    await withTransaction(async (client) => {
+      await client.query('UPDATE settings SET updated_by = NULL WHERE updated_by = $1', [id]);
+      await client.query('UPDATE uploads SET uploaded_by = NULL WHERE uploaded_by = $1', [id]);
+      await client.query('DELETE FROM activity_logs WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM notifications WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM user_sessions WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM session WHERE "userId" = $1', [id]);
+      await client.query('DELETE FROM account WHERE "userId" = $1', [id]);
+      await client.query('DELETE FROM quotes WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM projects WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM profiles WHERE id = $1', [id]);
+    });
 
-    // Delete the profile
-    await rawQuery('DELETE FROM profiles WHERE id = $1', [id]);
+    // Fichiers physiques supprimés après COMMIT (best-effort, hors transaction DB).
+    await deleteUploadedFiles(fileRefs);
 
     logAdminAction(request, auth, 'delete_client', 'client', id, `Client supprimé`);
 

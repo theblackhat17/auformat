@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Project, ProjectMilestone } from '@/lib/types';
 import type { AgendaEvent } from '@/app/api/admin/agenda/route';
-import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress } from '@/lib/project-config';
+import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
 import { PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { timeAgo } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
@@ -57,7 +58,48 @@ export function AdminProjetsClient() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>(FILTER_ALL);
   const [search, setSearch] = useState('');
+  const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const toast = useToast();
+  const router = useRouter();
+
+  // Préférence de vue (Liste / Kanban) mémorisée localement
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('projets_view') : null;
+    if (saved === 'list' || saved === 'kanban') setView(saved);
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('projets_view', view); } catch { /* stockage indispo */ }
+  }, [view]);
+
+  /**
+   * Définit l'étape courante d'un projet par glisser-déposer : coche les étapes
+   * jusqu'à `upToKey` inclus (null = non démarré). Écrit la MÊME donnée que la
+   * checklist de la fiche projet → kanban et onglet Étapes toujours synchro.
+   */
+  async function moveProjectToStage(projectId: string, upToKey: string | null) {
+    const proj = projects.find((p) => p.id === projectId);
+    if (!proj) return;
+    const targetIndex = upToKey === null ? -1 : milestones.findIndex((m) => m.key === upToKey);
+    const previousMilestones = proj.milestones;
+    // Avancement optimiste
+    const optimistic: NonNullable<Project['milestones']> = {};
+    milestones.forEach((m, i) => { optimistic[m.key] = { done: i <= targetIndex }; });
+    setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: optimistic } : p)));
+    try {
+      const res = await fetch(`/api/admin/projects/${projectId}/milestones`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ upTo: upToKey }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: data.milestones, status: data.status } : p)));
+      toast.success(`« ${proj.name} » → ${targetIndex >= 0 ? milestones[targetIndex].label : 'Non démarré'}`);
+    } catch {
+      setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: previousMilestones } : p)));
+      toast.error('Déplacement impossible');
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -213,6 +255,20 @@ export function AdminProjetsClient() {
       })
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [projects, stageById, filter, search]);
+
+  /** Projets filtrés par la seule recherche (le kanban regroupe déjà par statut). */
+  const searched = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = q
+      ? projects.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            (p.clientName || '').toLowerCase().includes(q) ||
+            (p.clientEmail || '').toLowerCase().includes(q)
+        )
+      : projects;
+    return [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [projects, search]);
 
   const filterLabel =
     filter === FILTER_ALL ? null
@@ -425,6 +481,48 @@ export function AdminProjetsClient() {
             />
           </div>
 
+          {/* Barre d'outils : bascule de vue + recherche */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Choisir la vue">
+              <button
+                onClick={() => setView('kanban')}
+                aria-pressed={view === 'kanban'}
+                className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'kanban' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
+              >
+                Kanban
+              </button>
+              <button
+                onClick={() => setView('list')}
+                aria-pressed={view === 'list'}
+                className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'list' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
+              >
+                Liste
+              </button>
+            </div>
+            <div className="relative w-full sm:w-auto sm:min-w-[18rem] sm:flex-1 sm:max-w-sm">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Rechercher un projet, un client, un email…"
+                aria-label="Rechercher un projet"
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/45 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10"
+              />
+            </div>
+          </div>
+
+          {projects.length === 0 ? (
+            <EmptyState
+              title="Aucun projet pour l'instant"
+              text="Les projets créés depuis le configurateur ou ajoutés pour un client apparaîtront ici."
+            />
+          ) : view === 'kanban' ? (
+            <KanbanBoard projects={searched} milestones={milestones} onMove={moveProjectToStage} onOpen={(pid) => router.push(`/admin/projets/${pid}`)} />
+          ) : (
+          <>
           {/* Pipeline par étape (catalogue de jalons, dans l'ordre) */}
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
@@ -459,21 +557,8 @@ export function AdminProjetsClient() {
             </div>
           </div>
 
-          {/* Recherche + compteur de résultats */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="relative w-full max-w-sm">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un projet, un client, un email…"
-                aria-label="Rechercher un projet"
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm text-noir placeholder-noir/45 focus:outline-none focus:border-vert-foret focus:ring-2 focus:ring-vert-foret/10"
-              />
-            </div>
+          {/* Compteur de résultats */}
+          <div className="flex items-center justify-end mb-4">
             <p className="text-sm text-noir/50 tabular-nums">
               {visible.length} projet{visible.length > 1 ? 's' : ''}
               {filterLabel && <> · étape « {filterLabel} »</>}
@@ -514,9 +599,129 @@ export function AdminProjetsClient() {
               })}
             </div>
           )}
+          </>
+          )}
         </>
       )}
     </>
+  );
+}
+
+/* ————— Kanban : colonnes = étapes configurées, cartes déplaçables (drag & drop natif) ————— */
+const KANBAN_NONE = '__none__';
+
+function KanbanBoard({
+  projects,
+  milestones,
+  onMove,
+  onOpen,
+}: {
+  projects: AdminProject[];
+  milestones: ProjectMilestone[];
+  onMove: (projectId: string, upToKey: string | null) => void;
+  onOpen: (projectId: string) => void;
+}) {
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overCol, setOverCol] = useState<string | null>(null);
+
+  /** Colonnes = « Non démarré » puis chaque étape du catalogue, dans l'ordre. */
+  const columns = useMemo(
+    () => [{ key: KANBAN_NONE, label: 'Non démarré', clientVisible: true }, ...milestones.map((m) => ({ key: m.key, label: m.label, clientVisible: isClientVisible(m) }))],
+    [milestones]
+  );
+
+  /** Projets regroupés par étape courante (dernier jalon franchi). Modèles exclus. */
+  const byStage = useMemo(() => {
+    const map: Record<string, AdminProject[]> = { [KANBAN_NONE]: [] };
+    for (const m of milestones) map[m.key] = [];
+    for (const p of projects) {
+      if (p.isTemplate) continue;
+      const cur = currentMilestone(p, milestones);
+      (map[cur?.key ?? KANBAN_NONE] ??= []).push(p);
+    }
+    return map;
+  }, [projects, milestones]);
+
+  return (
+    <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
+      {columns.map((col) => {
+        const list = byStage[col.key] || [];
+        const isOver = overCol === col.key;
+        return (
+          <div
+            key={col.key}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+              if (overCol !== col.key) setOverCol(col.key);
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverCol((o) => (o === col.key ? null : o));
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              const id = e.dataTransfer.getData('text/plain') || dragId;
+              setOverCol(null);
+              setDragId(null);
+              if (id) onMove(id, col.key === KANBAN_NONE ? null : col.key);
+            }}
+            className={`flex w-72 shrink-0 flex-col rounded-xl border transition-colors ${isOver ? 'border-vert-foret bg-vert-foret/5' : 'border-gray-100 bg-gray-50/60'}`}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-gray-100 px-3 py-2.5">
+              <span className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-sm font-semibold text-noir">{col.label}</span>
+                {!col.clientVisible && (
+                  <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-noir/45" title="Étape interne — non visible par le client">interne</span>
+                )}
+              </span>
+              <span className="shrink-0 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-noir/60">{list.length}</span>
+            </div>
+            <div className="min-h-[80px] flex-1 space-y-2 p-2">
+              {list.map((p) => {
+                const unread = p.unreadCount + p.folderUnread;
+                return (
+                  <article
+                    key={p.id}
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', p.id);
+                      e.dataTransfer.effectAllowed = 'move';
+                      setDragId(p.id);
+                    }}
+                    onDragEnd={() => {
+                      setDragId(null);
+                      setOverCol(null);
+                    }}
+                    onClick={() => onOpen(p.id)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter') onOpen(p.id); }}
+                    className={`cursor-grab rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-vert-foret active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`}
+                  >
+                    <div className="flex items-start gap-2">
+                      <span className="text-base leading-none" aria-hidden="true">{PROJECT_TYPE_ICONS[p.type] || '🪚'}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-noir">{p.name}</p>
+                        <p className="truncate text-xs text-noir/50">{p.clientName || p.clientEmail || 'Sans client'}</p>
+                      </div>
+                      {unread > 0 && (
+                        <span className="shrink-0 rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-5 text-white">{unread}</span>
+                      )}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-2 text-[11px] text-noir/45">
+                      <span>{timeAgo(p.updatedAt)}</span>
+                      {p.updateCount > 0 && <span>· 📷 {p.updateCount}</span>}
+                      {p.folderName && <span className="truncate">· 📂 {p.folderName}</span>}
+                    </div>
+                  </article>
+                );
+              })}
+              {list.length === 0 && <p className="px-1 py-6 text-center text-xs text-noir/30">Déposez un projet ici</p>}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

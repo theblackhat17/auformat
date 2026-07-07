@@ -8,7 +8,12 @@
     "deploy": "NODE_OPTIONS=--max-old-space-size=4096 next build && cp -r .next/static .next/standalone/.next/static && ln -sfn $(pwd)/public .next/standalone/public && pm2 delete auformat && pm2 start ecosystem.config.js && bash infra/scripts/sync-build.sh",
     "sync-build": "bash infra/scripts/sync-build.sh",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",
@@ -21,7 +26,7 @@
     "googleapis": "^173.0.0",
     "jsonwebtoken": "^9.0.3",
     "next": "^16.2.9",
-    "nodemailer": "^8.0.0",
+    "nodemailer": "^9.0.3",
     "pdfkit": "^0.19.1",
     "pg": "^8.18.0",
     "react": "19.2.3",
@@ -30,6 +35,7 @@
     "react-markdown": "^10.1.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
+    "sharp": "^0.34.5",
     "three": "^0.184.0"
   },
   "devDependencies": {
@@ -44,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

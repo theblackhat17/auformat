@@ -24,7 +24,7 @@ export function AdminConfigurateurClient() {
   const [univers, setUnivers] = useState<ConfigurateurUnivers[]>([]);
   const [moduleTypes, setModuleTypes] = useState<ConfigurateurModuleType[]>([]);
   const [labels, setLabels] = useState<ConfigurateurLabels | null>(null);
-  const [pricingMode, setPricingMode] = useState<'masque' | 'estimation'>('masque');
+  const [assistantEnabled, setAssistantEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -42,7 +42,7 @@ export function AdminConfigurateurClient() {
       setUnivers(data.univers || []);
       setModuleTypes(data.module_types || []);
       setLabels(data.labels || null);
-      setPricingMode(data.pricing_mode === 'estimation' ? 'estimation' : 'masque');
+      setAssistantEnabled(data.assistant_enabled === true);
     } catch {
       showToast('Erreur de chargement');
     } finally {
@@ -105,29 +105,34 @@ export function AdminConfigurateurClient() {
         ))}
       </div>
 
-      {/* Mode de prix client */}
-      <div data-focus="prix" className="mb-4 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between gap-4 flex-wrap">
+      {/* Affichage des prix : rappel de la règle (jamais côté client) */}
+      <div data-focus="prix" className="mb-4 p-4 bg-white border border-gray-200 rounded-lg">
+        <p className="text-sm font-semibold text-gray-900">Affichage des prix côté client</p>
+        <p className="text-xs text-gray-500 mt-0.5">
+          Les prix ne sont <strong>jamais</strong> visibles par les clients ni les prospects : ils voient « Prix sur devis ».
+          Seuls les administrateurs voient le chiffrage. Vous transmettez le devis depuis l&apos;admin.
+        </p>
+      </div>
+
+      {/* Assistant IA : interrupteur (masqué par défaut) */}
+      <div data-focus="assistant" className="mb-4 p-4 bg-white border border-gray-200 rounded-lg flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Affichage des prix côté client</p>
+          <p className="text-sm font-semibold text-gray-900">Assistant IA de composition</p>
           <p className="text-xs text-gray-500 mt-0.5">
-            {pricingMode === 'masque'
-              ? '« Prix sur devis » : le client ne voit aucun prix, vous chiffrez depuis l\'admin.'
-              : 'Estimation indicative affichée en direct au client.'}
+            {assistantEnabled
+              ? 'Activé : les visiteurs peuvent décrire leur projet à l\'assistant.'
+              : 'Masqué : le bouton « Assistant » n\'apparaît pas côté client.'}
           </p>
         </div>
-        <div className="flex gap-1 bg-gray-100 rounded-full p-1">
-          {(['masque', 'estimation'] as const).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => { setPricingMode(mode); saveKey('pricing_mode', mode); }}
-              className={`px-4 py-1.5 text-sm font-medium rounded-full transition-colors ${
-                pricingMode === mode ? 'bg-vert-foret text-white' : 'text-gray-500 hover:text-gray-800'
-              }`}
-            >
-              {mode === 'masque' ? 'Prix sur devis' : 'Estimation visible'}
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={assistantEnabled}
+          onClick={() => { const next = !assistantEnabled; setAssistantEnabled(next); saveKey('assistant_enabled', next); }}
+          className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors ${assistantEnabled ? 'bg-vert-foret' : 'bg-gray-300'}`}
+        >
+          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform mt-0.5 ${assistantEnabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+        </button>
       </div>
 
       {/* Materials link */}

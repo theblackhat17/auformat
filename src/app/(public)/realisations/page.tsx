@@ -7,6 +7,7 @@ import { buildPageMetadata, SITE_URL } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd } from '@/lib/jsonld';
 import { PageHero } from '@/components/layout/PageHero';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/realisations', {
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RealisationsPage() {
+  await assertPageEnabled('/realisations');
   const [realisations, categories, sections] = await Promise.all([
     getRealisations(),
     getCategories('realisation'),

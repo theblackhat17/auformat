@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getEmailTemplate, renderTemplate } from './email-templates';
+import { PROJECT_MAIL_SIGNATURE } from './project-mail-templates';
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -163,17 +164,27 @@ export async function sendQuoteToClient(
   tva: number,
   totalTtc: number,
   pdfAttachment?: { filename: string; content: Buffer },
+  /**
+   * Confirmation sans montant (soumission publique du configurateur) : le client
+   * reçoit l'accusé de sa demande, mais aucun prix — le chiffrage reste réservé
+   * au commercial. Le devis stocké en base garde, lui, les montants calculés.
+   */
+  hidePrices = false,
 ): Promise<boolean> {
+  const priceCell = (n: number) => (hidePrices ? 'Sur devis' : formatEur(n));
+
   const itemRows = items.map((item) =>
     `<tr>
       <td style="padding: 8px; border-bottom: 1px solid #eee;">${esc(item.description)}</td>
       <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatEur(item.unitPrice)}</td>
-      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatEur(item.total)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${priceCell(item.unitPrice)}</td>
+      <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${priceCell(item.total)}</td>
     </tr>`
   ).join('');
 
-  const footerBlock = pdfAttachment
+  const footerBlock = hidePrices
+    ? `<p style="color: #555; font-size: 13px;">Votre demande nous est bien parvenue. Notre atelier étudie votre projet et vous transmet un devis chiffré sous 48h — gratuit et sans engagement.</p>`
+    : pdfAttachment
     ? `<p style="color: #555; font-size: 13px;">Votre devis détaillé est joint à cet email au format PDF. Pour l'accepter, retournez-le signé avec la mention « bon pour accord », ou répondez simplement à cet email.</p>`
     : `<p style="color: #888; font-size: 13px;">Ce devis est estimatif. Notre équipe vous recontactera pour confirmer les détails et le prix final.</p>`;
 
@@ -181,9 +192,9 @@ export async function sendQuoteToClient(
     clientName: esc(clientName),
     quoteNumber: esc(quoteNumber),
     itemRows,
-    subtotalHt: formatEur(subtotalHt),
-    tva: formatEur(tva),
-    totalTtc: formatEur(totalTtc),
+    subtotalHt: priceCell(subtotalHt),
+    tva: priceCell(tva),
+    totalTtc: priceCell(totalTtc),
     footerBlock,
   });
 
@@ -270,6 +281,53 @@ export async function sendProjectUpdateEmail(
     statusLabel,
   });
   return sendMail(to, subject, body);
+}
+
+/** Bouton et gabarit des e-mails d'étape (même style que la route /notify) */
+const stageBtn = (href: string, label: string) => `
+  <div style="text-align: center; margin: 24px 0;">
+    <a href="${href}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">${label}</a>
+  </div>`;
+const stageWrap = (title: string, body: string) => `
+  <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+    <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+      <h2 style="margin: 0;">${title}</h2>
+    </div>
+    <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+      ${body}
+      <p style="color: #888; font-size: 13px; margin-top: 16px;">Au Format — Menuiserie sur mesure</p>
+    </div>
+  </div>`;
+
+/**
+ * E-mail automatique de franchissement d'étape : utilise le modèle « Étape : … »
+ * dédié (`stage_<clé>`, éditable dans Mails) s'il existe, sinon retombe sur le
+ * modèle générique « Avancement du projet ». Aucun prix. Ne jette jamais.
+ */
+export async function sendProjectStageEmail(
+  to: string,
+  clientName: string,
+  projectName: string,
+  stageKey: string,
+  fallbackLabel: string
+): Promise<boolean> {
+  try {
+    if (getEmailTemplate(`stage_${stageKey}`)) {
+      const { subject, body } = await resolveTemplate(`stage_${stageKey}`, {
+        clientName: esc(clientName),
+        projectName: esc(projectName),
+      });
+      const insertion = stageBtn(`${SITE}/mes-projets`, 'Voir mon projet');
+      const bodyHtml = body.includes(PROJECT_MAIL_SIGNATURE)
+        ? body.replace(PROJECT_MAIL_SIGNATURE, `${insertion}${PROJECT_MAIL_SIGNATURE}`)
+        : `${body}${insertion}`;
+      return sendMail(to, `${subject} — Au Format`, stageWrap(subject, bodyHtml));
+    }
+    return sendProjectUpdateEmail(to, clientName, projectName, fallbackLabel, null, 0);
+  } catch (err) {
+    console.error('[mailer] sendProjectStageEmail failed:', err);
+    return false;
+  }
 }
 
 /** Relance d'un devis resté sans réponse (J+7) */

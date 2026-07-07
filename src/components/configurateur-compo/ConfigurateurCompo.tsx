@@ -92,8 +92,9 @@ export function ConfigurateurCompo({
   const compo = useComposition(initialConfig);
   const univers = (settings.univers || []).find((u) => u.slug === compo.config.univers);
   /** Les prix ne sont JAMAIS montrés au client : seul un admin (commercial) voit le chiffrage.
+   *  `pricesVisible` (calculé serveur = role admin) verrouille cette règle même si isAdmin dérivait.
    *  En mode « aperçu client », l'admin masque volontairement les prix pour vérifier le rendu. */
-  const showPrices = isAdmin && !previewClient;
+  const showPrices = isAdmin && settings.pricesVisible !== false && !previewClient;
   /** Un client connecté ne demande pas de devis (son commercial pilote tout) ; on garde la
    *  demande pour les prospects (visiteurs non connectés) et pour l'admin. */
   const canRequestQuote = (isAdmin && !previewClient) || !isAuthenticated;

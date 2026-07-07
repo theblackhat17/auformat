@@ -54,7 +54,7 @@ export function ShareClient({ name, config, settings }: { name: string; config: 
 
         <div className="bg-noir text-white rounded-2xl p-6 mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            {settings.pricing_mode === 'estimation' ? (
+            {settings.pricesVisible === true ? (
               <>
                 <p className="text-sm text-white/75">Estimation TTC</p>
                 <p className="font-display text-3xl" style={{ fontVariantNumeric: 'tabular-nums' }}>{formatEur(breakdown.totalTtc)}</p>
@@ -89,7 +89,7 @@ export function ShareClient({ name, config, settings }: { name: string; config: 
         materials={materials}
         univers={univers}
         projectName={name}
-        showPrices={settings.pricing_mode === 'estimation'}
+        showPrices={settings.pricesVisible === true}
       />
     </div>
   );

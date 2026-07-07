@@ -16,6 +16,8 @@ interface Props {
 
 export function Configurateur2D({ settings }: Props) {
   const { materials, product_types: productTypes, option_prices: optionPrices, options = [], labels } = settings;
+  // Les prix ne s'affichent que pour un admin (pricesVisible calculé serveur) ; sinon « Prix sur devis ».
+  const pricesVisible = settings.pricesVisible === true;
   const { config, setProduct, setDimension, setMaterial, setOption, setOptionSelection } = useConfigurateur2D();
   const [quoteOpen, setQuoteOpen] = useState(false);
 
@@ -57,6 +59,7 @@ export function Configurateur2D({ settings }: Props) {
                 options={options}
                 labels={labels}
                 price={price}
+                pricesVisible={pricesVisible}
                 onChangeProduct={(slug) => setProduct(slug, productTypes)}
                 onChangeDimension={setDimension}
                 onChangeMaterial={setMaterial}
@@ -78,6 +81,7 @@ export function Configurateur2D({ settings }: Props) {
         materials={materials}
         productTypes={productTypes}
         labels={labels}
+        pricesVisible={pricesVisible}
       />
     </div>
   );

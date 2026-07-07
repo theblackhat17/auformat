@@ -62,6 +62,12 @@ export interface ProjectMilestone {
   financial: boolean;
   /** Prévenir le client quand cette étape est franchie */
   clientNotify: boolean;
+  /**
+   * Étape montrée au client (badge de suivi + kanban visible côté client).
+   * Optionnel pour compatibilité avec les anciens catalogues : à défaut,
+   * on retombe sur clientNotify (voir isClientVisible / project-config).
+   */
+  clientVisible?: boolean;
 }
 
 /** Dossier de chantier : regroupe plusieurs projets qui vont ensemble */
@@ -559,6 +565,8 @@ export interface SiteSettings {
   facebook: string | null;
   heroBackground: string | null;
   configurateurEnabled: boolean;
+  /** Pages publiques désactivées (liste de hrefs) : retirées du menu + URL redirigée */
+  disabledPages?: string[];
   /** Lien direct « laisser un avis » de la fiche Google Business (demande d'avis automatique) */
   googleReviewUrl?: string | null;
   /** 'moderne' (Young Serif + Hanken Grotesk) ou 'classique' (polices système, ancien site) */
@@ -761,10 +769,12 @@ export interface ConfigurateurSettings {
   labels: ConfigurateurLabels;
   univers?: ConfigurateurUnivers[];
   module_types?: ConfigurateurModuleType[];
-  /** true si l'assistant IA est configuré côté serveur (ANTHROPIC_API_KEY) */
+  /** true si l'assistant IA est activé (interrupteur admin) ET configuré côté serveur (ANTHROPIC_API_KEY) */
   ai_enabled?: boolean;
-  /** 'masque' (défaut) : le client ne voit aucun prix, chiffrage par devis · 'estimation' : prix indicatifs affichés */
-  pricing_mode?: 'masque' | 'estimation';
+  /** Interrupteur admin brut de l'assistant IA (persisté en base) */
+  assistant_enabled?: boolean;
+  /** true uniquement pour un admin : autorise l'affichage des prix. Sinon « Prix sur devis ». */
+  pricesVisible?: boolean;
 }
 
 /* ── Configurateur v2 : composition multi-modules (cuisine, dressing, salle de bain) ── */

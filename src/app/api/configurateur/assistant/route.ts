@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { query } from '@/lib/db';
 import { getMateriauxForConfigurateur } from '@/lib/content';
+import { getClientIp } from '@/lib/middleware-auth';
+import { checkAssistantRateLimit } from '@/lib/rate-limit';
 import type {
   CompositionConfig,
   CompositionModule,
@@ -21,19 +23,6 @@ import type {
 const MODEL = process.env.CONFIGURATEUR_AI_MODEL || 'claude-opus-4-8';
 /** 'medium' réduit nettement la latence sur cette tâche bien cadrée ; surchargeable via env */
 const EFFORT = (process.env.CONFIGURATEUR_AI_EFFORT || 'medium') as 'low' | 'medium' | 'high';
-
-/* Rate limit dédié : 10 requêtes / 10 min par IP (l'inférence a un coût) */
-const WINDOW_MS = 10 * 60 * 1000;
-const MAX_REQ = 10;
-const hits = new Map<string, number[]>();
-function checkAssistantRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const list = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
-  if (list.length >= MAX_REQ) return false;
-  list.push(now);
-  hits.set(ip, list);
-  return true;
-}
 
 function buildSchema(universSlugs: string[], moduleSlugs: string[]) {
   return {
@@ -86,9 +75,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "L'assistant n'est pas configuré." }, { status: 503 });
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  if (!checkAssistantRateLimit(ip)) {
-    return NextResponse.json({ error: 'Trop de demandes. Réessayez dans quelques minutes.' }, { status: 429 });
+  // IP de confiance (cf. getClientIp) — jamais le x-forwarded-for brut, usurpable.
+  const ip = getClientIp(request);
+  const rateLimit = await checkAssistantRateLimit(ip);
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: 'Trop de demandes. Réessayez dans quelques minutes.' },
+      { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSeconds) } }
+    );
   }
 
   try {
@@ -106,6 +100,13 @@ export async function POST(request: NextRequest) {
     ]);
     const settings: Record<string, unknown> = {};
     for (const row of rows) settings[row.key] = row.value;
+
+    // Défense serveur : l'assistant doit être explicitement activé en base
+    // (interrupteur admin), même si la clé API existe.
+    if (settings.assistant_enabled !== true) {
+      return NextResponse.json({ error: "L'assistant n'est pas activé." }, { status: 503 });
+    }
+
     const universList = ((settings.univers as ConfigurateurUnivers[]) || []).filter((u) => u.actif);
     const moduleTypes = ((settings.module_types as ConfigurateurModuleType[]) || []).filter((m) => m.actif);
 

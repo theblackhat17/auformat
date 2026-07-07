@@ -3,6 +3,7 @@ import { query, queryOne, rawQuery, toCamelCase } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { logAdminAction } from '@/lib/activity-logger';
 import { getMateriauxForConfigurateur } from '@/lib/content';
+import { nextQuoteNumber } from '@/lib/quote-number';
 import { computeCompositionPrice } from '@/components/configurateur-compo/pricingCompo';
 import { TAX_RATE } from '@/lib/constants';
 import type {
@@ -112,12 +113,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Aucune configuration à chiffrer' }, { status: 400 });
     }
 
-    // Numéro de devis : même génération que POST /api/quotes
-    const yearResult = await rawQuery(
-      "SELECT COUNT(*)::int as count FROM quotes WHERE EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW())"
-    );
-    const nextNum = (yearResult.rows[0]?.count || 0) + 1;
-    const quoteNumber = `DEV-${new Date().getFullYear()}-${String(nextNum).padStart(4, '0')}`;
+    // Numéro de devis atomique et monotone (voir nextQuoteNumber)
+    const quoteNumber = await nextQuoteNumber();
 
     const result = await rawQuery(
       `INSERT INTO quotes (user_id, project_id, quote_number, title, client_name, client_email, items, subtotal_ht, tax_rate, tax_amount, total_ttc, status)

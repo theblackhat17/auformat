@@ -57,9 +57,11 @@ export async function Footer() {
   const socialsData = getFooterSection('socials') as { items?: { platform: string; url: string }[] } | undefined;
 
   const configurateurEnabled = settings?.configurateurEnabled ?? false;
+  const disabledPages = new Set(settings?.disabledPages ?? []);
   const addresses = addressesData?.items?.length ? addressesData.items : DEFAULT_ADDRESSES;
   const allLinks = linksData?.items?.length ? linksData.items : DEFAULT_LINKS;
-  const links = configurateurEnabled ? allLinks : allLinks.filter((l) => l.href !== '/configurateur');
+  const links = (configurateurEnabled ? allLinks : allLinks.filter((l) => l.href !== '/configurateur'))
+    .filter((l) => !disabledPages.has(l.href));
   const seoText = seoData?.text || DEFAULT_SEO_TEXT;
   const socials = socialsData?.items?.length ? socialsData.items : DEFAULT_SOCIALS;
 

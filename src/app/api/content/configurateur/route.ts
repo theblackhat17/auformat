@@ -31,11 +31,17 @@ export async function GET() {
       grainHex: (m as unknown as { grainHex?: string }).grainHex || null,
     }));
 
-    // L'assistant IA n'est proposé que si la clé API est configurée côté serveur
-    settings.ai_enabled = !!process.env.ANTHROPIC_API_KEY;
+    // L'assistant IA n'est proposé que s'il est explicitement activé en base
+    // (interrupteur admin) ET que la clé API est configurée côté serveur.
+    // Défaut (clé absente) : masqué.
+    settings.ai_enabled = settings.assistant_enabled === true && !!process.env.ANTHROPIC_API_KEY;
 
-    // Les prix ne quittent JAMAIS le serveur pour un non-admin (le chiffrage est
-    // réservé au commercial). On les retire avant sérialisation.
+    // Seul l'admin voit les prix ; pour tout autre visiteur, l'UI affiche
+    // « Prix sur devis » (jamais « 0 € »). On expose l'info au client…
+    settings.pricesVisible = role === 'admin';
+
+    // …et, défense en profondeur, on retire physiquement les prix du payload
+    // d'un non-admin (ils ne transitent jamais dans la réponse réseau).
     const payload = role === 'admin' ? settings : (stripPrices(settings) as Record<string, unknown>);
 
     return NextResponse.json(payload);

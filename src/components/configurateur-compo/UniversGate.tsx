@@ -60,7 +60,8 @@ export function UniversGate({
 }) {
   const universList = (settings.univers || []).filter((u) => u.actif).sort((a, b) => a.sortOrder - b.sortOrder);
   const materials = settings.materials || [];
-  const showPrices = settings.pricing_mode === 'estimation';
+  // Les prix ne s'affichent que pour un admin (pricesVisible calculé serveur) ; jamais pour un client.
+  const showPrices = settings.pricesVisible === true;
   const [chosen, setChosen] = useState<ConfigurateurUnivers | null>(null);
   const [materialIndex, setMaterialIndex] = useState(0);
   const [assistantOpen, setAssistantOpen] = useState(false);

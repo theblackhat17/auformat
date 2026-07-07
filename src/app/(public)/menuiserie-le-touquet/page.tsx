@@ -6,6 +6,7 @@ import { buildPageMetadata, SITE_URL, LOCATIONS } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, localBusinessCalotterieJsonLd } from '@/lib/jsonld';
 import { LocalAtelierSections } from '@/components/local/LocalAtelierSections';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/menuiserie-le-touquet', {
@@ -50,6 +51,7 @@ const DEFAULT_AREAS = [
 ];
 
 export default async function MenuiserieLeTouquetPage() {
+  await assertPageEnabled('/menuiserie-le-touquet');
   const [services, avisStats, sections] = await Promise.all([
     getServices(),
     getAvisStats(),

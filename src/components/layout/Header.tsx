@@ -12,9 +12,9 @@ const ATELIER_HREFS = ['/menuiserie-lille', '/menuiserie-le-touquet'];
 export async function Header() {
   const settings = await getSettings();
   const configurateurEnabled = settings?.configurateurEnabled ?? false;
-  const navLinks = configurateurEnabled
-    ? NAV_LINKS
-    : NAV_LINKS.filter((l) => l.href !== '/configurateur');
+  const disabled = new Set(settings?.disabledPages ?? []);
+  const navLinks = (configurateurEnabled ? NAV_LINKS : NAV_LINKS.filter((l) => l.href !== '/configurateur'))
+    .filter((l) => !disabled.has(l.href));
 
   // Desktop : ateliers regroupés en menu déroulant, « Contact » devient le CTA bouton.
   const ateliers = navLinks.filter((l) => ATELIER_HREFS.includes(l.href));

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { queryOne, rawQuery, toCamelCase } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { logAdminAction } from '@/lib/activity-logger';
-import { saveUploadedFile } from '@/lib/upload';
+import { saveUploadedFile, deleteUploadedFile } from '@/lib/upload';
 import type { ProjectDocument } from '@/lib/types';
 
 /**
@@ -54,7 +54,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   try {
     const { documentId } = await request.json();
     if (!documentId) return NextResponse.json({ error: 'documentId requis' }, { status: 400 });
+    // Récupère l'URL avant suppression pour effacer aussi le fichier physique.
+    const doc = await queryOne<{ url: string }>(
+      `SELECT url FROM project_documents WHERE id = $1 AND project_id = $2`,
+      [documentId, id]
+    );
     await rawQuery(`DELETE FROM project_documents WHERE id = $1 AND project_id = $2`, [documentId, id]);
+    if (doc?.url) await deleteUploadedFile(doc.url);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Delete project document error:', err);

@@ -24,6 +24,7 @@ interface Props {
   options: ConfigurateurOption[];
   labels: ConfigurateurLabels;
   price: Configurateur2DPriceBreakdown;
+  pricesVisible: boolean;
   onChangeProduct: (slug: ConfigurateurProductSlug) => void;
   onChangeDimension: (field: 'largeur' | 'hauteur' | 'profondeur' | 'epaisseur', value: number) => void;
   onChangeMaterial: (index: number) => void;
@@ -39,6 +40,7 @@ export function ConfigPanel({
   options,
   labels,
   price,
+  pricesVisible,
   onChangeProduct,
   onChangeDimension,
   onChangeMaterial,
@@ -95,7 +97,7 @@ export function ConfigPanel({
       </Section>
 
       {/* Price */}
-      <PriceDisplay price={price} label={labels.prixEstimatif} />
+      <PriceDisplay price={price} label={labels.prixEstimatif} pricesVisible={pricesVisible} />
 
       {/* Quote button */}
       <button

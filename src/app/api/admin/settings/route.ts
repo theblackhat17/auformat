@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { requireAdmin } from '@/lib/middleware-auth';
 import { queryOne, rawQuery } from '@/lib/db';
 import { logAdminAction } from '@/lib/activity-logger';
+import { TOGGLEABLE_HREFS } from '@/lib/constants';
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -28,11 +29,20 @@ export async function PUT(request: NextRequest) {
       phone, email, hoursWeekdays, hoursSaturday, hoursSunday,
       instagram, facebook, heroBackground, configurateurEnabled,
       colorBoisClair, colorBoisFonce, colorVertForet, colorVertForetDark,
-      colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl,
+      colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl, disabledPages,
     } = body;
 
     if (fontTheme !== undefined && !['moderne', 'classique'].includes(fontTheme)) {
       return NextResponse.json({ error: 'Thème typographique invalide' }, { status: 400 });
+    }
+
+    // Pages désactivées : uniquement des hrefs de pages activables (sécurité)
+    let disabledPagesJson: string | null = null;
+    if (disabledPages !== undefined) {
+      if (!Array.isArray(disabledPages) || disabledPages.some((h) => typeof h !== 'string' || !TOGGLEABLE_HREFS.includes(h))) {
+        return NextResponse.json({ error: 'Pages désactivées invalides' }, { status: 400 });
+      }
+      disabledPagesJson = JSON.stringify([...new Set(disabledPages)]);
     }
 
     const HEX = /^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/;
@@ -61,10 +71,11 @@ export async function PUT(request: NextRequest) {
           color_blanc = COALESCE($21, color_blanc),
           font_theme = COALESCE($22, font_theme),
           google_review_url = $23,
+          disabled_pages = COALESCE($24::jsonb, disabled_pages),
           updated_at = NOW()
-         WHERE id = $24 RETURNING *`,
+         WHERE id = $25 RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, heroBackground || null, configurateurEnabled ?? false,
-         colorBoisClair, colorBoisFonce, colorVertForet, colorVertForetDark, colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl || null, existing.id]
+         colorBoisClair, colorBoisFonce, colorVertForet, colorVertForetDark, colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl || null, disabledPagesJson, existing.id]
       );
       logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');
@@ -72,13 +83,13 @@ export async function PUT(request: NextRequest) {
     } else {
       const result = await rawQuery(
         `INSERT INTO site_settings (company_name, slogan, address, zipcode, city, phone, email, hours_weekdays, hours_saturday, hours_sunday, instagram, facebook, hero_background, configurateur_enabled,
-          color_bois_clair, color_bois_fonce, color_vert_foret, color_vert_foret_dark, color_beige, color_noir, color_blanc, font_theme, google_review_url)
+          color_bois_clair, color_bois_fonce, color_vert_foret, color_vert_foret_dark, color_beige, color_noir, color_blanc, font_theme, google_review_url, disabled_pages)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
           COALESCE($15, '#D4A574'), COALESCE($16, '#8B6F47'), COALESCE($17, '#2C5F2D'), COALESCE($18, '#234a24'),
-          COALESCE($19, '#F5F1E8'), COALESCE($20, '#2B2B2B'), COALESCE($21, '#FFFFFF'), COALESCE($22, 'moderne'), $23)
+          COALESCE($19, '#F5F1E8'), COALESCE($20, '#2B2B2B'), COALESCE($21, '#FFFFFF'), COALESCE($22, 'moderne'), $23, COALESCE($24::jsonb, '[]'::jsonb))
          RETURNING *`,
         [companyName, slogan, address, zipcode, city, phone, email, hoursWeekdays, hoursSaturday, hoursSunday, instagram, facebook, heroBackground || null, configurateurEnabled ?? false,
-         colorBoisClair, colorBoisFonce, colorVertForet, colorVertForetDark, colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl || null]
+         colorBoisClair, colorBoisFonce, colorVertForet, colorVertForetDark, colorBeige, colorNoir, colorBlanc, fontTheme, googleReviewUrl || null, disabledPagesJson]
       );
       logAdminAction(request, auth, 'update_settings', 'settings', null, `Paramètres du site modifiés`);
       revalidatePath('/', 'layout');

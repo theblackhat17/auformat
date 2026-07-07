@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import type { Project, ProjectFolder, ProjectDocument, ProjectEvent } from '@/lib/types';
+import type { Project, ProjectFolder, ProjectDocument, ProjectEvent, ProjectUpdate } from '@/lib/types';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
@@ -14,15 +14,18 @@ import { ChatPanel } from '@/components/chat/ChatPanel';
 
 type Unread = { projects: Record<string, number>; folders: Record<string, number> };
 type ChatTarget = { projectId?: string; folderId?: string; title: string };
+/** Projet côté client : le serveur y ajoute `stageLabel` (dernière étape visible atteinte). */
+type ClientProject = Project & { stageLabel?: string | null };
 
 export function MesProjetsClient() {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<ClientProject[]>([]);
   const [folders, setFolders] = useState<ProjectFolder[]>([]);
   const [unread, setUnread] = useState<Unread>({ projects: {}, folders: {} });
   const [loading, setLoading] = useState(true);
   const [configurateurEnabled, setConfigurateurEnabled] = useState(false);
   const [documentsModal, setDocumentsModal] = useState<Project | null>(null);
   const [eventsModal, setEventsModal] = useState<Project | null>(null);
+  const [suiviModal, setSuiviModal] = useState<Project | null>(null);
   const [chatTarget, setChatTarget] = useState<ChatTarget | null>(null);
 
   const refreshUnread = useCallback(() => {
@@ -102,13 +105,13 @@ export function MesProjetsClient() {
 
   const ungrouped = projects.filter((p) => !p.folderId);
 
-  const renderCard = (project: Project) => {
+  const renderCard = (project: ClientProject) => {
     const unreadCount = unread.projects[project.id] || 0;
     return (
       <Card key={project.id} hover>
         <div className="flex items-start justify-between mb-3">
           <span className="text-2xl">{PROJECT_TYPE_ICONS[project.type] || '🎨'}</span>
-          <Badge variant={PROJECT_STATUS_COLORS[project.status]}>{PROJECT_STATUS_LABELS[project.status] || project.status}</Badge>
+          <Badge variant={PROJECT_STATUS_COLORS[project.status]}>{project.stageLabel || 'Nouveau projet'}</Badge>
         </div>
         <h3 className="text-lg font-semibold text-noir mb-1">{project.name}</h3>
         <p className="text-xs text-noir/40 mb-3">{formatDate(project.createdAt)}</p>
@@ -130,6 +133,9 @@ export function MesProjetsClient() {
             {unreadCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{unreadCount}</span>
             )}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setSuiviModal(project)} className="flex-1">
+            Suivi
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setDocumentsModal(project)} className="flex-1">
             Documents
@@ -218,6 +224,8 @@ export function MesProjetsClient() {
       )}
 
       {/* Suivi de fabrication */}
+      {suiviModal && <SuiviModal project={suiviModal} onClose={() => setSuiviModal(null)} />}
+
       {/* Documents partagés */}
       {documentsModal && <DocumentsModal project={documentsModal} onClose={() => setDocumentsModal(null)} />}
 
@@ -236,6 +244,61 @@ export function MesProjetsClient() {
         </Modal>
       )}
     </>
+  );
+}
+
+/** Suivi de fabrication : étapes publiées par l'atelier (statut, note, photos) — consultation */
+function SuiviModal({ project, onClose }: { project: Project; onClose: () => void }) {
+  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/projects/${project.id}/updates`)
+      .then((r) => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
+      .then((d) => setUpdates(Array.isArray(d) ? d : []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [project.id]);
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Suivi — ${project.name}`}>
+      <div className="max-h-[60vh] overflow-y-auto pr-1">
+        {loading ? (
+          <p className="text-sm text-noir/40 py-4">Chargement…</p>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-4">Impossible de charger le suivi. Réessayez plus tard.</p>
+        ) : updates.length === 0 ? (
+          <p className="text-sm text-noir/40 py-4">Votre projet n&apos;a pas encore d&apos;étape publiée. Vous serez prévenu par e-mail dès que l&apos;atelier avancera.</p>
+        ) : (
+          <ol className="space-y-4 py-1">
+            {updates.map((u) => (
+              <li key={u.id} className="relative border-l-2 border-vert-foret/25 pl-4">
+                <span className="absolute -left-[7px] top-1 h-3 w-3 rounded-full bg-vert-foret" aria-hidden="true" />
+                <div className="flex flex-wrap items-center gap-2">
+                  {u.status && <Badge variant={PROJECT_STATUS_COLORS[u.status]}>{PROJECT_STATUS_LABELS[u.status] || u.status}</Badge>}
+                  <span className="text-xs text-noir/40">{formatDate(u.createdAt)}</span>
+                </div>
+                {u.note && <p className="mt-1.5 text-sm text-noir/80 whitespace-pre-line">{u.note}</p>}
+                {u.photos?.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {u.photos.map((src) => (
+                      <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-lg border border-gray-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="Photo d’atelier" className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </Modal>
   );
 }
 

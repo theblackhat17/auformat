@@ -90,14 +90,33 @@ export async function getOptionalRole(): Promise<string | null> {
 }
 
 /**
- * Extract client IP from request headers (set by Nginx)
+ * Vraie IP du client pour le rate limiting.
+ *
+ * Chaîne de proxy réelle : client → Cloudflare (tunnel) → cloudflared (local) →
+ * nginx (127.0.0.1) → app. Deux pièges à éviter :
+ *  - `x-real-ip` / `$remote_addr` vaut l'adresse de cloudflared (constante) — inutilisable.
+ *  - la PREMIÈRE valeur de `x-forwarded-for` est fournie par le client : usurpable à
+ *    volonté (il suffit d'envoyer un XFF aléatoire pour repartir de zéro).
+ *
+ * Cloudflare écrase toujours `CF-Connecting-IP` avec l'IP observée à la périphérie
+ * et ignore toute valeur envoyée par le client : c'est la seule source de confiance
+ * (l'app n'étant joignable que par le tunnel). On retombe sur la DERNIÈRE valeur de
+ * XFF — celle injectée par le proxy de confiance — jamais la première.
  */
 export function getClientIp(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-  );
+  const cf = request.headers.get('cf-connecting-ip')?.trim();
+  if (cf) return cf;
+
+  const trueClient = request.headers.get('true-client-ip')?.trim();
+  if (trueClient) return trueClient;
+
+  const xff = (request.headers.get('x-forwarded-for') || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (xff.length > 0) return xff[xff.length - 1];
+
+  return request.headers.get('x-real-ip')?.trim() || 'unknown';
 }
 
 /**

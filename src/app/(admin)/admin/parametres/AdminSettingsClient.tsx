@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/Toast';
 import { ImageUpload } from '@/components/admin/ImageUpload';
 import { DEFAULT_THEME_COLORS } from '@/lib/types';
+import { TOGGLEABLE_NAV } from '@/lib/constants';
 
 interface Settings {
   id?: string;
@@ -30,6 +31,7 @@ interface Settings {
   colorNoir: string;
   colorBlanc: string;
   googleReviewUrl: string;
+  disabledPages: string[];
 }
 
 const COLOR_FIELDS: Array<{ key: keyof Settings & `color${string}`; label: string; hint: string }> = [
@@ -55,6 +57,7 @@ const EMPTY: Settings = {
   instagram: '', facebook: '', heroBackground: '', configurateurEnabled: false,
   googleReviewUrl: '',
   fontTheme: 'moderne',
+  disabledPages: [],
   ...DEFAULT_THEME_COLORS,
 };
 
@@ -282,6 +285,43 @@ export function AdminSettingsClient() {
                 />
               </button>
             </div>
+          </div>
+
+          {/* Visibilité des pages du menu */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-noir">Pages du menu</h2>
+            <p className="text-sm text-noir/50 mt-1 mb-4">
+              Désactivez une page pour la retirer du menu et du pied de page, et rendre son adresse inaccessible (redirection vers l&apos;accueil).
+            </p>
+            <ul className="divide-y divide-gray-100">
+              {TOGGLEABLE_NAV.map((l) => {
+                const enabled = !settings.disabledPages.includes(l.href);
+                return (
+                  <li key={l.href} className="flex items-center justify-between py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-noir">{l.label}</p>
+                      <p className="text-xs text-noir/40 truncate">{l.href}</p>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={enabled}
+                      aria-label={`Afficher la page ${l.label}`}
+                      onClick={() => setSettings((s) => ({
+                        ...s,
+                        disabledPages: enabled
+                          ? [...s.disabledPages, l.href]
+                          : s.disabledPages.filter((h) => h !== l.href),
+                      }))}
+                      className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-vert-foret/20 ${enabled ? 'bg-vert-foret' : 'bg-gray-300'}`}
+                    >
+                      <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="text-xs text-noir/40 mt-3">Le Configurateur a son propre interrupteur ci-dessus. L&apos;accueil, Contact et les pages légales restent toujours actifs.</p>
           </div>
         </div>
       )}

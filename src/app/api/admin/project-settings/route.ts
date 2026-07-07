@@ -32,6 +32,7 @@ function validateMilestones(value: unknown): value is ProjectMilestone[] {
     if (typeof m.key !== 'string' || !m.key.trim()) return false;
     if (typeof m.label !== 'string' || !m.label.trim()) return false;
     if (typeof m.financial !== 'boolean' || typeof m.clientNotify !== 'boolean') return false;
+    if (m.clientVisible !== undefined && typeof m.clientVisible !== 'boolean') return false;
     if (keys.has(m.key)) return false;
     keys.add(m.key);
   }
@@ -56,6 +57,8 @@ export async function PUT(request: NextRequest) {
       label: m.label.trim(),
       financial: m.financial,
       clientNotify: m.clientNotify,
+      // Rétrocompat : à défaut, une étape est visible si elle notifie déjà le client.
+      clientVisible: typeof m.clientVisible === 'boolean' ? m.clientVisible : m.clientNotify,
     }));
 
     await rawQuery(

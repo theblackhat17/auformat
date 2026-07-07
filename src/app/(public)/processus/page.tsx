@@ -8,6 +8,7 @@ import { SITE_URL, buildPageMetadata } from '@/lib/seo';
 import { getPageContent } from '@/lib/content';
 import { PageHero } from '@/components/layout/PageHero';
 import { Reveal } from '@/components/motion/Reveal';
+import { assertPageEnabled } from '@/lib/page-visibility';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata('/processus', {
@@ -68,6 +69,7 @@ function EngagementIcon({ icon }: { icon: string }) {
 }
 
 export default async function ProcessusPage() {
+  await assertPageEnabled('/processus');
   const sections = await getPageContent('processus');
 
   const heroSection = sections.find((s) => s.sectionKey === 'hero');

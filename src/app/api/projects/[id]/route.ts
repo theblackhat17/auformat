@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { queryOne, update, deleteById, rawQuery } from '@/lib/db';
+import { queryOne, query, update, deleteById, rawQuery } from '@/lib/db';
 import { requireAuth } from '@/lib/middleware-auth';
+import { deleteUploadedFiles } from '@/lib/upload';
 import { logActivity } from '@/lib/activity-logger';
 import { getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { toCamelCase } from '@/lib/db';
@@ -164,7 +165,13 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
       return NextResponse.json({ error: 'Acces interdit' }, { status: 403 });
     }
 
+    // Fichiers des documents du projet, collectés avant la suppression en cascade des lignes.
+    const docs = await query<{ url: string }>('SELECT url FROM project_documents WHERE project_id = $1', [id]);
+
     await deleteById('projects', id);
+
+    // Fichiers physiques supprimés après la suppression DB (best-effort).
+    await deleteUploadedFiles(docs.map((d) => d.url));
 
     const ip = getClientIp(request);
     const ua = getUserAgent(request);
