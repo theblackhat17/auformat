@@ -3,12 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Project, ProjectMilestone } from '@/lib/types';
+import type { Project, ProjectMilestone, ProjectFolder } from '@/lib/types';
 import type { AgendaEvent } from '@/app/api/admin/agenda/route';
 import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
 import { PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { timeAgo } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 type AdminProject = Project & {
   clientName: string | null;
@@ -17,6 +20,23 @@ type AdminProject = Project & {
   unreadCount: number;
   folderName: string | null;
   folderUnread: number;
+  folderId?: string | null;
+};
+
+type FolderCard = ProjectFolder & { clientName: string | null; clientEmail: string | null; unreadCount: number };
+
+/** Carte du kanban : soit un dossier (unité qui avance), soit un projet isolé. */
+type KanbanCard = {
+  kind: 'folder' | 'project';
+  id: string;
+  name: string;
+  clientName: string | null;
+  clientEmail: string | null;
+  milestones: Record<string, { done: boolean; date?: string | null; by?: string | null }> | undefined;
+  updatedAt: string;
+  unread: number;
+  count: number;
+  icon: string;
 };
 
 /** Filtre d'étape : tous / non démarré / clé de jalon */
@@ -53,14 +73,73 @@ function formatEventDate(e: Pick<AgendaEvent, 'startAt' | 'allDay'>): string {
 
 export function AdminProjetsClient() {
   const [projects, setProjects] = useState<AdminProject[]>([]);
+  const [folders, setFolders] = useState<FolderCard[]>([]);
   const [milestones, setMilestones] = useState<ProjectMilestone[]>(DEFAULT_MILESTONES);
   const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>(FILTER_ALL);
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
+  const [npOpen, setNpOpen] = useState(false);
+  const [npForm, setNpForm] = useState({ name: '', clientEmail: '', clientName: '' });
+  const [npCreating, setNpCreating] = useState(false);
+  const [ndOpen, setNdOpen] = useState(false);
+  const [ndForm, setNdForm] = useState({ name: '', clientEmail: '', clientName: '' });
+  const [ndCreating, setNdCreating] = useState(false);
   const toast = useToast();
   const router = useRouter();
+
+  /** Crée un dossier (unité de gestion) et ouvre sa fiche. */
+  async function handleCreateFolder() {
+    if (!ndForm.name.trim()) { toast.error('Donnez un nom au dossier'); return; }
+    setNdCreating(true);
+    try {
+      const res = await fetch('/api/admin/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: ndForm.name.trim(),
+          ...(ndForm.clientEmail.trim() ? { clientEmail: ndForm.clientEmail.trim(), clientName: ndForm.clientName.trim() || undefined } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Erreur lors de la création'); return; }
+      toast.success('Dossier créé');
+      router.push(`/admin/dossiers/${data.id}`);
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setNdCreating(false);
+    }
+  }
+
+  /** Crée un projet « libre » (sans configurateur) et ouvre sa fiche. */
+  async function handleCreateProject() {
+    if (!npForm.name.trim()) { toast.error('Donnez un nom au projet'); return; }
+    setNpCreating(true);
+    try {
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: npForm.name.trim(),
+          type: 'libre',
+          config: {},
+          ...(npForm.clientEmail.trim()
+            ? { clientEmail: npForm.clientEmail.trim(), clientName: npForm.clientName.trim() || undefined }
+            : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Erreur lors de la création'); return; }
+      toast.success('Projet créé');
+      router.push(`/admin/projets/${data.id}`);
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setNpCreating(false);
+    }
+  }
 
   // Préférence de vue (Liste / Kanban) mémorisée localement
   useEffect(() => {
@@ -71,32 +150,47 @@ export function AdminProjetsClient() {
     try { localStorage.setItem('projets_view', view); } catch { /* stockage indispo */ }
   }, [view]);
 
+  // Colonnes du kanban masquées (clés d'étape), mémorisées localement
+  const [hiddenCols, setHiddenCols] = useState<string[]>([]);
+  useEffect(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('projets_kanban_hidden') : null;
+    if (saved) {
+      try { const arr = JSON.parse(saved); if (Array.isArray(arr)) setHiddenCols(arr); } catch { /* ignore */ }
+    }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem('projets_kanban_hidden', JSON.stringify(hiddenCols)); } catch { /* ignore */ }
+  }, [hiddenCols]);
+  const toggleCol = (key: string) => setHiddenCols((h) => (h.includes(key) ? h.filter((k) => k !== key) : [...h, key]));
+
   /**
    * Définit l'étape courante d'un projet par glisser-déposer : coche les étapes
    * jusqu'à `upToKey` inclus (null = non démarré). Écrit la MÊME donnée que la
    * checklist de la fiche projet → kanban et onglet Étapes toujours synchro.
    */
-  async function moveProjectToStage(projectId: string, upToKey: string | null) {
-    const proj = projects.find((p) => p.id === projectId);
-    if (!proj) return;
+  async function moveCard(card: KanbanCard, upToKey: string | null) {
     const targetIndex = upToKey === null ? -1 : milestones.findIndex((m) => m.key === upToKey);
-    const previousMilestones = proj.milestones;
-    // Avancement optimiste
-    const optimistic: NonNullable<Project['milestones']> = {};
+    const prev = card.milestones;
+    const optimistic: Record<string, { done: boolean }> = {};
     milestones.forEach((m, i) => { optimistic[m.key] = { done: i <= targetIndex }; });
-    setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: optimistic } : p)));
+    const patch = (mil: KanbanCard['milestones']) => {
+      if (card.kind === 'folder') setFolders((fs) => fs.map((f) => (f.id === card.id ? { ...f, milestones: mil } : f)));
+      else setProjects((ps) => ps.map((p) => (p.id === card.id ? { ...p, milestones: mil } : p)));
+    };
+    patch(optimistic);
     try {
-      const res = await fetch(`/api/admin/projects/${projectId}/milestones`, {
+      const base = card.kind === 'folder' ? 'folders' : 'projects';
+      const res = await fetch(`/api/admin/${base}/${card.id}/milestones`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ upTo: upToKey }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: data.milestones, status: data.status } : p)));
-      toast.success(`« ${proj.name} » → ${targetIndex >= 0 ? milestones[targetIndex].label : 'Non démarré'}`);
+      patch(data.milestones);
+      toast.success(`« ${card.name} » → ${targetIndex >= 0 ? milestones[targetIndex].label : 'Non démarré'}`);
     } catch {
-      setProjects((ps) => ps.map((p) => (p.id === projectId ? { ...p, milestones: previousMilestones } : p)));
+      patch(prev);
       toast.error('Déplacement impossible');
     }
   }
@@ -117,13 +211,17 @@ export function AdminProjetsClient() {
       fetch(`/api/admin/agenda?${agendaQuery}`)
         .then((r) => (r.ok ? r.json() : Promise.reject(new Error('agenda'))))
         .catch(() => null),
-    ]).then(([projectsData, settingsData, agendaData]) => {
+      fetch('/api/admin/folders')
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error('folders'))))
+        .catch(() => null),
+    ]).then(([projectsData, settingsData, agendaData, foldersData]) => {
       if (cancelled) return;
       if (Array.isArray(projectsData)) {
         setProjects(projectsData);
       } else {
         toast.error('Impossible de charger les projets');
       }
+      if (Array.isArray(foldersData)) setFolders(foldersData);
       if (settingsData && Array.isArray(settingsData.milestones) && settingsData.milestones.length > 0) {
         setMilestones(settingsData.milestones);
       }
@@ -270,6 +368,25 @@ export function AdminProjetsClient() {
     return [...list].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   }, [projects, search]);
 
+  /** Cartes du kanban : dossiers (unités qui avancent) + projets isolés (sans dossier). */
+  const kanbanCards = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const match = (name: string, cn: string | null, ce: string | null) =>
+      !q || name.toLowerCase().includes(q) || (cn || '').toLowerCase().includes(q) || (ce || '').toLowerCase().includes(q);
+    const cards: KanbanCard[] = [];
+    for (const f of folders) {
+      if (!match(f.name, f.clientName ?? null, f.clientEmail ?? null)) continue;
+      cards.push({ kind: 'folder', id: f.id, name: f.name, clientName: f.clientName ?? null, clientEmail: f.clientEmail ?? null, milestones: f.milestones, updatedAt: f.updatedAt, unread: f.unreadCount || 0, count: f.projectCount || 0, icon: '📂' });
+    }
+    for (const p of projects) {
+      if (p.folderId) continue; // dans un dossier → géré par le dossier
+      if (p.isTemplate) continue;
+      if (!match(p.name, p.clientName, p.clientEmail)) continue;
+      cards.push({ kind: 'project', id: p.id, name: p.name, clientName: p.clientName, clientEmail: p.clientEmail, milestones: p.milestones, updatedAt: p.updatedAt, unread: (p.unreadCount || 0) + (p.folderUnread || 0), count: 0, icon: PROJECT_TYPE_ICONS[p.type] || '🪚' });
+    }
+    return cards.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [folders, projects, search]);
+
   const filterLabel =
     filter === FILTER_ALL ? null
       : filter === FILTER_NONE ? 'Non démarré'
@@ -285,7 +402,9 @@ export function AdminProjetsClient() {
             Vue d&apos;ensemble de l&apos;atelier — cliquez sur un projet pour ouvrir sa fiche : étapes, production, documents et messagerie.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button size="sm" onClick={() => setNdOpen(true)}>+ Nouveau dossier</Button>
+          <Button size="sm" variant="outline" onClick={() => setNpOpen(true)}>+ Nouveau projet</Button>
           {/* Agenda global : tous les RDV et jours d'atelier, tous projets confondus */}
           <Link
             href="/admin/agenda"
@@ -483,21 +602,49 @@ export function AdminProjetsClient() {
 
           {/* Barre d'outils : bascule de vue + recherche */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Choisir la vue">
-              <button
-                onClick={() => setView('kanban')}
-                aria-pressed={view === 'kanban'}
-                className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'kanban' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
-              >
-                Kanban
-              </button>
-              <button
-                onClick={() => setView('list')}
-                aria-pressed={view === 'list'}
-                className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'list' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
-              >
-                Liste
-              </button>
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5" role="group" aria-label="Choisir la vue">
+                <button
+                  onClick={() => setView('kanban')}
+                  aria-pressed={view === 'kanban'}
+                  className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'kanban' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
+                >
+                  Kanban
+                </button>
+                <button
+                  onClick={() => setView('list')}
+                  aria-pressed={view === 'list'}
+                  className={`px-3.5 py-1.5 text-sm font-medium rounded-md transition-colors ${view === 'list' ? 'bg-vert-foret text-white' : 'text-noir/60 hover:text-noir'}`}
+                >
+                  Liste
+                </button>
+              </div>
+              {view === 'kanban' && (
+                <details className="relative">
+                  <summary className="cursor-pointer list-none select-none rounded-lg border border-gray-200 bg-white px-3.5 py-1.5 text-sm font-medium text-noir/70 transition-colors hover:border-vert-foret hover:text-vert-foret">
+                    Colonnes{hiddenCols.length > 0 ? ` · ${hiddenCols.length} masquée${hiddenCols.length > 1 ? 's' : ''}` : ''}
+                  </summary>
+                  <div className="absolute z-20 mt-1 max-h-80 w-64 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+                    <div className="flex items-center justify-between px-1 pb-1.5">
+                      <span className="text-[11px] font-semibold uppercase tracking-wide text-noir/40">Colonnes affichées</span>
+                      {hiddenCols.length > 0 && (
+                        <button onClick={() => setHiddenCols([])} className="text-xs text-vert-foret hover:underline">Tout afficher</button>
+                      )}
+                    </div>
+                    {[{ key: '__none__', label: 'Non démarré' }, ...milestones.map((m) => ({ key: m.key, label: m.label }))].map((col) => (
+                      <label key={col.key} className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 text-sm text-noir/80 hover:bg-beige/50">
+                        <input
+                          type="checkbox"
+                          checked={!hiddenCols.includes(col.key)}
+                          onChange={() => toggleCol(col.key)}
+                          className="h-4 w-4 rounded border-gray-300 text-vert-foret focus:ring-vert-foret"
+                        />
+                        <span className="truncate">{col.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </details>
+              )}
             </div>
             <div className="relative w-full sm:w-auto sm:min-w-[18rem] sm:flex-1 sm:max-w-sm">
               <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-noir/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -514,13 +661,19 @@ export function AdminProjetsClient() {
             </div>
           </div>
 
-          {projects.length === 0 ? (
+          {projects.length === 0 && folders.length === 0 ? (
             <EmptyState
               title="Aucun projet pour l'instant"
               text="Les projets créés depuis le configurateur ou ajoutés pour un client apparaîtront ici."
             />
           ) : view === 'kanban' ? (
-            <KanbanBoard projects={searched} milestones={milestones} onMove={moveProjectToStage} onOpen={(pid) => router.push(`/admin/projets/${pid}`)} />
+            <KanbanBoard
+              cards={kanbanCards}
+              milestones={milestones}
+              hiddenCols={hiddenCols}
+              onMove={moveCard}
+              onOpen={(card) => router.push(card.kind === 'folder' ? `/admin/dossiers/${card.id}` : `/admin/projets/${card.id}`)}
+            />
           ) : (
           <>
           {/* Pipeline par étape (catalogue de jalons, dans l'ordre) */}
@@ -603,6 +756,51 @@ export function AdminProjetsClient() {
           )}
         </>
       )}
+
+      {/* Création d'un projet libre (sans configurateur) */}
+      <Modal
+        isOpen={npOpen}
+        onClose={() => setNpOpen(false)}
+        title="Nouveau projet (sans configurateur)"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setNpOpen(false)}>Annuler</Button>
+            <Button onClick={handleCreateProject} isLoading={npCreating}>Créer le projet</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input label="Nom du projet *" value={npForm.name} onChange={(e) => setNpForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ex. Aménagement combles — Dupont" />
+          <Input label="E-mail du client (existant ou nouveau)" type="email" value={npForm.clientEmail} onChange={(e) => setNpForm((p) => ({ ...p, clientEmail: e.target.value }))} placeholder="client@exemple.fr" />
+          <Input label="Nom du client (si nouveau)" value={npForm.clientName} onChange={(e) => setNpForm((p) => ({ ...p, clientName: e.target.value }))} />
+          <p className="text-xs text-noir/50">
+            Le projet sera géré comme les autres (kanban, étapes, documents, suivi client, messagerie) mais sans configurateur.
+            Laissez l&apos;e-mail vide pour l&apos;attribuer à un client plus tard depuis la fiche projet.
+          </p>
+        </div>
+      </Modal>
+
+      {/* Création d'un dossier (unité de gestion regroupant des projets) */}
+      <Modal
+        isOpen={ndOpen}
+        onClose={() => setNdOpen(false)}
+        title="Nouveau dossier"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setNdOpen(false)}>Annuler</Button>
+            <Button onClick={handleCreateFolder} isLoading={ndCreating}>Créer le dossier</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input label="Nom du dossier *" value={ndForm.name} onChange={(e) => setNdForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ex. Rénovation maison — Dupont" />
+          <Input label="E-mail du client (existant ou nouveau)" type="email" value={ndForm.clientEmail} onChange={(e) => setNdForm((p) => ({ ...p, clientEmail: e.target.value }))} placeholder="client@exemple.fr" />
+          <Input label="Nom du client (si nouveau)" value={ndForm.clientName} onChange={(e) => setNdForm((p) => ({ ...p, clientName: e.target.value }))} />
+          <p className="text-xs text-noir/50">
+            Le <strong>dossier</strong> avance dans le kanban (étapes, suivi client, documents). Vous y ajouterez ensuite des projets, qui en sont les livrables.
+          </p>
+        </div>
+      </Modal>
     </>
   );
 }
@@ -611,36 +809,40 @@ export function AdminProjetsClient() {
 const KANBAN_NONE = '__none__';
 
 function KanbanBoard({
-  projects,
+  cards,
   milestones,
+  hiddenCols,
   onMove,
   onOpen,
 }: {
-  projects: AdminProject[];
+  cards: KanbanCard[];
   milestones: ProjectMilestone[];
-  onMove: (projectId: string, upToKey: string | null) => void;
-  onOpen: (projectId: string) => void;
+  hiddenCols: string[];
+  onMove: (card: KanbanCard, upToKey: string | null) => void;
+  onOpen: (card: KanbanCard) => void;
 }) {
   const [dragId, setDragId] = useState<string | null>(null);
   const [overCol, setOverCol] = useState<string | null>(null);
 
-  /** Colonnes = « Non démarré » puis chaque étape du catalogue, dans l'ordre. */
   const columns = useMemo(
-    () => [{ key: KANBAN_NONE, label: 'Non démarré', clientVisible: true }, ...milestones.map((m) => ({ key: m.key, label: m.label, clientVisible: isClientVisible(m) }))],
-    [milestones]
+    () =>
+      [
+        { key: KANBAN_NONE, label: 'Non démarré', clientVisible: true },
+        ...milestones.map((m) => ({ key: m.key, label: m.label, clientVisible: isClientVisible(m) })),
+      ].filter((c) => !hiddenCols.includes(c.key)),
+    [milestones, hiddenCols]
   );
 
-  /** Projets regroupés par étape courante (dernier jalon franchi). Modèles exclus. */
+  /** Cartes (dossiers + projets isolés) regroupées par étape courante. */
   const byStage = useMemo(() => {
-    const map: Record<string, AdminProject[]> = { [KANBAN_NONE]: [] };
+    const map: Record<string, KanbanCard[]> = { [KANBAN_NONE]: [] };
     for (const m of milestones) map[m.key] = [];
-    for (const p of projects) {
-      if (p.isTemplate) continue;
-      const cur = currentMilestone(p, milestones);
-      (map[cur?.key ?? KANBAN_NONE] ??= []).push(p);
+    for (const c of cards) {
+      const cur = currentMilestone({ milestones: c.milestones }, milestones);
+      (map[cur?.key ?? KANBAN_NONE] ??= []).push(c);
     }
     return map;
-  }, [projects, milestones]);
+  }, [cards, milestones]);
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
@@ -663,7 +865,8 @@ function KanbanBoard({
               const id = e.dataTransfer.getData('text/plain') || dragId;
               setOverCol(null);
               setDragId(null);
-              if (id) onMove(id, col.key === KANBAN_NONE ? null : col.key);
+              const card = cards.find((c) => c.id === id);
+              if (card) onMove(card, col.key === KANBAN_NONE ? null : col.key);
             }}
             className={`flex w-72 shrink-0 flex-col rounded-xl border transition-colors ${isOver ? 'border-vert-foret bg-vert-foret/5' : 'border-gray-100 bg-gray-50/60'}`}
           >
@@ -677,46 +880,41 @@ function KanbanBoard({
               <span className="shrink-0 rounded-full border border-gray-200 bg-white px-2 py-0.5 text-xs font-bold tabular-nums text-noir/60">{list.length}</span>
             </div>
             <div className="min-h-[80px] flex-1 space-y-2 p-2">
-              {list.map((p) => {
-                const unread = p.unreadCount + p.folderUnread;
-                return (
-                  <article
-                    key={p.id}
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('text/plain', p.id);
-                      e.dataTransfer.effectAllowed = 'move';
-                      setDragId(p.id);
-                    }}
-                    onDragEnd={() => {
-                      setDragId(null);
-                      setOverCol(null);
-                    }}
-                    onClick={() => onOpen(p.id)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') onOpen(p.id); }}
-                    className={`cursor-grab rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-vert-foret active:cursor-grabbing ${dragId === p.id ? 'opacity-40' : ''}`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <span className="text-base leading-none" aria-hidden="true">{PROJECT_TYPE_ICONS[p.type] || '🪚'}</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-noir">{p.name}</p>
-                        <p className="truncate text-xs text-noir/50">{p.clientName || p.clientEmail || 'Sans client'}</p>
-                      </div>
-                      {unread > 0 && (
-                        <span className="shrink-0 rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-5 text-white">{unread}</span>
-                      )}
+              {list.map((c) => (
+                <article
+                  key={c.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', c.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setDragId(c.id);
+                  }}
+                  onDragEnd={() => { setDragId(null); setOverCol(null); }}
+                  onClick={() => onOpen(c)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') onOpen(c); }}
+                  className={`cursor-grab rounded-lg border bg-white p-2.5 shadow-sm transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-vert-foret active:cursor-grabbing ${c.kind === 'folder' ? 'border-vert-foret/40' : 'border-gray-200'} ${dragId === c.id ? 'opacity-40' : ''}`}
+                >
+                  <div className="flex items-start gap-2">
+                    <span className="text-base leading-none" aria-hidden="true">{c.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-noir">{c.name}</p>
+                      <p className="truncate text-xs text-noir/50">{c.clientName || c.clientEmail || 'Sans client'}</p>
                     </div>
-                    <div className="mt-1.5 flex items-center gap-2 text-[11px] text-noir/45">
-                      <span>{timeAgo(p.updatedAt)}</span>
-                      {p.updateCount > 0 && <span>· 📷 {p.updateCount}</span>}
-                      {p.folderName && <span className="truncate">· 📂 {p.folderName}</span>}
-                    </div>
-                  </article>
-                );
-              })}
-              {list.length === 0 && <p className="px-1 py-6 text-center text-xs text-noir/30">Déposez un projet ici</p>}
+                    {c.unread > 0 && (
+                      <span className="shrink-0 rounded-full bg-red-600 px-1.5 text-[10px] font-bold leading-5 text-white">{c.unread}</span>
+                    )}
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2 text-[11px] text-noir/45">
+                    {c.kind === 'folder' && (
+                      <span className="rounded bg-vert-foret/10 px-1.5 py-0.5 font-medium text-vert-foret">Dossier · {c.count} projet{c.count > 1 ? 's' : ''}</span>
+                    )}
+                    <span>{timeAgo(c.updatedAt)}</span>
+                  </div>
+                </article>
+              ))}
+              {list.length === 0 && <p className="px-1 py-6 text-center text-xs text-noir/30">Déposez une carte ici</p>}
             </div>
           </div>
         );

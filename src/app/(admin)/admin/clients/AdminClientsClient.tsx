@@ -6,8 +6,14 @@ import type { ClientWithStats } from '@/lib/types';
 import { formatPrice, timeAgo, getInitials } from '@/lib/utils';
 import { SearchInput } from '@/components/ui/SearchInput';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 
 type ClientWithRole = ClientWithStats & { role: 'client' | 'admin' };
+
+const EMPTY_CREATE = { email: '', fullName: '', companyName: '', phone: '', address: '', sendInvite: true };
 
 export function AdminClientsClient() {
   const [clients, setClients] = useState<ClientWithRole[]>([]);
@@ -15,6 +21,43 @@ export function AdminClientsClient() {
   const [search, setSearch] = useState('');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState(EMPTY_CREATE);
+  const [creating, setCreating] = useState(false);
+  const toast = useToast();
+
+  async function handleCreate() {
+    const email = createForm.email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error('Adresse e-mail invalide');
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erreur lors de la création');
+        return;
+      }
+      toast.success(
+        data.emailed
+          ? `Client créé — e-mail d'accès envoyé à ${email}`
+          : data.created ? 'Client créé' : 'Client déjà existant, infos mises à jour'
+      );
+      setCreateOpen(false);
+      setCreateForm(EMPTY_CREATE);
+      fetchClients();
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const fetchClients = useCallback(() => {
     fetch('/api/admin/clients').then((r) => r.json()).then(setClients).finally(() => setLoading(false));
@@ -83,11 +126,12 @@ export function AdminClientsClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-noir">Utilisateurs</h1>
           <p className="text-sm text-noir/50 mt-1">{clients.length} utilisateurs &middot; {formatPrice(totalRevenue)} CA total</p>
         </div>
+        <Button onClick={() => setCreateOpen(true)}>+ Nouveau client</Button>
       </div>
 
       <div className="max-w-sm">
@@ -174,6 +218,36 @@ export function AdminClientsClient() {
           <div className="text-center py-10 text-sm text-noir/40">Aucun utilisateur trouve</div>
         )}
       </div>
+
+      {/* Création d'un client (sans projet) */}
+      <Modal
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        title="Nouveau client"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCreateOpen(false)}>Annuler</Button>
+            <Button onClick={handleCreate} isLoading={creating}>Créer le client</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input label="Adresse e-mail *" type="email" value={createForm.email} onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))} placeholder="client@exemple.fr" />
+          <Input label="Nom complet" value={createForm.fullName} onChange={(e) => setCreateForm((p) => ({ ...p, fullName: e.target.value }))} />
+          <Input label="Société" value={createForm.companyName} onChange={(e) => setCreateForm((p) => ({ ...p, companyName: e.target.value }))} />
+          <Input label="Téléphone" value={createForm.phone} onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))} />
+          <Input label="Adresse" value={createForm.address} onChange={(e) => setCreateForm((p) => ({ ...p, address: e.target.value }))} />
+          <label className="flex items-center gap-2.5 text-sm text-noir/80 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={createForm.sendInvite}
+              onChange={(e) => setCreateForm((p) => ({ ...p, sendInvite: e.target.checked }))}
+              className="h-4 w-4 rounded border-gray-300 text-vert-foret focus:ring-vert-foret"
+            />
+            Envoyer l&apos;e-mail d&apos;accès (le client définit son mot de passe)
+          </label>
+        </div>
+      </Modal>
     </div>
   );
 }

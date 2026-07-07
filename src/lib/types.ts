@@ -73,11 +73,19 @@ export interface ProjectMilestone {
 /** Dossier de chantier : regroupe plusieurs projets qui vont ensemble */
 export interface ProjectFolder {
   id: string;
-  userId: string;
+  userId: string | null;
   name: string;
+  /** Phase 2 : le dossier avance dans le pipeline (même catalogue d'étapes que les projets). */
+  status: ProjectStatus;
+  milestones?: Record<string, { done: boolean; date?: string | null; by?: string | null }>;
+  adminNotes?: string | null;
   createdAt: string;
   updatedAt: string;
   projectCount?: number;
+  /** Champs enrichis (vues admin) */
+  clientName?: string | null;
+  clientEmail?: string | null;
+  stageLabel?: string | null;
 }
 
 /** Message de la discussion client ↔ atelier (rattachée à un projet ou à un dossier) */
@@ -869,6 +877,10 @@ export interface CompositionModule {
   empileSur?: string | null;
   /** Décalage horizontal (mm) du module empilé, depuis le bord gauche de son support. */
   empileOffset?: number;
+  /** Refend : panneau vertical séparant le caisson en deux. Les tablettes se fixent de part et d'autre. */
+  refend?: boolean;
+  /** Position X du refend en mm depuis le bord gauche du caisson (null = centré). */
+  refendPos?: number | null;
 }
 
 export interface CompositionConfig {

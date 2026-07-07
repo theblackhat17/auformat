@@ -901,10 +901,34 @@ export function Compo3D({ config, moduleTypes, materials, univers, selectedId, o
         } else {
           // Étagères (positions réglables, visibles dans le caisson, au-dessus des tiroirs en bas)
           shelfYs = shelfPositions(mod, mod.hauteur).map((pos) => Math.min(freeTop - 0.06, Math.max(pos * S, freeBottom + 0.06)));
+          // Refend vertical optionnel : les tablettes se fixent de part et d'autre
+          const hasRefend = !!mod.refend;
+          const refendXm = hasRefend ? Math.min(w - PANEL, Math.max(PANEL, (mod.refendPos ?? mod.largeur / 2) * S)) : 0;
           for (const sy of shelfYs) {
-            const sh = box(w - PANEL * 2, PANEL, d - 0.04, bodyMat);
-            sh.position.set(w / 2, sy, d / 2 - 0.01);
-            mg.add(sh);
+            if (hasRefend) {
+              const leftW = refendXm - PANEL / 2 - PANEL;
+              const rightW = w - PANEL - (refendXm + PANEL / 2);
+              if (leftW > 0.02) {
+                const shL = box(leftW, PANEL, d - 0.04, bodyMat);
+                shL.position.set(PANEL + leftW / 2, sy, d / 2 - 0.01);
+                mg.add(shL);
+              }
+              if (rightW > 0.02) {
+                const shR = box(rightW, PANEL, d - 0.04, bodyMat);
+                shR.position.set(refendXm + PANEL / 2 + rightW / 2, sy, d / 2 - 0.01);
+                mg.add(shR);
+              }
+            } else {
+              const sh = box(w - PANEL * 2, PANEL, d - 0.04, bodyMat);
+              sh.position.set(w / 2, sy, d / 2 - 0.01);
+              mg.add(sh);
+            }
+          }
+          // Le refend : panneau vertical plein (hauteur intérieure, pleine profondeur)
+          if (hasRefend) {
+            const ref = box(PANEL, h - PANEL * 2, d - 0.04, bodyMat);
+            ref.position.set(refendXm, h / 2, d / 2 - 0.01);
+            mg.add(ref);
           }
 
           // Séparateurs verticaux : compartiments répartis sur la largeur

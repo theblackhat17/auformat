@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
     const fullName = String(body.fullName || body.name || '').trim();
     const phone = body.phone ? String(body.phone).trim() : null;
     const companyName = body.companyName ? String(body.companyName).trim() : null;
+    const address = body.address ? String(body.address).trim() : null;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Email invalide' }, { status: 400 });
     }
@@ -79,15 +80,16 @@ export async function POST(request: NextRequest) {
            full_name = COALESCE(NULLIF($2,''), full_name),
            company_name = COALESCE($3, company_name),
            phone = COALESCE($4, phone),
+           address = COALESCE($5, address),
            updated_at = NOW()
          WHERE id = $1`,
-        [id, fullName, companyName, phone]
+        [id, fullName, companyName, phone, address]
       );
     } else {
       const row = await rawQuery(
-        `INSERT INTO profiles (email, full_name, company_name, phone, role, discount_rate)
-         VALUES ($1, $2, $3, $4, 'client', 0) RETURNING id`,
-        [email, fullName || email.split('@')[0], companyName, phone]
+        `INSERT INTO profiles (email, full_name, company_name, phone, address, role, discount_rate)
+         VALUES ($1, $2, $3, $4, $5, 'client', 0) RETURNING id`,
+        [email, fullName || email.split('@')[0], companyName, phone, address]
       );
       id = row.rows[0].id;
       created = true;

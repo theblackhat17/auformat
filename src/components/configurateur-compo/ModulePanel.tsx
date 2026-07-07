@@ -218,6 +218,8 @@ export function ModulePanel({
   onFusion,
   onBandeau,
   onBandeauHauteur,
+  onRefend,
+  onRefendPos,
   onGrille,
   onGrilleColonnes,
   onGrilleEtageres,
@@ -250,6 +252,8 @@ export function ModulePanel({
   onFusion: (value: boolean) => void;
   onBandeau: (value: boolean) => void;
   onBandeauHauteur: (value: number | null) => void;
+  onRefend: (value: boolean) => void;
+  onRefendPos: (value: number | null) => void;
   onGrille: (value: { colonnes: number; etageresParColonne: number[] } | null) => void;
   onGrilleColonnes: (value: number) => void;
   onGrilleEtageres: (col: number, value: number) => void;
@@ -632,6 +636,50 @@ export function ModulePanel({
                   <input type="range" min={20} max={1200} step={10} value={mod.bandeauHauteur} onChange={(e) => onBandeauHauteur(Number(e.target.value))} className="w-full accent-vert-foret" aria-label="Hauteur du bandeau" />
                 </div>
               )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Refend : séparation verticale du caisson, positionnable sur la largeur */}
+      {!isDecor && (
+        <div className="mt-1 border-t border-noir/8">
+          <Toggle
+            label="Refend vertical"
+            hint="Panneau vertical qui sépare le caisson en deux. Les tablettes se fixent de part et d'autre. Positionnable sur la largeur."
+            value={mod.refend ?? false}
+            onChange={onRefend}
+          />
+          {mod.refend && (
+            <div className="pb-2.5">
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-noir/80">Position (depuis la gauche)</label>
+                <span className="text-xs tabular-nums text-noir/70">
+                  <NumField
+                    value={mod.refendPos ?? Math.round(mod.largeur / 2)}
+                    min={50}
+                    max={Math.max(60, mod.largeur - 50)}
+                    onCommit={(v) => onRefendPos(v)}
+                    ariaLabel="Position du refend"
+                    className="w-14 px-1.5 py-1 text-right border border-noir/20 rounded-md text-xs focus:outline-none focus:border-vert-foret"
+                  /> {unitLabel(unit)}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={50}
+                max={Math.max(60, mod.largeur - 50)}
+                step={10}
+                value={mod.refendPos ?? Math.round(mod.largeur / 2)}
+                onChange={(e) => onRefendPos(Number(e.target.value))}
+                className="w-full accent-vert-foret"
+                aria-label="Position du refend"
+              />
+              <div className="mt-1 flex justify-end">
+                <button type="button" onClick={() => onRefendPos(null)} className="text-xs text-vert-foret hover:underline">
+                  Centrer
+                </button>
+              </div>
             </div>
           )}
         </div>

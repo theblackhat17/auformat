@@ -123,6 +123,9 @@ export function computeDebit(
     const nbSeparateurs = grille ? grille.colonnes - 1 : opts.separateur_vertical || 0;
     addPanel('Séparateur', H - 2 * EP, P - JEU_PROFONDEUR, nbSeparateurs, interieurMat);
 
+    // Refend vertical (séparation structurelle du caisson) — matériau du caisson
+    addPanel('Refend', H - 2 * EP, P - JEU_PROFONDEUR, mod.refend ? 1 : 0, caissonMat);
+
     // Façades de portes — les portes basses/hautes couvrent une demi-hauteur (approx.)
     const nbPortesPleines = (opts.porte || 0) + (opts.porte_pleine || 0);
     const nbPortesDemi = (opts.porte_basse || 0) + (opts.porte_haute || 0);

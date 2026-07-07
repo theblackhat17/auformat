@@ -26,6 +26,7 @@ export function MesProjetsClient() {
   const [documentsModal, setDocumentsModal] = useState<Project | null>(null);
   const [eventsModal, setEventsModal] = useState<Project | null>(null);
   const [suiviModal, setSuiviModal] = useState<Project | null>(null);
+  const [folderSuivi, setFolderSuivi] = useState<ProjectFolder | null>(null);
   const [chatTarget, setChatTarget] = useState<ChatTarget | null>(null);
 
   const refreshUnread = useCallback(() => {
@@ -143,7 +144,7 @@ export function MesProjetsClient() {
           <Button variant="secondary" size="sm" onClick={() => setEventsModal(project)} className="flex-1">
             Rendez-vous
           </Button>
-          {configurateurEnabled && (
+          {configurateurEnabled && project.type !== 'libre' && (
             <Link href={`/configurateur?project=${project.id}`} className="flex-1">
               <Button variant="outline" size="sm" className="w-full">Modifier</Button>
             </Link>
@@ -190,7 +191,9 @@ export function MesProjetsClient() {
               <section key={folder.id}>
                 <div className="flex items-center gap-3 mb-4 flex-wrap">
                   <h2 className="text-lg font-bold text-noir">📂 {folder.name}</h2>
+                  {folder.stageLabel && <Badge variant={PROJECT_STATUS_COLORS[folder.status]}>{folder.stageLabel}</Badge>}
                   <span className="text-xs text-noir/40">{folderProjects.length} projet(s)</span>
+                  <Button variant="outline" size="sm" onClick={() => setFolderSuivi(folder)}>Suivi</Button>
                   <Button variant="outline" size="sm" onClick={() => setChatTarget({ folderId: folder.id, title: `Dossier ${folder.name}` })} className="relative">
                     💬 Discussion du dossier
                     {folderUnread > 0 && (
@@ -226,6 +229,9 @@ export function MesProjetsClient() {
       {/* Suivi de fabrication */}
       {suiviModal && <SuiviModal project={suiviModal} onClose={() => setSuiviModal(null)} />}
 
+      {/* Suivi du dossier */}
+      {folderSuivi && <FolderSuiviModal folder={folderSuivi} onClose={() => setFolderSuivi(null)} />}
+
       {/* Documents partagés */}
       {documentsModal && <DocumentsModal project={documentsModal} onClose={() => setDocumentsModal(null)} />}
 
@@ -244,6 +250,55 @@ export function MesProjetsClient() {
         </Modal>
       )}
     </>
+  );
+}
+
+/** Suivi d'un dossier : étapes publiées par l'atelier au niveau du dossier — consultation */
+function FolderSuiviModal({ folder, onClose }: { folder: ProjectFolder; onClose: () => void }) {
+  const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/folders/${folder.id}/updates`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => setUpdates(Array.isArray(d) ? d : []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [folder.id]);
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Suivi — ${folder.name}`}>
+      <div className="max-h-[60vh] overflow-y-auto pr-1">
+        {loading ? (
+          <p className="text-sm text-noir/40 py-4">Chargement…</p>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-4">Impossible de charger le suivi. Réessayez plus tard.</p>
+        ) : updates.length === 0 ? (
+          <p className="text-sm text-noir/40 py-4">Votre dossier n&apos;a pas encore d&apos;étape publiée. Vous serez prévenu par e-mail dès que l&apos;atelier avancera.</p>
+        ) : (
+          <ol className="space-y-4 py-1">
+            {updates.map((u) => (
+              <li key={u.id} className="relative border-l-2 border-vert-foret/25 pl-4">
+                <span className="absolute -left-[7px] top-1 h-3 w-3 rounded-full bg-vert-foret" aria-hidden="true" />
+                <span className="text-xs text-noir/40">{formatDate(u.createdAt)}</span>
+                {u.note && <p className="mt-1.5 text-sm text-noir/80 whitespace-pre-line">{u.note}</p>}
+                {u.photos?.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {u.photos.map((src) => (
+                      <a key={src} href={src} target="_blank" rel="noopener noreferrer" className="block h-20 w-20 overflow-hidden rounded-lg border border-gray-200">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={src} alt="Photo d’atelier" className="h-full w-full object-cover" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+    </Modal>
   );
 }
 

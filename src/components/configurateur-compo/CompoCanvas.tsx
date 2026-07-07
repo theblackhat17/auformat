@@ -983,6 +983,10 @@ function ModuleShape({
         }
       }
     } else if (!interiorHidden) {
+      // Refend vertical optionnel (séparation du caisson, positionnable sur la largeur)
+      const hasRefend = !!mod.refend;
+      const refendX = Math.min(innerX + innerW - 10, Math.max(innerX + 10, X + (mod.refendPos ?? Math.round(w / 2))));
+      const REF_W = 16;
       // Séparateurs verticaux : compartiments répartis sur la largeur (dans l'espace libre)
       for (let i = 1; i <= separateurs; i++) {
         const sx = innerX + (innerW / (separateurs + 1)) * i;
@@ -993,8 +997,20 @@ function ModuleShape({
       shelfYs.forEach((ey, idx) => {
         // Étagères inclinées pour le meuble à chaussures
         const tilt = isChaussures ? 35 : 0;
-        elements.push(<line key={`e${idx}`} x1={innerX} y1={Y(ey + tilt)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
+        if (hasRefend) {
+          // Tablettes fixées de part et d'autre du refend
+          elements.push(<line key={`eL${idx}`} x1={innerX} y1={Y(ey + tilt)} x2={refendX - REF_W / 2} y2={Y(ey)} stroke={stroke} strokeWidth={4} />);
+          elements.push(<line key={`eR${idx}`} x1={refendX + REF_W / 2} y1={Y(ey)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
+        } else {
+          elements.push(<line key={`e${idx}`} x1={innerX} y1={Y(ey + tilt)} x2={innerX + innerW} y2={Y(ey - tilt)} stroke={stroke} strokeWidth={4} />);
+        }
       });
+      // Le refend par-dessus les tablettes : panneau vertical plein hauteur libre
+      if (hasRefend) {
+        elements.push(
+          <rect key="refend" x={refendX - REF_W / 2} y={Y(freeTop)} width={REF_W} height={Math.abs(Y(freeBottom) - Y(freeTop))} fill={inner} stroke={stroke} strokeWidth={2} />
+        );
+      }
       {
         // Tringles : disposition de penderie (simple/double, haut/bas) ; sinon empilées sous l'ancrage
         const rails = isPenderie

@@ -621,6 +621,8 @@ export function ConfigurateurCompo({
                   onFusion={(value) => compo.setFusion(selectedModule.id, value)}
                   onBandeau={(value) => compo.setBandeau(selectedModule.id, value)}
                   onBandeauHauteur={(value) => compo.setBandeauHauteur(selectedModule.id, value)}
+                  onRefend={(value) => compo.setRefend(selectedModule.id, value)}
+                  onRefendPos={(value) => compo.setRefendPos(selectedModule.id, value)}
                   onGrille={(value) => compo.setGrille(selectedModule.id, value)}
                   onGrilleColonnes={(value) => compo.setGrilleColonnes(selectedModule.id, value)}
                   onGrilleEtageres={(col, value) => compo.setGrilleEtageres(selectedModule.id, col, value)}

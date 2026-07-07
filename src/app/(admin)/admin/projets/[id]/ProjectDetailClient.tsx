@@ -138,9 +138,11 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
           <h1 className="text-2xl font-bold text-noir">{project.name}</h1>
           <Badge variant={PROJECT_STATUS_COLORS[project.status]}>{currentMilestone(project, catalog)?.label ?? 'Nouveau projet'}</Badge>
           <div className="ml-auto flex items-center gap-2">
-            <Link href={`/configurateur?project=${project.id}`} className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-noir/70 hover:border-vert-foret hover:text-vert-foret transition-colors">
-              Ouvrir le configurateur
-            </Link>
+            {project.type !== 'libre' && (
+              <Link href={`/configurateur?project=${project.id}`} className="text-sm font-medium px-3 py-1.5 rounded-lg border border-gray-200 text-noir/70 hover:border-vert-foret hover:text-vert-foret transition-colors">
+                Ouvrir le configurateur
+              </Link>
+            )}
             <button onClick={handleDelete} disabled={deleting} className="text-sm font-medium px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors">
               {deleting ? 'Suppression…' : 'Supprimer'}
             </button>
@@ -250,11 +252,13 @@ function ApercuTab({ project, client, onChanged }: { project: Project; client: C
           <p><span className="text-noir/40">Créé le :</span> {formatDate(project.createdAt)}</p>
           <p><span className="text-noir/40">Dernière maj :</span> {formatDate(project.updatedAt)}</p>
         </div>
-        <div className="flex flex-col gap-2">
-          <Link href={`/configurateur?project=${project.id}`}>
-            <Button size="sm" className="w-full">Ouvrir dans le configurateur</Button>
-          </Link>
-        </div>
+        {project.type !== 'libre' && (
+          <div className="flex flex-col gap-2">
+            <Link href={`/configurateur?project=${project.id}`}>
+              <Button size="sm" className="w-full">Ouvrir dans le configurateur</Button>
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

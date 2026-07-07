@@ -72,6 +72,15 @@ export function computeCompositionPrice(
       }
     }
 
+    // Refend vertical : panneau supplémentaire, chiffré à la surface (matériau du caisson)
+    if (mod.refend) {
+      const refMat = moduleMaterial(materials, config, mod.materialIndex);
+      const refCost = round2(((mod.hauteur * mod.profondeur) / 1_000_000) * (refMat?.prixM2 || 0));
+      if (refCost > 0) {
+        details.push({ label: '— Refend (séparation verticale)', quantity: 1, unitPrice: refCost, total: refCost });
+      }
+    }
+
     for (const opt of type.options) {
       const qty = mod.options[opt.slug] ?? 0;
       if (qty <= 0 || opt.prix <= 0) continue;

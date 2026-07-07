@@ -92,6 +92,8 @@ type Action =
   | { type: 'SET_INTERIEUR_MATERIAL'; id: string; index: number | null }
   | { type: 'SET_FUSION'; id: string; value: boolean }
   | { type: 'SET_BANDEAU'; id: string; value: boolean }
+  | { type: 'SET_REFEND'; id: string; value: boolean }
+  | { type: 'SET_REFEND_POS'; id: string; value: number | null }
   | { type: 'SET_BANDEAU_HAUTEUR'; id: string; value: number | null }
   | { type: 'SET_GRILLE'; id: string; value: { colonnes: number; etageresParColonne: number[] } | null }
   | { type: 'SET_GRILLE_COLONNES'; id: string; value: number }
@@ -272,6 +274,15 @@ function reducer(rawState: State, action: Action): State {
       return patchModule(state, action.id, { fusionSuivant: action.value });
     case 'SET_BANDEAU':
       return patchModule(state, action.id, { bandeau: action.value });
+    case 'SET_REFEND':
+      // Activer : refendPos reste à null (= centré) ; désactiver : on remet à null.
+      return patchModule(state, action.id, action.value ? { refend: true } : { refend: false, refendPos: null });
+    case 'SET_REFEND_POS': {
+      const mod = state.config.modules.find((m) => m.id === action.id);
+      if (!mod) return rawState;
+      const clamped = action.value == null ? null : Math.min(mod.largeur - 50, Math.max(50, Math.round(action.value)));
+      return patchModule(state, action.id, { refendPos: clamped });
+    }
     case 'SET_BANDEAU_HAUTEUR':
       return patchModule(state, action.id, { bandeauHauteur: action.value });
     case 'SET_GRILLE':
@@ -377,6 +388,8 @@ export function useComposition(initial: CompositionConfig) {
   const setFusion = useCallback((id: string, value: boolean) => dispatch({ type: 'SET_FUSION', id, value }), []);
   const setBandeau = useCallback((id: string, value: boolean) => dispatch({ type: 'SET_BANDEAU', id, value }), []);
   const setBandeauHauteur = useCallback((id: string, value: number | null) => dispatch({ type: 'SET_BANDEAU_HAUTEUR', id, value }), []);
+  const setRefend = useCallback((id: string, value: boolean) => dispatch({ type: 'SET_REFEND', id, value }), []);
+  const setRefendPos = useCallback((id: string, value: number | null) => dispatch({ type: 'SET_REFEND_POS', id, value }), []);
   const setGrille = useCallback((id: string, value: { colonnes: number; etageresParColonne: number[] } | null) => dispatch({ type: 'SET_GRILLE', id, value }), []);
   const setGrilleColonnes = useCallback((id: string, value: number) => dispatch({ type: 'SET_GRILLE_COLONNES', id, value }), []);
   const setGrilleEtageres = useCallback((id: string, col: number, value: number) => dispatch({ type: 'SET_GRILLE_ETAGERES', id, col, value }), []);
@@ -425,6 +438,8 @@ export function useComposition(initial: CompositionConfig) {
     setFusion,
     setBandeau,
     setBandeauHauteur,
+    setRefend,
+    setRefendPos,
     setGrille,
     setGrilleColonnes,
     setGrilleEtageres,
