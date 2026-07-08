@@ -3,22 +3,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Project, ProjectFolder, ProjectMilestone, ProjectUpdate, ProjectDocument, ProjectStatus } from '@/lib/types';
-import { PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS } from '@/lib/constants';
+import type { Project, ProjectFolder, ProjectMilestone, ProjectUpdate, ProjectDocument, ProjectStatus, ProjectEvent, ConfigurateurModuleType, ConfigurateurMaterial, CompositionConfig } from '@/lib/types';
+import { PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
 import { currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
+import { computeDebit } from '@/lib/debit';
 import { formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { ClientPicker, type PickedClient } from '@/components/admin/ClientPicker';
 
 type FolderDetail = ProjectFolder & { clientName: string | null; clientEmail: string | null; clientPhone: string | null };
 
 const TABS = [
   { key: 'projets', label: 'Projets' },
+  { key: 'production', label: 'Production' },
   { key: 'etapes', label: 'Étapes' },
   { key: 'suivi', label: 'Suivi client' },
+  { key: 'agenda', label: 'Agenda' },
   { key: 'documents', label: 'Documents' },
   { key: 'messagerie', label: 'Messagerie' },
   { key: 'notes', label: 'Notes' },
@@ -120,12 +124,14 @@ export function DossierDetailClient({ folderId }: { folderId: string }) {
       {tab === 'projets' && (
         <ProjetsTab folderId={folderId} folder={folder} projects={projects} onChanged={refresh} />
       )}
+      {tab === 'production' && <ProductionTab projects={projects} />}
       {tab === 'etapes' && (
         <EtapesTab folderId={folderId} catalog={catalog} milestones={folder.milestones || {}} onChanged={(m, s) => setFolder((f) => (f ? { ...f, milestones: m, status: s } : f))} />
       )}
       {tab === 'suivi' && (
         <SuiviTab folderId={folderId} catalog={catalog} onStageChanged={(m, s) => setFolder((f) => (f ? { ...f, milestones: m, status: s } : f))} />
       )}
+      {tab === 'agenda' && <AgendaTab folderId={folderId} />}
       {tab === 'documents' && <DocumentsTab folderId={folderId} />}
       {tab === 'messagerie' && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -142,8 +148,27 @@ function ProjetsTab({ folderId, folder, projects, onChanged }: { folderId: strin
   const toast = useToast();
   const [name, setName] = useState('');
   const [creating, setCreating] = useState(false);
-  const [clientEmail, setClientEmail] = useState('');
+  const [client, setClient] = useState<PickedClient>({ email: '' });
   const [assigning, setAssigning] = useState(false);
+  const [candidates, setCandidates] = useState<{ id: string; name: string }[]>([]);
+  const [attachId, setAttachId] = useState('');
+
+  // Projets du même client, hors dossier, rattachables à celui-ci
+  useEffect(() => {
+    if (!folder.userId) { setCandidates([]); return; }
+    let cancelled = false;
+    fetch('/api/admin/projects').then((r) => r.json()).then((all) => {
+      if (cancelled || !Array.isArray(all)) return;
+      setCandidates(all.filter((p: Project) => p.userId === folder.userId && !p.folderId).map((p: Project) => ({ id: p.id, name: p.name })));
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [folder.userId, projects.length]);
+
+  async function attach() {
+    if (!attachId) return;
+    const res = await fetch(`/api/admin/folders/${folderId}/projects`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ projectId: attachId }) });
+    if (res.ok) { setAttachId(''); await onChanged(); toast.success('Projet rattaché'); } else toast.error('Erreur');
+  }
 
   async function createProject() {
     if (!name.trim()) { toast.error('Nom du projet requis'); return; }
@@ -168,14 +193,15 @@ function ProjetsTab({ folderId, folder, projects, onChanged }: { folderId: strin
   }
 
   async function assignClient() {
-    if (!clientEmail.trim()) return;
+    const payload = client.userId ? { clientUserId: client.userId } : client.email.trim() ? { clientEmail: client.email.trim(), clientName: client.name || undefined } : null;
+    if (!payload) return;
     setAssigning(true);
     try {
       const res = await fetch(`/api/admin/folders/${folderId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ clientEmail: clientEmail.trim() }),
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
-      setClientEmail('');
+      setClient({ email: '' });
       await onChanged();
       toast.success('Client attribué au dossier');
     } catch { toast.error('Erreur'); } finally { setAssigning(false); }
@@ -187,11 +213,16 @@ function ProjetsTab({ folderId, folder, projects, onChanged }: { folderId: strin
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <p className="text-sm font-medium text-amber-800 mb-2">Aucun client attribué</p>
           <div className="flex flex-wrap items-end gap-2">
-            <div className="flex-1 min-w-[200px]">
-              <Input label="E-mail du client" type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} placeholder="client@exemple.fr" />
+            <div className="flex-1 min-w-[220px]">
+              <ClientPicker label="Client" value={client} onChange={setClient} />
             </div>
             <Button size="sm" onClick={assignClient} isLoading={assigning}>Attribuer</Button>
           </div>
+          {!client.userId && client.email.trim() && (
+            <div className="mt-2 max-w-xs">
+              <Input label="Nom du client (nouveau)" value={client.name || ''} onChange={(e) => setClient((c) => ({ ...c, name: e.target.value }))} />
+            </div>
+          )}
         </div>
       )}
 
@@ -217,7 +248,109 @@ function ProjetsTab({ folderId, folder, projects, onChanged }: { folderId: strin
           </div>
           <Button size="sm" onClick={createProject} isLoading={creating}>+ Ajouter</Button>
         </div>
+
+        {candidates.length > 0 && (
+          <div className="flex flex-wrap items-end gap-2 border-t border-gray-100 pt-4 mt-4">
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-xs font-medium text-noir/60 mb-1">Rattacher un projet existant du client</label>
+              <select value={attachId} onChange={(e) => setAttachId(e.target.value)} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret">
+                <option value="">— Choisir un projet —</option>
+                {candidates.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <Button size="sm" variant="secondary" onClick={attach} disabled={!attachId}>Rattacher</Button>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+/* ————— Production / débit agrégé du dossier ————— */
+function ProductionTab({ projects }: { projects: Project[] }) {
+  const [catalog, setCatalog] = useState<{ moduleTypes: ConfigurateurModuleType[]; materials: ConfigurateurMaterial[] } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/configurateur')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => { if (!cancelled) setCatalog({ moduleTypes: Array.isArray(d.module_types) ? d.module_types : [], materials: Array.isArray(d.materials) ? d.materials : [] }); })
+      .catch(() => { if (!cancelled) setCatalog({ moduleTypes: [], materials: [] }); });
+    return () => { cancelled = true; };
+  }, []);
+
+  if (!catalog) {
+    return <div className="bg-white rounded-xl border border-gray-200 p-5 max-w-3xl"><p className="text-sm text-noir/40">Chargement…</p></div>;
+  }
+
+  const perProject: { name: string; panels: number; m2: number }[] = [];
+  const panelMap = new Map<string, { piece: string; largeur: number; hauteur: number; materiau: string; quantite: number }>();
+  let totalPanels = 0, totalM2 = 0;
+  for (const p of projects) {
+    const cfg = p.config && typeof p.config === 'object' && (p.config as unknown as CompositionConfig).version === 2 ? (p.config as unknown as CompositionConfig) : null;
+    const d = computeDebit(cfg, catalog.moduleTypes, catalog.materials);
+    const projM2 = Math.round(d.surfaces.reduce((s, x) => s + x.m2, 0) * 100) / 100;
+    perProject.push({ name: p.name, panels: d.totalPanels, m2: projM2 });
+    totalPanels += d.totalPanels; totalM2 += projM2;
+    for (const pan of d.panels) {
+      const key = `${pan.piece}|${pan.materiau}|${pan.largeur}x${pan.hauteur}`;
+      const ex = panelMap.get(key);
+      if (ex) ex.quantite += pan.quantite; else panelMap.set(key, { ...pan });
+    }
+  }
+  const panels = [...panelMap.values()].sort((a, b) => a.materiau.localeCompare(b.materiau) || a.piece.localeCompare(b.piece));
+  const fmtM2 = (n: number) => (Math.round(n * 100) / 100).toFixed(2).replace('.', ',');
+
+  return (
+    <div className="space-y-4 max-w-3xl">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-semibold text-noir mb-1">Débit agrégé du dossier</p>
+        <p className="text-xs text-noir/50 mb-4">Somme du débit atelier estimatif de tous les projets issus du configurateur. Sans prix.</p>
+        <div className="flex flex-wrap gap-8 mb-4">
+          <div><p className="text-2xl font-bold text-noir tabular-nums leading-none">{totalPanels}</p><p className="text-xs text-noir/50 mt-1">panneaux</p></div>
+          <div><p className="text-2xl font-bold text-noir tabular-nums leading-none">{fmtM2(totalM2)}</p><p className="text-xs text-noir/50 mt-1">m² de panneaux</p></div>
+          <div><p className="text-2xl font-bold text-noir tabular-nums leading-none">{projects.length}</p><p className="text-xs text-noir/50 mt-1">projet(s)</p></div>
+        </div>
+        {perProject.length > 0 && (
+          <ul className="text-sm text-noir/70 space-y-1 border-t border-gray-100 pt-3">
+            {perProject.map((pp, i) => (
+              <li key={i} className="flex justify-between gap-3"><span className="truncate">{pp.name}</span><span className="shrink-0 tabular-nums text-noir/50">{pp.panels} pan · {fmtM2(pp.m2)} m²</span></li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {panels.length > 0 ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <p className="text-sm font-semibold text-noir mb-3">Panneaux à débiter (cumulés)</p>
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-sm min-w-[480px]">
+              <thead>
+                <tr className="text-left text-xs text-noir/40 uppercase tracking-wide border-b border-gray-200">
+                  <th className="py-2 pr-3 font-semibold">Pièce</th>
+                  <th className="py-2 pr-3 font-semibold">Dim. (mm)</th>
+                  <th className="py-2 pr-3 font-semibold">Matériau</th>
+                  <th className="py-2 font-semibold text-right">Qté</th>
+                </tr>
+              </thead>
+              <tbody>
+                {panels.map((pan, i) => (
+                  <tr key={i} className="border-b border-gray-50">
+                    <td className="py-1.5 pr-3">{pan.piece}</td>
+                    <td className="py-1.5 pr-3 tabular-nums">{pan.largeur} × {pan.hauteur}</td>
+                    <td className="py-1.5 pr-3">{pan.materiau}</td>
+                    <td className="py-1.5 text-right tabular-nums font-medium">{pan.quantite}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
+          <p className="text-sm text-noir/45">Aucun projet issu du configurateur dans ce dossier — rien à débiter pour l&apos;instant.</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -380,6 +513,104 @@ function SuiviTab({ folderId, catalog, onStageChanged }: {
               </li>
             ))}
           </ol>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ————— Agenda du dossier ————— */
+function AgendaTab({ folderId }: { folderId: string }) {
+  const toast = useToast();
+  const [events, setEvents] = useState<ProjectEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({ type: PROJECT_EVENT_TYPES[0].key, date: '', time: '09:00', allDay: false, title: '' });
+  const [saving, setSaving] = useState(false);
+  const typeByKey = new Map(PROJECT_EVENT_TYPES.map((t) => [t.key, t]));
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/folders/${folderId}/events`).then((r) => r.json())
+      .then((d) => { if (!cancelled) setEvents(Array.isArray(d.events) ? d.events : []); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [folderId]);
+
+  async function add() {
+    if (!form.date) { toast.error('Choisissez une date'); return; }
+    const startAt = form.allDay ? new Date(`${form.date}T00:00`).toISOString() : new Date(`${form.date}T${form.time}`).toISOString();
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/folders/${folderId}/events`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: form.type, startAt, allDay: form.allDay, title: form.title || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) { toast.error(data.error || 'Erreur'); return; }
+      setEvents((e) => [...e, data.event].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()));
+      setForm((f) => ({ ...f, title: '' }));
+      toast.success('Événement ajouté');
+    } catch { toast.error('Erreur réseau'); } finally { setSaving(false); }
+  }
+
+  async function del(ev: ProjectEvent) {
+    if (!confirm('Supprimer cet événement ?')) return;
+    const res = await fetch(`/api/admin/folders/${folderId}/events`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId: ev.id }) });
+    if (res.ok) setEvents((e) => e.filter((x) => x.id !== ev.id)); else toast.error('Erreur');
+  }
+
+  return (
+    <div className="max-w-2xl space-y-4">
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-semibold text-noir mb-3">Ajouter un événement</p>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-noir/60 mb-1">Type</label>
+            <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret">
+              {PROJECT_EVENT_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-noir/60 mb-1">Date</label>
+            <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret" />
+          </div>
+          {!form.allDay && (
+            <div>
+              <label className="block text-xs font-medium text-noir/60 mb-1">Heure</label>
+              <input type="time" value={form.time} onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret" />
+            </div>
+          )}
+          <label className="flex items-center gap-2 text-sm text-noir/80 self-end pb-2">
+            <input type="checkbox" checked={form.allDay} onChange={(e) => setForm((f) => ({ ...f, allDay: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-vert-foret focus:ring-vert-foret" /> Journée entière
+          </label>
+          <div className="sm:col-span-2">
+            <Input label="Intitulé (optionnel)" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+          </div>
+        </div>
+        <div className="mt-3 flex justify-end"><Button size="sm" onClick={add} isLoading={saving}>Ajouter</Button></div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <p className="text-sm font-semibold text-noir mb-3">Événements</p>
+        {loading ? <p className="text-sm text-noir/40">Chargement…</p> : events.length === 0 ? (
+          <p className="text-sm text-noir/45">Aucun événement.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {events.map((ev) => {
+              const t = typeByKey.get(ev.type);
+              const d = new Date(ev.startAt);
+              return (
+                <li key={ev.id} className="flex items-center gap-3 py-2.5">
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t?.color || '#2C5F2D' }} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-noir truncate">{ev.title || t?.label || ev.type}</p>
+                    <p className="text-xs text-noir/50">{t?.label} · {d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}{ev.allDay ? '' : ` à ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}</p>
+                  </div>
+                  <button onClick={() => del(ev)} className="text-sm text-red-600 hover:underline">Supprimer</button>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </div>
     </div>

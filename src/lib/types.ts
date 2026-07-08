@@ -25,8 +25,20 @@ export interface Profile {
   role: 'client' | 'admin';
   avatarUrl: string | null;
   discountRate: number;
+  /** Notes internes admin sur le client (jamais visibles côté client) */
+  adminNotes?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Contact supplémentaire d'un client (conjoint, architecte…) — reçoit les e-mails du client */
+export interface ClientContact {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  createdAt: string;
 }
 
 export interface Project {

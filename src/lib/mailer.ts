@@ -34,18 +34,20 @@ function isConfigured(): boolean {
 }
 
 export async function sendMail(
-  to: string,
+  to: string | string[],
   subject: string,
   html: string,
   attachments?: { filename: string; content: Buffer; contentType?: string }[]
 ): Promise<boolean> {
+  const recipients = Array.isArray(to) ? to.filter(Boolean) : [to];
+  if (recipients.length === 0) return false;
   if (!isConfigured()) {
-    console.warn('[mailer] SMTP not configured, skipping email to:', to);
+    console.warn('[mailer] SMTP not configured, skipping email to:', recipients.join(', '));
     return false;
   }
 
   try {
-    await transporter.sendMail({ from: FROM, to, subject, html, attachments });
+    await transporter.sendMail({ from: FROM, to: recipients, subject, html, attachments });
     return true;
   } catch (err) {
     console.error('[mailer] Failed to send email:', err);
@@ -156,7 +158,7 @@ export async function sendVerificationEmail(to: string, verificationUrl: string)
 }
 
 export async function sendQuoteToClient(
-  to: string,
+  to: string | string[],
   clientName: string,
   quoteNumber: string,
   items: { description: string; quantity: number; unitPrice: number; total: number }[],
@@ -253,7 +255,7 @@ export async function sendContactConfirmation(data: ContactFormData): Promise<bo
 
 /** Le projet du client avance à l'atelier : nouvelle étape de fabrication */
 export async function sendProjectUpdateEmail(
-  to: string,
+  to: string | string[],
   clientName: string,
   projectName: string,
   statusLabel: string,
@@ -305,7 +307,7 @@ const stageWrap = (title: string, body: string) => `
  * modèle générique « Avancement du projet ». Aucun prix. Ne jette jamais.
  */
 export async function sendProjectStageEmail(
-  to: string,
+  to: string | string[],
   clientName: string,
   projectName: string,
   stageKey: string,
@@ -332,7 +334,7 @@ export async function sendProjectStageEmail(
 
 /** Relance d'un devis resté sans réponse (J+7) */
 export async function sendQuoteReminderEmail(
-  to: string,
+  to: string | string[],
   clientName: string,
   quoteNumber: string,
   totalTtc: number,
@@ -352,7 +354,7 @@ export async function sendQuoteReminderEmail(
 
 /** Le devis expire bientôt (J-5) */
 export async function sendQuoteExpiryEmail(
-  to: string,
+  to: string | string[],
   clientName: string,
   quoteNumber: string,
   validUntil: string
@@ -383,7 +385,7 @@ export async function notifyAdminsQuoteRevision(
 
 /** Rappel J-1 : le client a un rendez-vous demain (RDV découverte, technique ou pose) */
 export async function sendRdvReminderEmail(
-  to: string,
+  to: string | string[],
   opts: { clientName: string; typeLabel: string; projectName: string; whenLabel: string }
 ): Promise<boolean> {
   const { subject, body } = await resolveTemplate('rdv_reminder', {
@@ -397,7 +399,7 @@ export async function sendRdvReminderEmail(
 
 /** Le chantier est terminé : on invite le client à laisser un avis Google */
 export async function sendReviewRequestEmail(
-  to: string,
+  to: string | string[],
   clientName: string,
   projectName: string,
   reviewUrl: string
@@ -412,7 +414,7 @@ export async function sendReviewRequestEmail(
 
 /** Nouveau message de l'atelier en attente côté client */
 export async function sendChatNotificationToClient(
-  to: string,
+  to: string | string[],
   clientName: string,
   contextLabel: string,
   preview: string

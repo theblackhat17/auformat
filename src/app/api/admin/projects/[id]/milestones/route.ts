@@ -5,6 +5,7 @@ import { logAdminAction } from '@/lib/activity-logger';
 import { getProjectMilestones } from '@/lib/project-config-server';
 import { deriveProjectStatus, newlyNotifiedMilestone } from '@/lib/project-config';
 import { sendProjectStageEmail } from '@/lib/mailer';
+import { clientRecipients } from '@/lib/client-contacts';
 
 type Milestones = Record<string, { done: boolean; date?: string | null; by?: string | null }>;
 
@@ -25,7 +26,8 @@ async function maybeNotifyClient(
     'SELECT email, full_name, role FROM profiles WHERE id = $1', [project.userId]
   );
   if (owner && owner.role !== 'admin' && !owner.email.endsWith('@anonyme.local')) {
-    void sendProjectStageEmail(owner.email, owner.fullName || owner.email.split('@')[0], project.name, crossed.key, crossed.label);
+    const to = await clientRecipients(project.userId, owner.email);
+    void sendProjectStageEmail(to, owner.fullName || owner.email.split('@')[0], project.name, crossed.key, crossed.label);
   }
 }
 

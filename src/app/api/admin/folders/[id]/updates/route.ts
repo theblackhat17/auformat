@@ -3,6 +3,7 @@ import { queryOne, query, rawQuery, toCamelCase } from '@/lib/db';
 import { requireAdmin, getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { sendProjectStageEmail, sendProjectUpdateEmail } from '@/lib/mailer';
+import { clientRecipients } from '@/lib/client-contacts';
 import { saveUploadedFile, deleteUploadedFiles } from '@/lib/upload';
 import { getProjectMilestones } from '@/lib/project-config-server';
 import { deriveProjectStatus } from '@/lib/project-config';
@@ -94,9 +95,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const owner = await queryOne<{ email: string; fullName: string | null; role: string }>('SELECT email, full_name, role FROM profiles WHERE id = $1', [folder.userId]);
       if (owner && owner.role !== 'admin' && !owner.email.endsWith('@anonyme.local') && (stageLabel || note)) {
         const clientName = owner.fullName || owner.email.split('@')[0];
+        const to = await clientRecipients(folder.userId, owner.email);
         emailed = stageLabel
-          ? await sendProjectStageEmail(owner.email, clientName, folder.name, stageKey, stageLabel)
-          : await sendProjectUpdateEmail(owner.email, clientName, folder.name, 'Avancement du dossier', note, photos.length);
+          ? await sendProjectStageEmail(to, clientName, folder.name, stageKey, stageLabel)
+          : await sendProjectUpdateEmail(to, clientName, folder.name, 'Avancement du dossier', note, photos.length);
       }
     }
 

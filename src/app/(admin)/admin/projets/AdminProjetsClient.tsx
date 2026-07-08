@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { ClientPicker, type PickedClient } from '@/components/admin/ClientPicker';
 
 type AdminProject = Project & {
   clientName: string | null;
@@ -81,26 +82,32 @@ export function AdminProjetsClient() {
   const [search, setSearch] = useState('');
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [npOpen, setNpOpen] = useState(false);
-  const [npForm, setNpForm] = useState({ name: '', clientEmail: '', clientName: '' });
+  const [npName, setNpName] = useState('');
+  const [npClient, setNpClient] = useState<PickedClient>({ email: '' });
   const [npCreating, setNpCreating] = useState(false);
   const [ndOpen, setNdOpen] = useState(false);
-  const [ndForm, setNdForm] = useState({ name: '', clientEmail: '', clientName: '' });
+  const [ndName, setNdName] = useState('');
+  const [ndClient, setNdClient] = useState<PickedClient>({ email: '' });
   const [ndCreating, setNdCreating] = useState(false);
   const toast = useToast();
   const router = useRouter();
 
+  /** Construit le fragment de payload client (id existant ou e-mail nouveau). */
+  function clientPayload(c: PickedClient) {
+    if (c.userId) return { clientUserId: c.userId };
+    if (c.email.trim()) return { clientEmail: c.email.trim(), clientName: c.name || undefined };
+    return {};
+  }
+
   /** Crée un dossier (unité de gestion) et ouvre sa fiche. */
   async function handleCreateFolder() {
-    if (!ndForm.name.trim()) { toast.error('Donnez un nom au dossier'); return; }
+    if (!ndName.trim()) { toast.error('Donnez un nom au dossier'); return; }
     setNdCreating(true);
     try {
       const res = await fetch('/api/admin/folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: ndForm.name.trim(),
-          ...(ndForm.clientEmail.trim() ? { clientEmail: ndForm.clientEmail.trim(), clientName: ndForm.clientName.trim() || undefined } : {}),
-        }),
+        body: JSON.stringify({ name: ndName.trim(), ...clientPayload(ndClient) }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Erreur lors de la création'); return; }
@@ -115,20 +122,13 @@ export function AdminProjetsClient() {
 
   /** Crée un projet « libre » (sans configurateur) et ouvre sa fiche. */
   async function handleCreateProject() {
-    if (!npForm.name.trim()) { toast.error('Donnez un nom au projet'); return; }
+    if (!npName.trim()) { toast.error('Donnez un nom au projet'); return; }
     setNpCreating(true);
     try {
       const res = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: npForm.name.trim(),
-          type: 'libre',
-          config: {},
-          ...(npForm.clientEmail.trim()
-            ? { clientEmail: npForm.clientEmail.trim(), clientName: npForm.clientName.trim() || undefined }
-            : {}),
-        }),
+        body: JSON.stringify({ name: npName.trim(), type: 'libre', config: {}, ...clientPayload(npClient) }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || 'Erreur lors de la création'); return; }
@@ -770,12 +770,14 @@ export function AdminProjetsClient() {
         }
       >
         <div className="space-y-4">
-          <Input label="Nom du projet *" value={npForm.name} onChange={(e) => setNpForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ex. Aménagement combles — Dupont" />
-          <Input label="E-mail du client (existant ou nouveau)" type="email" value={npForm.clientEmail} onChange={(e) => setNpForm((p) => ({ ...p, clientEmail: e.target.value }))} placeholder="client@exemple.fr" />
-          <Input label="Nom du client (si nouveau)" value={npForm.clientName} onChange={(e) => setNpForm((p) => ({ ...p, clientName: e.target.value }))} />
+          <Input label="Nom du projet *" value={npName} onChange={(e) => setNpName(e.target.value)} placeholder="Ex. Aménagement combles — Dupont" />
+          <ClientPicker label="Client (optionnel)" value={npClient} onChange={setNpClient} />
+          {!npClient.userId && npClient.email.trim() && (
+            <Input label="Nom du client (nouveau)" value={npClient.name || ''} onChange={(e) => setNpClient((c) => ({ ...c, name: e.target.value }))} />
+          )}
           <p className="text-xs text-noir/50">
             Le projet sera géré comme les autres (kanban, étapes, documents, suivi client, messagerie) mais sans configurateur.
-            Laissez l&apos;e-mail vide pour l&apos;attribuer à un client plus tard depuis la fiche projet.
+            Laissez le client vide pour l&apos;attribuer plus tard depuis la fiche projet.
           </p>
         </div>
       </Modal>
@@ -793,9 +795,11 @@ export function AdminProjetsClient() {
         }
       >
         <div className="space-y-4">
-          <Input label="Nom du dossier *" value={ndForm.name} onChange={(e) => setNdForm((p) => ({ ...p, name: e.target.value }))} placeholder="Ex. Rénovation maison — Dupont" />
-          <Input label="E-mail du client (existant ou nouveau)" type="email" value={ndForm.clientEmail} onChange={(e) => setNdForm((p) => ({ ...p, clientEmail: e.target.value }))} placeholder="client@exemple.fr" />
-          <Input label="Nom du client (si nouveau)" value={ndForm.clientName} onChange={(e) => setNdForm((p) => ({ ...p, clientName: e.target.value }))} />
+          <Input label="Nom du dossier *" value={ndName} onChange={(e) => setNdName(e.target.value)} placeholder="Ex. Rénovation maison — Dupont" />
+          <ClientPicker label="Client (optionnel)" value={ndClient} onChange={setNdClient} />
+          {!ndClient.userId && ndClient.email.trim() && (
+            <Input label="Nom du client (nouveau)" value={ndClient.name || ''} onChange={(e) => setNdClient((c) => ({ ...c, name: e.target.value }))} />
+          )}
           <p className="text-xs text-noir/50">
             Le <strong>dossier</strong> avance dans le kanban (étapes, suivi client, documents). Vous y ajouterez ensuite des projets, qui en sont les livrables.
           </p>

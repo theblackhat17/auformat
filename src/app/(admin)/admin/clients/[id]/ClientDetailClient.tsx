@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { ClientWithStats, Project, Quote, UserSession } from '@/lib/types';
+import type { ClientContact, ClientWithStats, Project, Quote, UserSession } from '@/lib/types';
 import { formatDate, formatPrice, timeAgo, getInitials, getDisplayName } from '@/lib/utils';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS } from '@/lib/constants';
 import { Card, CardTitle } from '@/components/ui/Card';
@@ -12,7 +12,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 
 export function ClientDetailClient({ clientId }: { clientId: string }) {
-  const [data, setData] = useState<{ client: ClientWithStats; projects: Project[]; quotes: Quote[]; sessions: UserSession[] } | null>(null);
+  const [data, setData] = useState<{ client: ClientWithStats; projects: Project[]; quotes: Quote[]; sessions: UserSession[]; contacts: ClientContact[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [editModal, setEditModal] = useState(false);
@@ -50,7 +50,7 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
   if (loading || !data) return <div className="flex justify-center py-20"><div className="w-8 h-8 border-2 border-vert-foret border-t-transparent rounded-full animate-spin" /></div>;
 
   const { client, projects, quotes, sessions } = data;
-  const tabs = ['overview', 'projects', 'quotes', 'history'];
+  const tabs = ['overview', 'projects', 'quotes', 'notes', 'history'];
 
   return (
     <div className="space-y-6">
@@ -84,22 +84,33 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
       <div className="border-b border-gray-200 flex gap-0">
         {tabs.map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-vert-foret text-vert-foret' : 'border-transparent text-noir/40 hover:text-noir/70'}`}>
-            {tab === 'overview' ? 'Apercu' : tab === 'projects' ? 'Projets' : tab === 'quotes' ? 'Devis' : 'Historique'}
+            {tab === 'overview' ? 'Apercu' : tab === 'projects' ? 'Projets' : tab === 'quotes' ? 'Devis' : tab === 'notes' ? 'Notes' : 'Historique'}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
       {activeTab === 'overview' && (
-        <Card>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            <div><span className="text-noir/40 text-xs block">Email</span>{client.email}</div>
-            <div><span className="text-noir/40 text-xs block">Telephone</span>{client.phone || '—'}</div>
-            <div><span className="text-noir/40 text-xs block">Adresse</span>{client.address || '—'}</div>
-            <div><span className="text-noir/40 text-xs block">Remise</span>{client.discountRate > 0 ? `${client.discountRate}%` : 'Aucune'}</div>
-            <div><span className="text-noir/40 text-xs block">Dernière visite</span>{client.lastSeen ? timeAgo(client.lastSeen) : 'Jamais'}</div>
-          </div>
-        </Card>
+        <div className="space-y-4">
+          <Card>
+            <div className="grid sm:grid-cols-2 gap-4 text-sm">
+              <div><span className="text-noir/40 text-xs block">Email</span>{client.email}</div>
+              <div><span className="text-noir/40 text-xs block">Telephone</span>{client.phone || '—'}</div>
+              <div><span className="text-noir/40 text-xs block">Adresse</span>{client.address || '—'}</div>
+              <div><span className="text-noir/40 text-xs block">Remise</span>{client.discountRate > 0 ? `${client.discountRate}%` : 'Aucune'}</div>
+              <div><span className="text-noir/40 text-xs block">Dernière visite</span>{client.lastSeen ? timeAgo(client.lastSeen) : 'Jamais'}</div>
+            </div>
+          </Card>
+          <ContactsCard
+            clientId={clientId}
+            contacts={data.contacts || []}
+            onChanged={(contacts) => setData((d) => (d ? { ...d, contacts } : d))}
+          />
+        </div>
+      )}
+
+      {activeTab === 'notes' && (
+        <ClientNotesCard clientId={clientId} value={client.adminNotes || ''} onSaved={(adminNotes) => setData((d) => (d ? { ...d, client: { ...d.client, adminNotes } } : d))} />
       )}
 
       {activeTab === 'projects' && (
@@ -162,5 +173,124 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
         </div>
       </Modal>
     </div>
+  );
+}
+
+/* ————— Contacts supplémentaires : reçoivent tous les e-mails envoyés au client ————— */
+function ContactsCard({ clientId, contacts, onChanged }: { clientId: string; contacts: ClientContact[]; onChanged: (contacts: ClientContact[]) => void }) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '' });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function add() {
+    if (!form.email.trim()) { setError('E-mail requis'); return; }
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}/contacts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: form.name, email: form.email, phone: form.phone }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) { setError(data?.error || "Erreur lors de l'ajout"); return; }
+      const next = contacts.filter((c) => c.id !== data.contact.id).concat(data.contact);
+      onChanged(next);
+      setForm({ name: '', email: '', phone: '' });
+    } catch {
+      setError('Erreur réseau');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove(contact: ClientContact) {
+    if (!confirm(`Retirer « ${contact.email} » des contacts ? Cette adresse ne recevra plus les e-mails du client.`)) return;
+    const res = await fetch(`/api/admin/clients/${clientId}/contacts`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contactId: contact.id }),
+    });
+    if (res.ok) onChanged(contacts.filter((c) => c.id !== contact.id));
+  }
+
+  return (
+    <Card>
+      <CardTitle>Contacts supplémentaires</CardTitle>
+      <p className="text-xs text-noir/50 mb-4">Ces adresses reçoivent aussi tous les e-mails envoyés au client (suivi de projet, devis, messagerie, relances).</p>
+      {contacts.length === 0 ? (
+        <p className="text-sm text-noir/45 mb-4">Aucun contact supplémentaire — les e-mails ne partent qu&apos;à l&apos;adresse principale.</p>
+      ) : (
+        <ul className="divide-y divide-gray-100 mb-4">
+          {contacts.map((c) => (
+            <li key={c.id} className="flex items-center gap-3 py-2.5 text-sm">
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-noir truncate">{c.name || c.email}</p>
+                <p className="text-xs text-noir/45 truncate">{c.email}{c.phone ? ` · ${c.phone}` : ''}</p>
+              </div>
+              <button onClick={() => remove(c)} className="text-sm text-red-600 hover:underline shrink-0">Retirer</button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className="flex flex-wrap items-end gap-2 border-t border-gray-100 pt-4">
+        <div className="flex-1 min-w-[160px]">
+          <Input label="Nom" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="Ex. Conjoint, architecte…" />
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <Input label="E-mail *" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
+        </div>
+        <div className="flex-1 min-w-[140px]">
+          <Input label="Téléphone" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} />
+        </div>
+        <Button size="sm" onClick={add} isLoading={busy}>+ Ajouter</Button>
+      </div>
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+    </Card>
+  );
+}
+
+/* ————— Notes internes sur le client (jamais visibles côté client) ————— */
+function ClientNotesCard({ clientId, value, onSaved }: { clientId: string; value: string; onSaved: (v: string) => void }) {
+  const [text, setText] = useState(value);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'saved' | 'error'>('idle');
+
+  async function save() {
+    setSaving(true);
+    setStatus('idle');
+    try {
+      const res = await fetch(`/api/admin/clients/${clientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminNotes: text }),
+      });
+      if (!res.ok) throw new Error();
+      onSaved(text);
+      setStatus('saved');
+    } catch {
+      setStatus('error');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Card className="max-w-2xl">
+      <CardTitle>Notes internes</CardTitle>
+      <p className="text-xs text-noir/50 mb-3">Jamais visibles par le client.</p>
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={8}
+        placeholder="Préférences, historique des échanges, points d'attention…"
+        className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret resize-y"
+      />
+      <div className="mt-3 flex items-center justify-end gap-3">
+        {status === 'saved' && <span className="text-xs text-vert-foret">Notes enregistrées</span>}
+        {status === 'error' && <span className="text-xs text-red-600">Erreur lors de l&apos;enregistrement</span>}
+        <Button size="sm" onClick={save} isLoading={saving}>Enregistrer</Button>
+      </div>
+    </Card>
   );
 }

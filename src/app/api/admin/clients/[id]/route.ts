@@ -15,7 +15,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const client = await queryOne(`
       SELECT
         p.id, p.email, p.full_name, p.company_name, p.phone, p.address,
-        p.avatar_url, p.discount_rate, p.created_at, p.updated_at,
+        p.avatar_url, p.discount_rate, p.admin_notes, p.created_at, p.updated_at,
         COALESCE(proj.total_projects, 0)::int as total_projects,
         COALESCE(proj.draft_projects, 0)::int as draft_projects,
         COALESCE(proj.quote_requested_projects, 0)::int as quote_requested_projects,
@@ -72,7 +72,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       [id]
     );
 
-    return NextResponse.json({ client, projects, quotes, sessions });
+    // Contacts supplémentaires (reçoivent les e-mails du client)
+    const contacts = await query(
+      'SELECT id, user_id, name, email, phone, created_at FROM client_contacts WHERE user_id = $1 ORDER BY created_at',
+      [id]
+    );
+
+    return NextResponse.json({ client, projects, quotes, sessions, contacts });
   } catch (err) {
     console.error('Admin client detail error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
@@ -133,6 +139,32 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Admin delete client error:', err);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
+/** Notes internes admin sur le client (jamais visibles côté client). */
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+
+  const { id } = await params;
+
+  try {
+    const body = await request.json();
+    if (typeof body.adminNotes !== 'string') {
+      return NextResponse.json({ error: 'adminNotes requis' }, { status: 400 });
+    }
+    const result = await rawQuery(
+      'UPDATE profiles SET admin_notes = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
+      [body.adminNotes.slice(0, 10000), id]
+    );
+    if (result.rows.length === 0) {
+      return NextResponse.json({ error: 'Client introuvable' }, { status: 404 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Admin client notes error:', err);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

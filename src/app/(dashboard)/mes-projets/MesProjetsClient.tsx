@@ -27,6 +27,7 @@ export function MesProjetsClient() {
   const [eventsModal, setEventsModal] = useState<Project | null>(null);
   const [suiviModal, setSuiviModal] = useState<Project | null>(null);
   const [folderSuivi, setFolderSuivi] = useState<ProjectFolder | null>(null);
+  const [folderDocs, setFolderDocs] = useState<ProjectFolder | null>(null);
   const [chatTarget, setChatTarget] = useState<ChatTarget | null>(null);
 
   const refreshUnread = useCallback(() => {
@@ -194,14 +195,19 @@ export function MesProjetsClient() {
                   {folder.stageLabel && <Badge variant={PROJECT_STATUS_COLORS[folder.status]}>{folder.stageLabel}</Badge>}
                   <span className="text-xs text-noir/40">{folderProjects.length} projet(s)</span>
                   <Button variant="outline" size="sm" onClick={() => setFolderSuivi(folder)}>Suivi</Button>
+                  <Button variant="outline" size="sm" onClick={() => setFolderDocs(folder)}>Documents</Button>
                   <Button variant="outline" size="sm" onClick={() => setChatTarget({ folderId: folder.id, title: `Dossier ${folder.name}` })} className="relative">
                     💬 Discussion du dossier
                     {folderUnread > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{folderUnread}</span>
                     )}
                   </Button>
-                  <button onClick={() => handleRenameFolder(folder)} aria-label={`Renommer ${folder.name}`} title="Renommer" className="text-noir/40 hover:text-noir text-sm">✏️</button>
-                  <button onClick={() => handleDeleteFolder(folder)} aria-label={`Supprimer ${folder.name}`} title="Supprimer le dossier" className="text-noir/40 hover:text-red-600 text-sm">🗑</button>
+                  {folder.status === 'draft' && (
+                    <>
+                      <button onClick={() => handleRenameFolder(folder)} aria-label={`Renommer ${folder.name}`} title="Renommer" className="text-noir/40 hover:text-noir text-sm">✏️</button>
+                      <button onClick={() => handleDeleteFolder(folder)} aria-label={`Supprimer ${folder.name}`} title="Supprimer le dossier" className="text-noir/40 hover:text-red-600 text-sm">🗑</button>
+                    </>
+                  )}
                 </div>
                 {folderProjects.length === 0 ? (
                   <p className="text-sm text-noir/40 bg-gray-50 rounded-xl px-4 py-3">Dossier vide — rangez-y des projets avec le sélecteur « 📂 » de leurs cartes.</p>
@@ -232,6 +238,9 @@ export function MesProjetsClient() {
       {/* Suivi du dossier */}
       {folderSuivi && <FolderSuiviModal folder={folderSuivi} onClose={() => setFolderSuivi(null)} />}
 
+      {/* Documents du dossier */}
+      {folderDocs && <FolderDocumentsModal folder={folderDocs} onClose={() => setFolderDocs(null)} />}
+
       {/* Documents partagés */}
       {documentsModal && <DocumentsModal project={documentsModal} onClose={() => setDocumentsModal(null)} />}
 
@@ -250,6 +259,45 @@ export function MesProjetsClient() {
         </Modal>
       )}
     </>
+  );
+}
+
+/** Documents partagés d'un dossier — consultation */
+function FolderDocumentsModal({ folder, onClose }: { folder: ProjectFolder; onClose: () => void }) {
+  const [documents, setDocuments] = useState<ProjectDocument[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/folders/${folder.id}/documents`)
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then((d) => setDocuments(Array.isArray(d) ? d : []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [folder.id]);
+
+  return (
+    <Modal isOpen onClose={onClose} title={`Documents — ${folder.name}`}>
+      <div className="max-h-[55vh] overflow-y-auto pr-1">
+        {loading ? (
+          <p className="text-sm text-noir/40 py-4">Chargement…</p>
+        ) : error ? (
+          <p className="text-sm text-red-500 py-4">Impossible de charger les documents. Réessayez plus tard.</p>
+        ) : documents.length === 0 ? (
+          <p className="text-sm text-noir/40 py-4">Aucun document partagé pour ce dossier.</p>
+        ) : (
+          <ul className="space-y-1">
+            {documents.map((doc) => (
+              <li key={doc.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50">
+                <span aria-hidden className="text-lg flex-shrink-0">📄</span>
+                <a href={doc.url} target="_blank" rel="noopener" className="text-sm font-medium text-vert-foret hover:underline flex-1 break-all">{doc.name}</a>
+                <span className="text-xs text-noir/40 whitespace-nowrap">{formatDate(doc.createdAt)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Modal>
   );
 }
 

@@ -27,6 +27,7 @@ import {
   QUOTE_STATUS_COLORS,
 } from '@/lib/constants';
 import { DEFAULT_MILESTONES, currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
+import { createStarterConfig } from '@/components/configurateur-compo/useComposition';
 import { PROJECT_STAGE_TEMPLATES } from '@/lib/project-mail-templates';
 import { getModuleType, moduleMaterial } from '@/components/configurateur-compo/pricingCompo';
 import { computeDebit } from '@/lib/debit';
@@ -168,7 +169,7 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
         ))}
       </div>
 
-      {activeTab === 'apercu' && <ApercuTab project={project} client={client} onChanged={refresh} />}
+      {activeTab === 'apercu' && <ApercuTab project={project} client={client} onChanged={refresh} onOpenNotes={() => setActiveTab('notes')} onOpenAgenda={() => setActiveTab('agenda')} />}
       {activeTab === 'etapes' && <EtapesTab project={project} onUpdated={(milestones) => setProject((prev) => prev ? { ...prev, milestones } : prev)} />}
       {activeTab === 'suivi' && <SuiviTab projectId={project.id} onStageChanged={(milestones, status) => setProject((prev) => prev ? { ...prev, milestones, status } : prev)} />}
       {activeTab === 'production' && <ProductionTab project={project} />}
@@ -188,8 +189,14 @@ export function ProjectDetailClient({ projectId }: { projectId: string }) {
   );
 }
 
-/** Aperçu : coordonnées du client, attribution/création de compte, accès rapides */
-function ApercuTab({ project, client, onChanged }: { project: Project; client: ClientInfo | null; onChanged: () => Promise<void> }) {
+/** Aperçu : coordonnées du client, attribution/création de compte, récap notes + dates, accès rapides */
+function ApercuTab({ project, client, onChanged, onOpenNotes, onOpenAgenda }: {
+  project: Project;
+  client: ClientInfo | null;
+  onChanged: () => Promise<void>;
+  onOpenNotes: () => void;
+  onOpenAgenda: () => void;
+}) {
   const toast = useToast();
   const [inviting, setInviting] = useState(false);
 
@@ -216,7 +223,8 @@ function ApercuTab({ project, client, onChanged }: { project: Project; client: C
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-4 max-w-3xl">
+    <div className="space-y-4 max-w-3xl">
+    <div className="grid md:grid-cols-2 gap-4">
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <p className="text-sm font-semibold text-noir mb-3">Client</p>
         {client ? (
@@ -252,13 +260,164 @@ function ApercuTab({ project, client, onChanged }: { project: Project; client: C
           <p><span className="text-noir/40">Créé le :</span> {formatDate(project.createdAt)}</p>
           <p><span className="text-noir/40">Dernière maj :</span> {formatDate(project.updatedAt)}</p>
         </div>
-        {project.type !== 'libre' && (
+        {project.type !== 'libre' ? (
           <div className="flex flex-col gap-2">
             <Link href={`/configurateur?project=${project.id}`}>
               <Button size="sm" className="w-full">Ouvrir dans le configurateur</Button>
             </Link>
           </div>
+        ) : (
+          <ConvertToConfigurateur project={project} onChanged={onChanged} />
         )}
+      </div>
+    </div>
+
+    <div className="grid md:grid-cols-2 gap-4">
+      {/* Récap des notes internes (édition dans l'onglet Notes) */}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <div className="flex items-baseline justify-between gap-3 mb-3">
+          <p className="text-sm font-semibold text-noir">Notes internes</p>
+          <button onClick={onOpenNotes} className="text-sm text-vert-foret hover:underline">Modifier →</button>
+        </div>
+        {project.adminNotes?.trim() ? (
+          <p className="text-sm text-noir/75 whitespace-pre-line max-h-56 overflow-y-auto">{project.adminNotes}</p>
+        ) : (
+          <p className="text-sm text-noir/45">Aucune note pour l&apos;instant — ajoutez-en dans l&apos;onglet Notes.</p>
+        )}
+      </div>
+
+      {/* Dates fixées avec le client (agenda du projet) */}
+      <ApercuDatesCard projectId={project.id} onOpenAgenda={onOpenAgenda} />
+    </div>
+    </div>
+  );
+}
+
+/** Prochaines dates du projet (RDV client, pose…) — récap lecture seule de l'agenda */
+function ApercuDatesCard({ projectId, onOpenAgenda }: { projectId: string; onOpenAgenda: () => void }) {
+  const [events, setEvents] = useState<ProjectEvent[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/projects/${projectId}/events`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        if (cancelled) return;
+        // Dates à venir (on garde aussi celles d'hier pour le contexte), 5 max
+        const cutoff = Date.now() - 24 * 3600 * 1000;
+        const all: ProjectEvent[] = Array.isArray(d.events) ? d.events : [];
+        setEvents(
+          all
+            .filter((e) => new Date(e.endAt || e.startAt).getTime() >= cutoff)
+            .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+            .slice(0, 5)
+        );
+      })
+      .catch(() => { if (!cancelled) setEvents([]); });
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  const upcoming = events || [];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-baseline justify-between gap-3 mb-3">
+        <p className="text-sm font-semibold text-noir">Dates prévues</p>
+        <button onClick={onOpenAgenda} className="text-sm text-vert-foret hover:underline">Agenda →</button>
+      </div>
+      {events === null ? (
+        <p className="text-sm text-noir/40">Chargement…</p>
+      ) : upcoming.length === 0 ? (
+        <p className="text-sm text-noir/45">Aucune date à venir — planifiez un RDV dans l&apos;onglet Agenda.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {upcoming.map((e) => {
+            const t = PROJECT_EVENT_TYPES.find((x) => x.key === e.type);
+            return (
+              <li key={e.id} className="flex items-start gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: t?.color || '#999' }} aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-noir truncate">
+                    {e.title || t?.label || e.type}
+                    {t && !t.clientVisible && (
+                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded align-middle">interne</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-noir/55">{eventDateLabel(e)}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Transforme un projet « libre » (sans configurateur) en projet configurateur :
+ * on choisit un univers, une composition de départ est créée, et le bouton
+ * « Ouvrir dans le configurateur » apparaît.
+ */
+function ConvertToConfigurateur({ project, onChanged }: { project: Project; onChanged: () => Promise<void> }) {
+  const toast = useToast();
+  const [catalog, setCatalog] = useState<{ universList: ConfigurateurUnivers[]; moduleTypes: ConfigurateurModuleType[] } | null>(null);
+  const [slug, setSlug] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/content/configurateur')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        if (cancelled) return;
+        const universList: ConfigurateurUnivers[] = (Array.isArray(d.univers) ? d.univers : []).filter((u: ConfigurateurUnivers) => u.actif !== false);
+        setCatalog({ universList, moduleTypes: Array.isArray(d.module_types) ? d.module_types : [] });
+        if (universList.length > 0) setSlug(universList[0].slug);
+      })
+      .catch(() => { if (!cancelled) setCatalog({ universList: [], moduleTypes: [] }); });
+    return () => { cancelled = true; };
+  }, []);
+
+  async function convert() {
+    const univers = catalog?.universList.find((u) => u.slug === slug);
+    if (!univers) return;
+    setBusy(true);
+    try {
+      const config = createStarterConfig(univers, catalog?.moduleTypes || [], 0);
+      const res = await fetch(`/api/projects/${project.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: univers.slug, config }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`Projet transformé en projet configurateur (${univers.nom}).`);
+      await onChanged();
+    } catch {
+      toast.error('Erreur lors de la transformation');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!catalog) return <p className="text-xs text-noir/40">Chargement du configurateur…</p>;
+  if (catalog.universList.length === 0) return null;
+
+  return (
+    <div className="border-t border-gray-100 pt-4">
+      <p className="text-xs text-noir/55 mb-2">
+        Projet sans configurateur. Transformez-le pour le composer visuellement (une composition de départ sera créée).
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          className="flex-1 min-w-[140px] px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+          aria-label="Univers du configurateur"
+        >
+          {catalog.universList.map((u) => <option key={u.slug} value={u.slug}>{u.nom}</option>)}
+        </select>
+        <Button size="sm" onClick={convert} isLoading={busy}>Transformer en projet configurateur</Button>
       </div>
     </div>
   );

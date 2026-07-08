@@ -3,6 +3,7 @@ import { queryOne, query, rawQuery, toCamelCase } from '@/lib/db';
 import { requireAdmin, getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { sendProjectUpdateEmail } from '@/lib/mailer';
+import { clientRecipients } from '@/lib/client-contacts';
 import { saveUploadedFile, deleteUploadedFiles } from '@/lib/upload';
 import { getProjectMilestones } from '@/lib/project-config-server';
 import { deriveProjectStatus } from '@/lib/project-config';
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let emailed = false;
     if (owner && owner.role !== 'admin' && !owner.email.endsWith('@anonyme.local') && (stageLabel || note)) {
       emailed = await sendProjectUpdateEmail(
-        owner.email,
+        await clientRecipients(project.userId, owner.email),
         owner.fullName || owner.email.split('@')[0],
         project.name,
         stageLabel || 'Avancement du projet',

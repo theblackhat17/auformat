@@ -4,6 +4,7 @@ import { requireAdmin, getClientIp, getUserAgent } from '@/lib/middleware-auth';
 import { logActivity } from '@/lib/activity-logger';
 import { toCamelCase } from '@/lib/db';
 import { sendQuoteToClient } from '@/lib/mailer';
+import { clientRecipients } from '@/lib/client-contacts';
 import { generateQuotePdf } from '@/lib/quote-pdf';
 import type { Quote } from '@/lib/types';
 
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const email = client?.email || quote.clientEmail;
 
     if (email) {
+      // Adresse principale + contacts supplémentaires de la fiche client
+      const recipients = await clientRecipients(quote.userId, email);
       let pdf: Buffer | undefined;
       try {
         pdf = await generateQuotePdf(quote);
@@ -42,7 +45,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         console.error('Quote PDF generation failed, sending without attachment:', e);
       }
       await sendQuoteToClient(
-        email,
+        recipients,
         client?.fullName || quote.clientName || 'Client',
         quote.quoteNumber,
         quote.items,

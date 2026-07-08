@@ -55,6 +55,19 @@ async function migrate() {
   `);
   console.log('✓ project_updates : folder_id + contrainte de portée');
 
+  // Agenda rattachable à un dossier
+  await pool.query(`ALTER TABLE project_events ALTER COLUMN project_id DROP NOT NULL`);
+  await pool.query(`ALTER TABLE project_events ADD COLUMN IF NOT EXISTS folder_id UUID REFERENCES project_folders(id) ON DELETE CASCADE`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_project_events_folder ON project_events(folder_id, start_at)`);
+  await pool.query(`
+    DO $$ BEGIN
+      IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'project_events_scope_chk') THEN
+        ALTER TABLE project_events ADD CONSTRAINT project_events_scope_chk CHECK (project_id IS NOT NULL OR folder_id IS NOT NULL);
+      END IF;
+    END $$;
+  `);
+  console.log('✓ project_events : folder_id + contrainte de portée');
+
   await pool.end();
 }
 

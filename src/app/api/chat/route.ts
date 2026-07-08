@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { query, queryOne, rawQuery, toCamelCase } from '@/lib/db';
 import { requireAuth } from '@/lib/middleware-auth';
 import { notifyAdminsChatMessage, sendChatNotificationToClient } from '@/lib/mailer';
+import { clientRecipients } from '@/lib/client-contacts';
 import type { ChatMessage } from '@/lib/types';
 
 /**
@@ -129,7 +130,8 @@ export async function POST(request: NextRequest) {
       if (myRole === 'client') {
         void notifyAdminsChatMessage(thread.ownerName, thread.contextLabel.replace(/^votre /, ''), preview.slice(0, 300));
       } else if (!thread.ownerEmail.endsWith('@anonyme.local')) {
-        void sendChatNotificationToClient(thread.ownerEmail, thread.ownerName, thread.contextLabel.replace(/^votre /, ''), preview.slice(0, 300));
+        const to = await clientRecipients(thread.ownerId, thread.ownerEmail);
+        void sendChatNotificationToClient(to, thread.ownerName, thread.contextLabel.replace(/^votre /, ''), preview.slice(0, 300));
       }
     }
 

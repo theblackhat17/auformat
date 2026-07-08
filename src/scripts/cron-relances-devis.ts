@@ -24,6 +24,7 @@ const pool = new Pool({ connectionString: DATABASE_URL });
 
 type QuoteRow = {
   id: string;
+  user_id: string | null;
   quote_number: string;
   total_ttc: string;
   valid_until: string | null;
@@ -38,6 +39,18 @@ const recipient = (q: QuoteRow) => ({
   name: q.client_name || q.profile_name || 'client',
 });
 
+/** Adresse principale + contacts supplémentaires de la fiche client (client_contacts). */
+async function withContacts(pool: Pool, userId: string | null, primary: string): Promise<string[]> {
+  const emails = new Set([primary.toLowerCase()]);
+  if (userId) {
+    try {
+      const r = await pool.query<{ email: string }>('SELECT email FROM client_contacts WHERE user_id = $1', [userId]);
+      for (const c of r.rows) if (c.email && !c.email.endsWith('@anonyme.local')) emails.add(c.email.toLowerCase());
+    } catch { /* table absente : adresse principale seule */ }
+  }
+  return [...emails];
+}
+
 // 5. Rappels J-1 : RDV client (types visibles client uniquement) qui ont lieu demain (Europe/Paris)
 async function remindRdv(pool: Pool): Promise<number> {
   const clientVisibleTypes = PROJECT_EVENT_TYPES.filter((t) => t.clientVisible).map((t) => t.key);
@@ -47,10 +60,11 @@ async function remindRdv(pool: Pool): Promise<number> {
     start_at: string;
     all_day: boolean;
     project_name: string;
+    user_id: string | null;
     client_name: string | null;
     client_email: string | null;
   }>(
-    `SELECT e.id, e.type, e.start_at, e.all_day, p.name AS project_name,
+    `SELECT e.id, e.type, e.start_at, e.all_day, p.name AS project_name, p.user_id,
             pr.full_name AS client_name, pr.email AS client_email
      FROM project_events e
      JOIN projects p ON e.project_id = p.id
@@ -73,7 +87,7 @@ async function remindRdv(pool: Pool): Promise<number> {
     const whenLabel = e.all_day
       ? dateLabel
       : `${dateLabel} à ${start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Paris' })}`;
-    const ok = await sendRdvReminderEmail(email, {
+    const ok = await sendRdvReminderEmail(await withContacts(pool, e.user_id, email), {
       clientName: e.client_name || 'client',
       typeLabel,
       projectName: e.project_name,
@@ -102,7 +116,7 @@ async function run() {
 
   // 1. Relance J+7 sans réponse
   const toRemind = await pool.query<QuoteRow>(
-    `SELECT q.id, q.quote_number, q.total_ttc, q.valid_until, q.client_name, q.client_email,
+    `SELECT q.id, q.user_id, q.quote_number, q.total_ttc, q.valid_until, q.client_name, q.client_email,
             p.email AS profile_email, p.full_name AS profile_name
      FROM quotes q LEFT JOIN profiles p ON p.id = q.user_id
      WHERE q.status IN ('sent', 'viewed')
@@ -113,7 +127,7 @@ async function run() {
   for (const q of toRemind.rows) {
     const { email, name } = recipient(q);
     if (!email || email.endsWith('@anonyme.local')) continue;
-    const ok = await sendQuoteReminderEmail(email, name, q.quote_number, Number(q.total_ttc), q.valid_until);
+    const ok = await sendQuoteReminderEmail(await withContacts(pool, q.user_id, email), name, q.quote_number, Number(q.total_ttc), q.valid_until);
     if (ok) {
       await pool.query(`UPDATE quotes SET reminder_sent_at = NOW() WHERE id = $1`, [q.id]);
       console.log(`  relance J+7 envoyée : ${q.quote_number} → ${email}`);
@@ -122,7 +136,7 @@ async function run() {
 
   // 2. Expiration dans 5 jours
   const toWarn = await pool.query<QuoteRow>(
-    `SELECT q.id, q.quote_number, q.total_ttc, q.valid_until, q.client_name, q.client_email,
+    `SELECT q.id, q.user_id, q.quote_number, q.total_ttc, q.valid_until, q.client_name, q.client_email,
             p.email AS profile_email, p.full_name AS profile_name
      FROM quotes q LEFT JOIN profiles p ON p.id = q.user_id
      WHERE q.status IN ('sent', 'viewed')
@@ -133,7 +147,7 @@ async function run() {
   for (const q of toWarn.rows) {
     const { email, name } = recipient(q);
     if (!email || email.endsWith('@anonyme.local') || !q.valid_until) continue;
-    const ok = await sendQuoteExpiryEmail(email, name, q.quote_number, q.valid_until);
+    const ok = await sendQuoteExpiryEmail(await withContacts(pool, q.user_id, email), name, q.quote_number, q.valid_until);
     if (ok) {
       await pool.query(`UPDATE quotes SET expiry_reminder_sent_at = NOW() WHERE id = $1`, [q.id]);
       console.log(`  alerte expiration envoyée : ${q.quote_number} → ${email}`);
@@ -147,8 +161,8 @@ async function run() {
   );
   const reviewUrl = settings.rows[0]?.google_review_url;
   if (reviewUrl) {
-    const completed = await pool.query<{ id: string; name: string; email: string; full_name: string | null }>(
-      `SELECT p.id, p.name, pr.email, pr.full_name
+    const completed = await pool.query<{ id: string; name: string; user_id: string | null; email: string; full_name: string | null }>(
+      `SELECT p.id, p.name, p.user_id, pr.email, pr.full_name
        FROM projects p JOIN profiles pr ON pr.id = p.user_id
        WHERE p.status = 'completed'
          AND p.updated_at < NOW() - interval '3 days'
@@ -157,7 +171,7 @@ async function run() {
          AND pr.email NOT LIKE '%@anonyme.local'`
     );
     for (const p of completed.rows) {
-      const ok = await sendReviewRequestEmail(p.email, p.full_name || p.email.split('@')[0], p.name, reviewUrl);
+      const ok = await sendReviewRequestEmail(await withContacts(pool, p.user_id, p.email), p.full_name || p.email.split('@')[0], p.name, reviewUrl);
       if (ok) {
         // updated_at inchangé : on ne fausse pas la date de fin du chantier
         await pool.query(`UPDATE projects SET review_request_sent_at = NOW() WHERE id = $1`, [p.id]);
