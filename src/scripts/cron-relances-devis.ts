@@ -10,7 +10,8 @@ import { PROJECT_EVENT_TYPES } from '../lib/constants';
  * 4. projet terminé depuis 3 jours → demande d'avis Google (si le lien est configuré
  *    dans Admin → Paramètres, une seule fois par projet) ;
  * 5. RDV client demain (Europe/Paris) → rappel J-1 au client (une seule fois par événement,
- *    types visibles client uniquement — jamais les jours d'atelier).
+ *    types visibles client uniquement — jamais les jours d'atelier). Couvre les RDV
+ *    rattachés à un projet ET ceux rattachés à un dossier de chantier.
  * Lancement : npx tsx src/scripts/cron-relances-devis.ts (avec .env.local sourcé).
  */
 
@@ -64,11 +65,14 @@ async function remindRdv(pool: Pool): Promise<number> {
     client_name: string | null;
     client_email: string | null;
   }>(
-    `SELECT e.id, e.type, e.start_at, e.all_day, p.name AS project_name, p.user_id,
+    `SELECT e.id, e.type, e.start_at, e.all_day,
+            COALESCE(p.name, f.name) AS project_name,
+            COALESCE(p.user_id, f.user_id) AS user_id,
             pr.full_name AS client_name, pr.email AS client_email
      FROM project_events e
-     JOIN projects p ON e.project_id = p.id
-     LEFT JOIN profiles pr ON p.user_id = pr.id
+     LEFT JOIN projects p ON e.project_id = p.id
+     LEFT JOIN project_folders f ON e.folder_id = f.id
+     LEFT JOIN profiles pr ON pr.id = COALESCE(p.user_id, f.user_id)
      WHERE e.reminder_sent_at IS NULL
        AND e.type = ANY($1)
        AND (e.start_at AT TIME ZONE 'Europe/Paris')::date = ((NOW() AT TIME ZONE 'Europe/Paris')::date + INTERVAL '1 day')`,

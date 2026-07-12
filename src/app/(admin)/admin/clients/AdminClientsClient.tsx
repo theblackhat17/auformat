@@ -19,6 +19,7 @@ export function AdminClientsClient() {
   const [clients, setClients] = useState<ClientWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<'recent' | 'alpha' | 'alpha-desc'>('recent');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -111,14 +112,20 @@ export function AdminClientsClient() {
   };
 
   const filtered = useMemo(() => {
-    if (!search) return clients;
-    const q = search.toLowerCase();
-    return clients.filter((c) =>
-      (c.fullName || '').toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q) ||
-      (c.companyName || '').toLowerCase().includes(q)
-    );
-  }, [clients, search]);
+    let list = clients;
+    if (search) {
+      const q = search.toLowerCase();
+      list = clients.filter((c) =>
+        (c.fullName || '').toLowerCase().includes(q) ||
+        c.email.toLowerCase().includes(q) ||
+        (c.companyName || '').toLowerCase().includes(q)
+      );
+    }
+    if (sort === 'recent') return list; // ordre de l'API : admins d'abord, puis plus récents
+    const name = (c: ClientWithRole) => (c.fullName || c.email).trim();
+    const sorted = [...list].sort((a, b) => name(a).localeCompare(name(b), 'fr', { sensitivity: 'base' }));
+    return sort === 'alpha' ? sorted : sorted.reverse();
+  }, [clients, search, sort]);
 
   const totalRevenue = clients.reduce((s, c) => s + (c.totalRevenue || 0), 0);
 
@@ -134,8 +141,20 @@ export function AdminClientsClient() {
         <Button onClick={() => setCreateOpen(true)}>+ Nouveau client</Button>
       </div>
 
-      <div className="max-w-sm">
-        <SearchInput placeholder="Rechercher un utilisateur..." onSearch={setSearch} />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="w-full max-w-sm">
+          <SearchInput placeholder="Rechercher un utilisateur..." onSearch={setSearch} />
+        </div>
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          className="px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+          aria-label="Trier les utilisateurs"
+        >
+          <option value="recent">Tri : plus récents</option>
+          <option value="alpha">Tri : nom A → Z</option>
+          <option value="alpha-desc">Tri : nom Z → A</option>
+        </select>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">

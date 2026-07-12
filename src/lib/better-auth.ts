@@ -3,7 +3,7 @@ import { nextCookies } from 'better-auth/next-js';
 import { pool } from './db';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration, sendPasswordResetEmail } from './mailer';
+import { sendVerificationEmail, sendWelcomeEmail, notifyNewRegistration, sendPasswordResetEmail, sendAccountInviteEmail } from './mailer';
 import { logActivity } from './activity-logger';
 
 if (!process.env.BETTER_AUTH_SECRET || process.env.BETTER_AUTH_SECRET.length < 32) {
@@ -37,7 +37,14 @@ export const auth = betterAuth({
       },
     },
     sendResetPassword: async ({ user, url }) => {
-      void sendPasswordResetEmail(user.email, url);
+      // Invitation envoyée par un admin (redirectTo « …?invite=1 », posé par
+      // POST /api/admin/clients) → e-mail d'activation dédié ; sinon, c'est un
+      // « mot de passe oublié » classique → e-mail de réinitialisation.
+      if (url.includes('invite%3D1') || url.includes('invite=1')) {
+        void sendAccountInviteEmail(user.email, url);
+      } else {
+        void sendPasswordResetEmail(user.email, url);
+      }
     },
   },
 

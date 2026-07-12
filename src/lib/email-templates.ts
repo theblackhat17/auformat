@@ -228,6 +228,37 @@ export const EMAIL_TEMPLATES: EmailTemplateDef[] = [
     layout: 'full',
   },
 
+  {
+    key: 'account_invite',
+    label: 'Invitation à activer son compte',
+    category: 'compte',
+    description: 'Envoyé quand un admin crée le compte d\'un client ou clique « Envoyer l\'accès » sur sa fiche : lien pour définir son mot de passe et accéder à son espace (lien valable 1 h).',
+    variables: [
+      { name: 'resetUrl', description: 'Lien de définition du mot de passe (rempli automatiquement)', sample: 'https://auformat.com/reset-password?token=exemple' },
+    ],
+    defaultSubject: 'Votre espace client Au Format vous attend',
+    defaultBody: `
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #2C5F2D; color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h2 style="margin: 0;">Votre espace client Au Format</h2>
+      </div>
+      <div style="border: 1px solid #e5e5e5; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
+        <p>Bonjour,</p>
+        <p>Un espace client vous a été ouvert sur <strong>Au Format</strong>. Vous y retrouverez vos projets, vos devis et l'avancement de votre fabrication, et pourrez échanger directement avec l'atelier.</p>
+        <p>Pour l'activer, choisissez votre mot de passe en cliquant sur le bouton ci-dessous :</p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="{{resetUrl}}" style="display: inline-block; padding: 12px 32px; background: #2C5F2D; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">
+            Activer mon espace client
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px;">Ce lien expire dans 1 heure — si c'est trop tard, demandez-nous simplement un nouvel accès. Vous pouvez aussi vous connecter directement avec votre compte Google associé à cette adresse.</p>
+        ${SIGNATURE}
+      </div>
+    </div>
+  `,
+    layout: 'full',
+  },
+
   // ------- Devis -------
   {
     key: 'quote_sent',

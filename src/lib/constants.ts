@@ -70,12 +70,12 @@ export const PROJECT_MILESTONES: { key: string; label: string; financial: boolea
  * les jours d'atelier restent internes (jamais montrés au client).
  */
 export const PROJECT_EVENT_TYPES: { key: string; label: string; color: string; clientVisible: boolean }[] = [
-  { key: 'rdv_decouverte', label: 'RDV découverte', color: '#2C5F2D', clientVisible: true },
-  { key: 'rdv_technique', label: 'RDV technique', color: '#2563eb', clientVisible: true },
-  { key: 'rdv_pose', label: 'RDV de pose', color: '#7c3aed', clientVisible: true },
+  { key: 'rdv_decouverte', label: 'RDV découverte', color: '#7c3aed', clientVisible: true },
+  { key: 'rdv_technique', label: 'RDV technique', color: '#6b7280', clientVisible: true },
+  { key: 'rdv_pose', label: 'RDV de pose', color: '#dc2626', clientVisible: true },
   { key: 'jour_coupe', label: 'Jour de coupe', color: '#d97706', clientVisible: false },
   { key: 'jour_usinage', label: "Jour d'usinage", color: '#0891b2', clientVisible: false },
-  { key: 'jour_montage', label: 'Jour de montage', color: '#dc2626', clientVisible: false },
+  { key: 'jour_montage', label: 'Jour de montage', color: '#92400e', clientVisible: false },
 ];
 
 /** Checklist de production d'un projet (gestion admin) */

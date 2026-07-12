@@ -48,6 +48,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json();
     const key: string = typeof body.key === 'string' ? body.key : '';
     const done: boolean = body.done === true;
+    // Date de franchissement fournie (édition a posteriori) ; à défaut, date du jour
+    const customDate = typeof body.date === 'string' && !isNaN(new Date(body.date).getTime())
+      ? new Date(body.date).toISOString() : null;
 
     const catalog = await getProjectMilestones();
     const milestone = catalog.find((m) => m.key === key);
@@ -62,7 +65,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const prev: Milestones = { ...(project.milestones || {}) };
     const milestones: Milestones = { ...prev };
-    milestones[key] = { done, date: done ? new Date().toISOString() : null, by: auth.userId };
+    milestones[key] = { done, date: done ? (customDate ?? prev[key]?.date ?? new Date().toISOString()) : null, by: auth.userId };
     const status = deriveProjectStatus({ milestones }, catalog);
 
     const result = await rawQuery(

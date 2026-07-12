@@ -27,6 +27,11 @@ function typeInfo(key: string) {
   return PROJECT_EVENT_TYPES.find((t) => t.key === key);
 }
 
+/** Fiche à ouvrir : le dossier si l'événement y est rattaché, sinon le projet */
+function eventHref(event: AgendaEvent): string {
+  return event.folderId ? `/admin/dossiers/${event.folderId}` : `/admin/projets/${event.projectId}`;
+}
+
 interface GoogleStatus {
   connected: boolean;
   email: string | null;
@@ -225,6 +230,9 @@ export function AgendaClient() {
     const from = new Date(first.getFullYear(), first.getMonth(), first.getDate()).toISOString();
     const to = new Date(last.getFullYear(), last.getMonth(), last.getDate(), 23, 59, 59).toISOString();
     if (!silent) setLoading(true);
+    // Sens retour Google → site : retire du site les RDV supprimés depuis l'app
+    // Google Agenda, avant de lire les événements (no-op serveur > 1×/minute)
+    try { await fetch('/api/admin/google/reconcile', { method: 'POST' }); } catch { /* best effort */ }
     const q = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     const [site, gg] = await Promise.allSettled([
       fetch(`/api/admin/agenda?${q}`).then((r) => (r.ok ? r.json() : Promise.reject())),
@@ -239,6 +247,36 @@ export function AgendaClient() {
 
   // Chargement au changement de mois
   useEffect(() => { load(false); }, [load]);
+
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+
+  /** Supprime un RDV du site (projet ou dossier) depuis le détail d'une journée — retiré aussi de Google */
+  async function handleDeleteEvent(event: AgendaEvent) {
+    if (!confirm('Supprimer ce rendez-vous ? Il sera aussi retiré de Google Agenda.')) return;
+    setDeletingEventId(event.id);
+    try {
+      const url = event.folderId
+        ? `/api/admin/folders/${event.folderId}/events`
+        : `/api/admin/projects/${event.projectId}/events`;
+      const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId: event.id }),
+      });
+      if (!res.ok) throw new Error();
+      setEvents((prev) => prev.filter((e) => e.id !== event.id));
+      setDayDetail((prev) => {
+        if (!prev) return prev;
+        const items = prev.items.filter((it) => it.kind !== 'site' || it.ev.id !== event.id);
+        return items.length > 0 ? { ...prev, items } : null;
+      });
+      toast.success('Rendez-vous supprimé');
+    } catch {
+      toast.error('Erreur lors de la suppression');
+    } finally {
+      setDeletingEventId(null);
+    }
+  }
 
   // Rafraîchissement automatique en continu (et au retour sur l'onglet) — sans recharger la page
   useEffect(() => {
@@ -372,7 +410,7 @@ export function AgendaClient() {
                       return (
                         <Link
                           key={`s-${event.id}-${key}`}
-                          href={`/admin/projets/${event.projectId}`}
+                          href={eventHref(event)}
                           title={`${info?.label || event.type} — ${event.projectName}${event.clientName ? ` (${event.clientName})` : ''}`}
                           className="block truncate rounded px-1 py-0.5 text-[10px] sm:text-[11px] font-medium leading-tight hover:opacity-80 transition-opacity"
                           style={{ backgroundColor: `${color}1a`, color }}
@@ -447,7 +485,7 @@ export function AgendaClient() {
                 : `${start.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} à ${start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
               return (
                 <li key={event.id}>
-                  <Link href={`/admin/projets/${event.projectId}`} className="flex items-center gap-3 py-2.5 group">
+                  <Link href={eventHref(event)} className="flex items-center gap-3 py-2.5 group">
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: info?.color || '#666' }} aria-hidden="true" />
                     <span className="text-sm text-noir/70 w-52 shrink-0 capitalize hidden sm:block">{dateLabel}</span>
                     <span className="flex-1 min-w-0">
@@ -504,11 +542,11 @@ export function AgendaClient() {
                     ? 'Journée'
                     : new Date(event.startAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                   return (
-                    <li key={`d-s-${event.id}-${idx}`}>
+                    <li key={`d-s-${event.id}-${idx}`} className="flex items-center gap-1">
                       <Link
-                        href={`/admin/projets/${event.projectId}`}
+                        href={eventHref(event)}
                         onClick={() => setDayDetail(null)}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group"
+                        className="flex flex-1 min-w-0 items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group"
                       >
                         <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} aria-hidden="true" />
                         <span className="text-sm text-noir/60 w-16 shrink-0 tabular-nums">{time}</span>
@@ -522,6 +560,14 @@ export function AgendaClient() {
                         </span>
                         <span className="text-noir/25 group-hover:text-vert-foret transition-colors" aria-hidden="true">→</span>
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteEvent(event)}
+                        disabled={deletingEventId !== null}
+                        className="shrink-0 px-2 py-1 text-xs font-medium text-red-600 hover:underline disabled:opacity-50 mr-1"
+                      >
+                        {deletingEventId === event.id ? 'Suppression…' : 'Supprimer'}
+                      </button>
                     </li>
                   );
                 }

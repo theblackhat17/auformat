@@ -445,3 +445,9 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   const { subject, body } = await resolveTemplate('password_reset', { resetUrl });
   return sendMail(to, subject, body);
 }
+
+/** Invitation envoyée par un admin : lien de définition du mot de passe pour activer l'espace client */
+export async function sendAccountInviteEmail(to: string, resetUrl: string): Promise<boolean> {
+  const { subject, body } = await resolveTemplate('account_invite', { resetUrl });
+  return sendMail(to, subject, body);
+}

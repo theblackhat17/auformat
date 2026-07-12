@@ -3,20 +3,46 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { ClientContact, ClientWithStats, Project, Quote, UserSession } from '@/lib/types';
-import { formatDate, formatPrice, timeAgo, getInitials, getDisplayName } from '@/lib/utils';
+import { formatDate, formatPrice, timeAgo, getInitials } from '@/lib/utils';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS } from '@/lib/constants';
 import { Card, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 
 export function ClientDetailClient({ clientId }: { clientId: string }) {
+  const toast = useToast();
   const [data, setData] = useState<{ client: ClientWithStats; projects: Project[]; quotes: Quote[]; sessions: UserSession[]; contacts: ClientContact[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [editModal, setEditModal] = useState(false);
   const [editForm, setEditForm] = useState({ fullName: '', companyName: '', phone: '', address: '', discountRate: 0 });
+  const [inviting, setInviting] = useState(false);
+
+  /** Envoie (ou renvoie) l'e-mail d'accès : lien de définition du mot de passe pour activer le compte */
+  async function handleInvite() {
+    if (!data?.client?.email) return;
+    setInviting(true);
+    try {
+      const res = await fetch('/api/admin/clients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: data.client.email, fullName: data.client.fullName || '', sendInvite: true }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => null);
+        toast.error(d?.error || "Erreur lors de l'envoi de l'invitation");
+        return;
+      }
+      toast.success(`E-mail d'accès envoyé à ${data.client.email}`);
+    } catch {
+      toast.error('Erreur réseau');
+    } finally {
+      setInviting(false);
+    }
+  }
 
   useEffect(() => {
     fetch(`/api/admin/clients/${clientId}`).then((r) => r.json()).then((d) => {
@@ -66,7 +92,17 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
             <p className="text-xs text-noir/30 mt-1">Client depuis {formatDate(client.createdAt)}</p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleInvite}
+            isLoading={inviting}
+            title="Envoie un e-mail avec un lien pour définir son mot de passe et activer son compte"
+          >
+            {client.totalLogins > 0 ? "Renvoyer l'accès" : 'Envoyer l’accès au compte'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.print()}>🖨 Imprimer</Button>
           <Button variant="outline" size="sm" onClick={() => setEditModal(true)}>Modifier</Button>
           <Link href={`/admin/devis?client=${clientId}`}><Button size="sm">Nouveau devis</Button></Link>
         </div>
@@ -115,6 +151,13 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
 
       {activeTab === 'projects' && (
         <div className="space-y-3">
+          <AssignProjectCard
+            clientId={clientId}
+            onAssigned={async () => {
+              const d = await fetch(`/api/admin/clients/${clientId}`).then((r) => r.json());
+              setData(d);
+            }}
+          />
           {projects.length === 0 ? <p className="text-sm text-noir/40 py-8 text-center">Aucun projet</p> : projects.map((p) => (
             <Card key={p.id} padding="sm" className="flex items-center justify-between">
               <div>
@@ -156,6 +199,9 @@ export function ClientDetailClient({ clientId }: { clientId: string }) {
           ))}
         </div>
       )}
+
+      {/* Fiche imprimable (visible uniquement à l'impression) */}
+      <ClientPrintSheet client={client} contacts={data.contacts || []} projects={projects} quotes={quotes} />
 
       {/* Edit modal */}
       <Modal isOpen={editModal} onClose={() => setEditModal(false)} title="Modifier le client" footer={
@@ -250,6 +296,76 @@ function ContactsCard({ clientId, contacts, onChanged }: { clientId: string; con
   );
 }
 
+/* ————— Attribuer un projet existant au client ————— */
+/** Propose les projets encore sans client et hors dossier (un projet en dossier hérite du client de son dossier) */
+function AssignProjectCard({ clientId, onAssigned }: { clientId: string; onAssigned: () => Promise<void> }) {
+  const toast = useToast();
+  const [candidates, setCandidates] = useState<{ id: string; name: string }[] | null>(null);
+  const [selected, setSelected] = useState('');
+  const [assigning, setAssigning] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/admin/projects')
+      .then((r) => r.json())
+      .then((all) => {
+        if (cancelled || !Array.isArray(all)) return;
+        setCandidates(all.filter((p: Project) => !p.userId && !p.folderId).map((p: Project) => ({ id: p.id, name: p.name })));
+      })
+      .catch(() => { if (!cancelled) setCandidates([]); });
+    return () => { cancelled = true; };
+  }, []);
+
+  async function assign() {
+    if (!selected) return;
+    setAssigning(true);
+    try {
+      const res = await fetch(`/api/projects/${selected}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clientUserId: clientId }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success('Projet attribué au client');
+      setCandidates((c) => (c ? c.filter((p) => p.id !== selected) : c));
+      setSelected('');
+      await onAssigned();
+    } catch {
+      toast.error("Erreur lors de l'attribution");
+    } finally {
+      setAssigning(false);
+    }
+  }
+
+  return (
+    <Card padding="sm">
+      <p className="text-sm font-semibold text-noir mb-1">Attribuer un projet</p>
+      <p className="text-xs text-noir/45 mb-3">
+        Projets sans client, hors dossier — un projet dans un dossier hérite du client attribué au dossier.
+      </p>
+      {candidates === null ? (
+        <p className="text-sm text-noir/40">Chargement…</p>
+      ) : candidates.length === 0 ? (
+        <p className="text-sm text-noir/45">Aucun projet sans client à attribuer.</p>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="flex-1 min-w-[220px] px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret"
+          >
+            <option value="">Choisir un projet…</option>
+            {candidates.map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
+          <Button size="sm" onClick={assign} isLoading={assigning} disabled={!selected}>Attribuer</Button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 /* ————— Notes internes sur le client (jamais visibles côté client) ————— */
 function ClientNotesCard({ clientId, value, onSaved }: { clientId: string; value: string; onSaved: (v: string) => void }) {
   const [text, setText] = useState(value);
@@ -292,5 +408,112 @@ function ClientNotesCard({ clientId, value, onSaved }: { clientId: string; value
         <Button size="sm" onClick={save} isLoading={saving}>Enregistrer</Button>
       </div>
     </Card>
+  );
+}
+
+/* ————— Fiche client imprimable : identité, contacts, notes, projets, devis ————— */
+function ClientPrintSheet({ client, contacts, projects, quotes }: {
+  client: ClientWithStats;
+  contacts: ClientContact[];
+  projects: Project[];
+  quotes: Quote[];
+}) {
+  return (
+    <div id="client-print" className="hidden print:block">
+      <style>{`@media print {
+        body * { visibility: hidden; }
+        #client-print, #client-print * { visibility: visible; }
+        #client-print { position: absolute; left: 0; top: 0; width: 100%; }
+      }`}</style>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>Fiche client — {client.fullName || client.email}</h1>
+      <p style={{ fontSize: 12, color: '#555', marginBottom: 16 }}>
+        {client.companyName ? `${client.companyName} · ` : ''}Client depuis le {formatDate(client.createdAt)}
+      </p>
+
+      <h2 style={{ fontSize: 14, fontWeight: 700, margin: '14px 0 6px' }}>Coordonnées</h2>
+      <table style={{ fontSize: 12, width: '100%', borderCollapse: 'collapse' }}>
+        <tbody>
+          <tr><td style={{ width: 140, color: '#777', padding: '2px 0' }}>E-mail</td><td style={{ padding: '2px 0' }}>{client.email}</td></tr>
+          <tr><td style={{ width: 140, color: '#777', padding: '2px 0' }}>Téléphone</td><td style={{ padding: '2px 0' }}>{client.phone || '—'}</td></tr>
+          <tr><td style={{ width: 140, color: '#777', padding: '2px 0' }}>Adresse</td><td style={{ padding: '2px 0' }}>{client.address || '—'}</td></tr>
+          <tr><td style={{ width: 140, color: '#777', padding: '2px 0' }}>Remise</td><td style={{ padding: '2px 0' }}>{client.discountRate > 0 ? `${client.discountRate}%` : 'Aucune'}</td></tr>
+        </tbody>
+      </table>
+
+      <h2 style={{ fontSize: 14, fontWeight: 700, margin: '14px 0 6px' }}>Contacts supplémentaires</h2>
+      {contacts.length === 0 ? (
+        <p style={{ fontSize: 12, color: '#777' }}>Aucun.</p>
+      ) : (
+        <table style={{ fontSize: 12, width: '100%', borderCollapse: 'collapse' }}>
+          <tbody>
+            {contacts.map((c) => (
+              <tr key={c.id}>
+                <td style={{ width: 140, padding: '2px 0' }}>{c.name || '—'}</td>
+                <td style={{ padding: '2px 0' }}>{c.email}{c.phone ? ` · ${c.phone}` : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {client.adminNotes?.trim() && (
+        <>
+          <h2 style={{ fontSize: 14, fontWeight: 700, margin: '14px 0 6px' }}>Notes internes</h2>
+          <p style={{ fontSize: 12, whiteSpace: 'pre-line' }}>{client.adminNotes}</p>
+        </>
+      )}
+
+      <h2 style={{ fontSize: 14, fontWeight: 700, margin: '14px 0 6px' }}>Projets ({projects.length})</h2>
+      {projects.length === 0 ? (
+        <p style={{ fontSize: 12, color: '#777' }}>Aucun projet.</p>
+      ) : (
+        <table style={{ fontSize: 12, width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', color: '#777' }}>
+              <th style={{ padding: '2px 8px 2px 0' }}>Projet</th>
+              <th style={{ padding: '2px 8px 2px 0' }}>Créé le</th>
+              <th style={{ padding: '2px 0' }}>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {projects.map((p) => (
+              <tr key={p.id}>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee' }}>{p.name}</td>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee' }}>{formatDate(p.createdAt)}</td>
+                <td style={{ padding: '3px 0', borderTop: '1px solid #eee' }}>{PROJECT_STATUS_LABELS[p.status] || p.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <h2 style={{ fontSize: 14, fontWeight: 700, margin: '14px 0 6px' }}>Devis ({quotes.length})</h2>
+      {quotes.length === 0 ? (
+        <p style={{ fontSize: 12, color: '#777' }}>Aucun devis.</p>
+      ) : (
+        <table style={{ fontSize: 12, width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ textAlign: 'left', color: '#777' }}>
+              <th style={{ padding: '2px 8px 2px 0' }}>Numéro</th>
+              <th style={{ padding: '2px 8px 2px 0' }}>Titre</th>
+              <th style={{ padding: '2px 8px 2px 0' }}>Créé le</th>
+              <th style={{ padding: '2px 8px 2px 0', textAlign: 'right' }}>Total TTC</th>
+              <th style={{ padding: '2px 0' }}>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {quotes.map((q) => (
+              <tr key={q.id}>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee' }}>{q.quoteNumber}</td>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee' }}>{q.title}</td>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee' }}>{formatDate(q.createdAt)}</td>
+                <td style={{ padding: '3px 8px 3px 0', borderTop: '1px solid #eee', textAlign: 'right' }}>{formatPrice(q.totalTtc)}</td>
+                <td style={{ padding: '3px 0', borderTop: '1px solid #eee' }}>{QUOTE_STATUS_LABELS[q.status] || q.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 }

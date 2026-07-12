@@ -250,6 +250,32 @@ export async function listGoogleEvents(fromISO: string, toISO: string): Promise<
   }
 }
 
+/**
+ * Parmi les ids fournis, renvoie ceux dont l'événement a été supprimé ou annulé
+ * côté Google (sens Google → site). En cas d'erreur réseau/quota sur un id, il
+ * n'est PAS considéré comme supprimé — on ne retire jamais un événement sur un doute.
+ */
+export async function findCancelledGoogleEvents(ids: string[]): Promise<Set<string>> {
+  const cancelled = new Set<string>();
+  if (ids.length === 0) return cancelled;
+  const client = await getCalendarClient();
+  if (!client) return cancelled;
+  const { calendar, calendarId } = client;
+  await Promise.all(
+    ids.map(async (eventId) => {
+      try {
+        const res = await calendar.events.get({ calendarId, eventId });
+        if (res.data.status === 'cancelled') cancelled.add(eventId);
+      } catch (err) {
+        const code = Number((err as { code?: number | string; response?: { status?: number } })?.code
+          ?? (err as { response?: { status?: number } })?.response?.status);
+        if (code === 404 || code === 410) cancelled.add(eventId);
+      }
+    })
+  );
+  return cancelled;
+}
+
 /** Supprime un événement de Google Agenda (best effort, ne lève jamais) */
 export async function deleteEventFromGoogle(googleEventId: string): Promise<void> {
   try {

@@ -3,7 +3,7 @@ import { rawQuery, toCamelCase } from '@/lib/db';
 import { requireAdmin } from '@/lib/middleware-auth';
 import type { ProjectEvent } from '@/lib/types';
 
-/** Événement d'agenda enrichi du projet et du client associés */
+/** Événement d'agenda enrichi du projet (ou dossier) et du client associés */
 export type AgendaEvent = ProjectEvent & {
   projectName: string;
   projectUserId: string | null;
@@ -11,9 +11,9 @@ export type AgendaEvent = ProjectEvent & {
 };
 
 /**
- * Agenda global (admin) : tous les événements de tous les projets,
- * filtrables par plage de dates (`from` / `to` en ISO), avec le nom du
- * projet et du client pour l'affichage calendrier.
+ * Agenda global (admin) : tous les événements, qu'ils soient rattachés à un
+ * projet ou à un dossier, filtrables par plage de dates (`from` / `to` en ISO),
+ * avec le nom du projet/dossier et du client pour l'affichage calendrier.
  */
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request);
@@ -27,10 +27,14 @@ export async function GET(request: NextRequest) {
     const to = toParam && !isNaN(new Date(toParam).getTime()) ? new Date(toParam).toISOString() : null;
 
     const result = await rawQuery(
-      `SELECT e.*, p.name AS project_name, p.user_id AS project_user_id, pr.full_name AS client_name
+      `SELECT e.*,
+              COALESCE(p.name, f.name) AS project_name,
+              COALESCE(p.user_id, f.user_id) AS project_user_id,
+              pr.full_name AS client_name
        FROM project_events e
-       JOIN projects p ON e.project_id = p.id
-       LEFT JOIN profiles pr ON p.user_id = pr.id
+       LEFT JOIN projects p ON e.project_id = p.id
+       LEFT JOIN project_folders f ON e.folder_id = f.id
+       LEFT JOIN profiles pr ON pr.id = COALESCE(p.user_id, f.user_id)
        WHERE ($1::timestamptz IS NULL OR e.start_at >= $1)
          AND ($2::timestamptz IS NULL OR e.start_at <= $2)
        ORDER BY e.start_at ASC`,

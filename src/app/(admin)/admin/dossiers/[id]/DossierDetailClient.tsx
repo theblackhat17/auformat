@@ -3,25 +3,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import type { Project, ProjectFolder, ProjectMilestone, ProjectUpdate, ProjectDocument, ProjectStatus, ProjectEvent, ConfigurateurModuleType, ConfigurateurMaterial, CompositionConfig } from '@/lib/types';
-import { PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES } from '@/lib/constants';
-import { currentMilestone, milestoneProgress, isClientVisible } from '@/lib/project-config';
+import type { Project, ProjectFolder, ProjectMilestone, ProjectUpdate, ProjectDocument, ProjectStatus, ProjectEvent, ConfigurateurModuleType, ConfigurateurMaterial, CompositionConfig, Quote } from '@/lib/types';
+import { PROJECT_STATUS_COLORS, PROJECT_TYPE_ICONS, PROJECT_EVENT_TYPES, QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS } from '@/lib/constants';
+import { currentMilestone, milestoneProgress, isClientVisible, DEFAULT_MILESTONES } from '@/lib/project-config';
 import { computeDebit } from '@/lib/debit';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPrice } from '@/lib/utils';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { ClientPicker, type PickedClient } from '@/components/admin/ClientPicker';
+import { RenameTitle } from '@/components/admin/RenameTitle';
+import { AgendaPanel, eventDateLabel } from '@/components/admin/agenda';
+import { FacturationCard, MilestoneDateEdit } from '@/components/admin/FacturationCard';
 
 type FolderDetail = ProjectFolder & { clientName: string | null; clientEmail: string | null; clientPhone: string | null };
 
 const TABS = [
+  { key: 'apercu', label: 'Aperçu' },
   { key: 'projets', label: 'Projets' },
-  { key: 'production', label: 'Production' },
   { key: 'etapes', label: 'Étapes' },
   { key: 'suivi', label: 'Suivi client' },
+  { key: 'devis', label: 'Devis' },
   { key: 'agenda', label: 'Agenda' },
   { key: 'documents', label: 'Documents' },
   { key: 'messagerie', label: 'Messagerie' },
@@ -34,7 +38,7 @@ export function DossierDetailClient({ folderId }: { folderId: string }) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [catalog, setCatalog] = useState<ProjectMilestone[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<TabKey>('projets');
+  const [tab, setTab] = useState<TabKey>('apercu');
   const [deleting, setDeleting] = useState(false);
   const toast = useToast();
   const router = useRouter();
@@ -93,7 +97,25 @@ export function DossierDetailClient({ folderId }: { folderId: string }) {
         </Link>
         <div className="flex items-center gap-3 flex-wrap">
           <span className="text-2xl" aria-hidden="true">📂</span>
-          <h1 className="text-2xl font-bold text-noir">{folder.name}</h1>
+          <RenameTitle
+            name={folder.name}
+            onSave={async (name) => {
+              try {
+                const res = await fetch(`/api/admin/folders/${folderId}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name }),
+                });
+                if (!res.ok) throw new Error();
+                setFolder((f) => (f ? { ...f, name } : f));
+                toast.success('Dossier renommé');
+                return true;
+              } catch {
+                toast.error('Erreur lors du renommage');
+                return false;
+              }
+            }}
+          />
           <Badge variant={PROJECT_STATUS_COLORS[folder.status]}>{stageLabel}</Badge>
           <span className="text-xs text-noir/40">{projects.length} projet{projects.length > 1 ? 's' : ''}</span>
           <div className="ml-auto">
@@ -121,24 +143,166 @@ export function DossierDetailClient({ folderId }: { folderId: string }) {
         ))}
       </div>
 
+      {tab === 'apercu' && (
+        <ApercuTab
+          folder={folder}
+          projects={projects}
+          stageLabel={stageLabel}
+          onOpenNotes={() => setTab('notes')}
+          onOpenAgenda={() => setTab('agenda')}
+        />
+      )}
       {tab === 'projets' && (
         <ProjetsTab folderId={folderId} folder={folder} projects={projects} onChanged={refresh} />
       )}
-      {tab === 'production' && <ProductionTab projects={projects} />}
       {tab === 'etapes' && (
         <EtapesTab folderId={folderId} catalog={catalog} milestones={folder.milestones || {}} onChanged={(m, s) => setFolder((f) => (f ? { ...f, milestones: m, status: s } : f))} />
       )}
       {tab === 'suivi' && (
         <SuiviTab folderId={folderId} catalog={catalog} onStageChanged={(m, s) => setFolder((f) => (f ? { ...f, milestones: m, status: s } : f))} />
       )}
-      {tab === 'agenda' && <AgendaTab folderId={folderId} />}
+      {tab === 'devis' && <DevisTab projects={projects} />}
+      {tab === 'agenda' && <AgendaPanel endpoint={`/api/admin/folders/${folderId}/events`} />}
       {tab === 'documents' && <DocumentsTab folderId={folderId} />}
       {tab === 'messagerie' && (
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <ChatPanel folderId={folderId} viewerRole="admin" />
         </div>
       )}
-      {tab === 'notes' && <NotesTab folderId={folderId} value={folder.adminNotes || ''} onSaved={(v) => setFolder((f) => (f ? { ...f, adminNotes: v } : f))} />}
+      {tab === 'notes' && (
+        <div className="max-w-2xl space-y-4">
+          <FacturationCard
+            endpoint={`/api/admin/folders/${folderId}/milestones`}
+            catalog={catalog.length > 0 ? catalog : DEFAULT_MILESTONES}
+            milestones={folder.milestones || {}}
+            onChanged={(milestones, status) => setFolder((f) => (f ? { ...f, milestones, status } : f))}
+          />
+          <NotesTab folderId={folderId} value={folder.adminNotes || ''} onSaved={(v) => setFolder((f) => (f ? { ...f, adminNotes: v } : f))} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ————— Aperçu du dossier : client, infos, notes, dates, débit agrégé ————— */
+function ApercuTab({ folder, projects, stageLabel, onOpenNotes, onOpenAgenda }: {
+  folder: FolderDetail;
+  projects: Project[];
+  stageLabel: string;
+  onOpenNotes: () => void;
+  onOpenAgenda: () => void;
+}) {
+  return (
+    <div className="space-y-4 max-w-3xl">
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Client */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <p className="text-sm font-semibold text-noir mb-3">Client</p>
+          {folder.userId ? (
+            <div className="space-y-1.5 text-sm text-noir/70">
+              <p><span className="text-noir/40">Nom :</span> {folder.clientName || '—'}</p>
+              <p><span className="text-noir/40">Email :</span> {folder.clientEmail || '—'}</p>
+              <p><span className="text-noir/40">Téléphone :</span> {folder.clientPhone || '—'}</p>
+              <Link href={`/admin/clients/${folder.userId}`} className="inline-block text-sm text-vert-foret hover:underline mt-1.5">
+                Voir la fiche client →
+              </Link>
+            </div>
+          ) : (
+            <p className="text-sm text-noir/45">Aucun client attribué — attribuez-en un dans l&apos;onglet Projets.</p>
+          )}
+        </div>
+
+        {/* Dossier */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <p className="text-sm font-semibold text-noir mb-3">Dossier</p>
+          <div className="space-y-1.5 text-sm text-noir/70">
+            <p><span className="text-noir/40">Créé le :</span> {formatDate(folder.createdAt)}</p>
+            <p><span className="text-noir/40">Étape actuelle :</span> {stageLabel}</p>
+            <p><span className="text-noir/40">Projets :</span> {projects.length}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Récap des notes internes */}
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-baseline justify-between gap-3 mb-3">
+            <p className="text-sm font-semibold text-noir">Notes internes</p>
+            <button onClick={onOpenNotes} className="text-sm text-vert-foret hover:underline">Modifier →</button>
+          </div>
+          {folder.adminNotes?.trim() ? (
+            <p className="text-sm text-noir/75 whitespace-pre-line max-h-56 overflow-y-auto">{folder.adminNotes}</p>
+          ) : (
+            <p className="text-sm text-noir/45">Aucune note pour l&apos;instant — ajoutez-en dans l&apos;onglet Notes.</p>
+          )}
+        </div>
+
+        {/* Dates fixées avec le client */}
+        <ApercuDatesCard folderId={folder.id} onOpenAgenda={onOpenAgenda} />
+      </div>
+
+      {/* Récap production : débit agrégé du dossier */}
+      <ProductionRecap projects={projects} />
+    </div>
+  );
+}
+
+/** Prochaines dates du dossier (RDV client, pose…) — récap lecture seule de l'agenda */
+function ApercuDatesCard({ folderId, onOpenAgenda }: { folderId: string; onOpenAgenda: () => void }) {
+  const [events, setEvents] = useState<ProjectEvent[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/admin/folders/${folderId}/events`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        if (cancelled) return;
+        const cutoff = Date.now() - 24 * 3600 * 1000;
+        const all: ProjectEvent[] = Array.isArray(d.events) ? d.events : [];
+        setEvents(
+          all
+            .filter((e) => new Date(e.endAt || e.startAt).getTime() >= cutoff)
+            .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+            .slice(0, 5)
+        );
+      })
+      .catch(() => { if (!cancelled) setEvents([]); });
+    return () => { cancelled = true; };
+  }, [folderId]);
+
+  const upcoming = events || [];
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 p-5">
+      <div className="flex items-baseline justify-between gap-3 mb-3">
+        <p className="text-sm font-semibold text-noir">Dates prévues</p>
+        <button onClick={onOpenAgenda} className="text-sm text-vert-foret hover:underline">Agenda →</button>
+      </div>
+      {events === null ? (
+        <p className="text-sm text-noir/40">Chargement…</p>
+      ) : upcoming.length === 0 ? (
+        <p className="text-sm text-noir/45">Aucune date à venir — planifiez un RDV dans l&apos;onglet Agenda.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {upcoming.map((e) => {
+            const t = PROJECT_EVENT_TYPES.find((x) => x.key === e.type);
+            return (
+              <li key={e.id} className="flex items-start gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: t?.color || '#999' }} aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-noir truncate">
+                    {e.title || t?.label || e.type}
+                    {t && !t.clientVisible && (
+                      <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded align-middle">interne</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-noir/55">{eventDateLabel(e)}</p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
@@ -266,8 +430,8 @@ function ProjetsTab({ folderId, folder, projects, onChanged }: { folderId: strin
   );
 }
 
-/* ————— Production / débit agrégé du dossier ————— */
-function ProductionTab({ projects }: { projects: Project[] }) {
+/* ————— Récap production / débit agrégé du dossier (affiché dans l'Aperçu) ————— */
+function ProductionRecap({ projects }: { projects: Project[] }) {
   const [catalog, setCatalog] = useState<{ moduleTypes: ConfigurateurModuleType[]; materials: ConfigurateurMaterial[] } | null>(null);
 
   useEffect(() => {
@@ -357,18 +521,19 @@ function ProductionTab({ projects }: { projects: Project[] }) {
 
 /* ————— Étapes du dossier ————— */
 function EtapesTab({ folderId, catalog, milestones, onChanged }: {
-  folderId: string; catalog: ProjectMilestone[]; milestones: Record<string, { done: boolean }>; onChanged: (m: Record<string, { done: boolean }>, s: ProjectStatus) => void;
+  folderId: string; catalog: ProjectMilestone[]; milestones: Record<string, { done: boolean; date?: string | null }>; onChanged: (m: Record<string, { done: boolean; date?: string | null }>, s: ProjectStatus) => void;
 }) {
   const toast = useToast();
   const [saving, setSaving] = useState<string | null>(null);
   const { done, total } = milestoneProgress({ milestones }, catalog);
   const current = currentMilestone({ milestones }, catalog);
 
-  async function toggle(key: string, value: boolean) {
+  async function toggle(key: string, value: boolean, date?: string) {
     setSaving(key);
     try {
       const res = await fetch(`/api/admin/folders/${folderId}/milestones`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, done: value }),
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, done: value, ...(date ? { date: new Date(`${date}T12:00`).toISOString() } : {}) }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
@@ -406,6 +571,11 @@ function EtapesTab({ folderId, catalog, milestones, onChanged }: {
                   : <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">interne</span>}
                 {isCurrent && <span className="rounded bg-vert-foret/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-vert-foret">étape actuelle</span>}
               </button>
+              {isDone && (
+                <div className="ml-9 pb-1">
+                  <MilestoneDateEdit dateIso={milestones[m.key]?.date} disabled={saving !== null} onSave={(d) => toggle(m.key, true, d)} />
+                </div>
+              )}
             </li>
           );
         })}
@@ -519,100 +689,104 @@ function SuiviTab({ folderId, catalog, onStageChanged }: {
   );
 }
 
-/* ————— Agenda du dossier ————— */
-function AgendaTab({ folderId }: { folderId: string }) {
+/* ————— Devis du dossier : agrège les devis de tous les projets, génération par projet ————— */
+function DevisTab({ projects }: { projects: Project[] }) {
   const toast = useToast();
-  const [events, setEvents] = useState<ProjectEvent[]>([]);
+  const router = useRouter();
+  const [quotes, setQuotes] = useState<(Quote & { projectName: string })[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ type: PROJECT_EVENT_TYPES[0].key, date: '', time: '09:00', allDay: false, title: '' });
-  const [saving, setSaving] = useState(false);
-  const typeByKey = new Map(PROJECT_EVENT_TYPES.map((t) => [t.key, t]));
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/admin/folders/${folderId}/events`).then((r) => r.json())
-      .then((d) => { if (!cancelled) setEvents(Array.isArray(d.events) ? d.events : []); })
+    if (projects.length === 0) { setQuotes([]); setLoading(false); return; }
+    Promise.all(
+      projects.map((p) =>
+        fetch(`/api/admin/projects/${p.id}/quotes`)
+          .then((r) => r.json())
+          .then((d) => (Array.isArray(d.quotes) ? d.quotes : []).map((q: Quote) => ({ ...q, projectName: p.name })))
+          .catch(() => [] as (Quote & { projectName: string })[])
+      )
+    )
+      .then((all) => { if (!cancelled) setQuotes(all.flat().sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [folderId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.map((p) => p.id).join(',')]);
 
-  async function add() {
-    if (!form.date) { toast.error('Choisissez une date'); return; }
-    const startAt = form.allDay ? new Date(`${form.date}T00:00`).toISOString() : new Date(`${form.date}T${form.time}`).toISOString();
-    setSaving(true);
+  async function handleGenerate(projectId: string) {
+    setGeneratingId(projectId);
     try {
-      const res = await fetch(`/api/admin/folders/${folderId}/events`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: form.type, startAt, allDay: form.allDay, title: form.title || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error || 'Erreur'); return; }
-      setEvents((e) => [...e, data.event].sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()));
-      setForm((f) => ({ ...f, title: '' }));
-      toast.success('Événement ajouté');
-    } catch { toast.error('Erreur réseau'); } finally { setSaving(false); }
-  }
-
-  async function del(ev: ProjectEvent) {
-    if (!confirm('Supprimer cet événement ?')) return;
-    const res = await fetch(`/api/admin/folders/${folderId}/events`, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId: ev.id }) });
-    if (res.ok) setEvents((e) => e.filter((x) => x.id !== ev.id)); else toast.error('Erreur');
+      const res = await fetch(`/api/admin/projects/${projectId}/quote`, { method: 'POST' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error || 'Erreur lors de la génération du devis');
+        setGeneratingId(null);
+        return;
+      }
+      toast.success(`Devis ${data.quoteNumber} créé`);
+      router.push(`/admin/devis/${data.id}`);
+    } catch {
+      toast.error('Erreur réseau');
+      setGeneratingId(null);
+    }
   }
 
   return (
-    <div className="max-w-2xl space-y-4">
+    <div className="space-y-4 max-w-4xl">
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <p className="text-sm font-semibold text-noir mb-3">Ajouter un événement</p>
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-noir/60 mb-1">Type</label>
-            <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret">
-              {PROJECT_EVENT_TYPES.map((t) => <option key={t.key} value={t.key}>{t.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-noir/60 mb-1">Date</label>
-            <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret" />
-          </div>
-          {!form.allDay && (
-            <div>
-              <label className="block text-xs font-medium text-noir/60 mb-1">Heure</label>
-              <input type="time" value={form.time} onChange={(e) => setForm((f) => ({ ...f, time: e.target.value }))} className="w-full px-3 py-2 bg-white border border-noir/20 rounded-lg text-sm focus:outline-none focus:border-vert-foret" />
-            </div>
-          )}
-          <label className="flex items-center gap-2 text-sm text-noir/80 self-end pb-2">
-            <input type="checkbox" checked={form.allDay} onChange={(e) => setForm((f) => ({ ...f, allDay: e.target.checked }))} className="h-4 w-4 rounded border-gray-300 text-vert-foret focus:ring-vert-foret" /> Journée entière
-          </label>
-          <div className="sm:col-span-2">
-            <Input label="Intitulé (optionnel)" value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
-          </div>
-        </div>
-        <div className="mt-3 flex justify-end"><Button size="sm" onClick={add} isLoading={saving}>Ajouter</Button></div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <p className="text-sm font-semibold text-noir mb-3">Événements</p>
-        {loading ? <p className="text-sm text-noir/40">Chargement…</p> : events.length === 0 ? (
-          <p className="text-sm text-noir/45">Aucun événement.</p>
+        <p className="text-sm font-semibold text-noir">Devis du dossier</p>
+        <p className="text-xs text-noir/45 mt-0.5">Chiffrage depuis la configuration de chaque projet, puis édition dans l&apos;éditeur de devis. Les prix restent invisibles côté client.</p>
+        {projects.length === 0 ? (
+          <p className="text-sm text-noir/45 mt-3">Aucun projet dans ce dossier — ajoutez-en un dans l&apos;onglet Projets.</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
-            {events.map((ev) => {
-              const t = typeByKey.get(ev.type);
-              const d = new Date(ev.startAt);
-              return (
-                <li key={ev.id} className="flex items-center gap-3 py-2.5">
-                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: t?.color || '#2C5F2D' }} />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-noir truncate">{ev.title || t?.label || ev.type}</p>
-                    <p className="text-xs text-noir/50">{t?.label} · {d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}{ev.allDay ? '' : ` à ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}</p>
-                  </div>
-                  <button onClick={() => del(ev)} className="text-sm text-red-600 hover:underline">Supprimer</button>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="flex flex-wrap gap-2 mt-3">
+            {projects.map((p) => (
+              <Button key={p.id} variant="outline" size="sm" onClick={() => handleGenerate(p.id)} disabled={generatingId !== null}>
+                {generatingId === p.id ? 'Génération…' : `Générer depuis « ${p.name} »`}
+              </Button>
+            ))}
+          </div>
         )}
       </div>
+
+      {loading ? (
+        <div className="flex justify-center py-10"><div className="w-6 h-6 border-2 border-vert-foret border-t-transparent rounded-full animate-spin" /></div>
+      ) : quotes.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50/70 rounded-2xl">
+          <p className="text-sm text-noir/45">Aucun devis pour ce dossier — générez-en un depuis la configuration d&apos;un projet.</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+          <table className="w-full text-sm min-w-[560px]">
+            <thead>
+              <tr className="border-b border-gray-100 text-left text-xs text-noir/45">
+                <th className="px-4 py-3 font-medium">Numéro</th>
+                <th className="px-4 py-3 font-medium">Projet</th>
+                <th className="px-4 py-3 font-medium">Statut</th>
+                <th className="px-4 py-3 font-medium text-right">Total TTC</th>
+                <th className="px-4 py-3 font-medium">Créé le</th>
+                <th className="px-4 py-3 font-medium text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {quotes.map((q) => (
+                <tr key={q.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                  <td className="px-4 py-3 font-medium text-noir">{q.quoteNumber}</td>
+                  <td className="px-4 py-3 text-noir/60 max-w-[180px] truncate">{q.projectName}</td>
+                  <td className="px-4 py-3"><Badge variant={QUOTE_STATUS_COLORS[q.status]}>{QUOTE_STATUS_LABELS[q.status]}</Badge></td>
+                  <td className="px-4 py-3 text-right tabular-nums text-noir">{formatPrice(q.totalTtc)}</td>
+                  <td className="px-4 py-3 text-noir/60">{formatDate(q.createdAt)}</td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link href={`/admin/devis/${q.id}`} className="text-vert-foret hover:underline font-medium">Éditer</Link>
+                    <a href={`/api/quotes/${q.id}/pdf`} target="_blank" rel="noopener noreferrer" className="ml-3 text-noir/60 hover:text-vert-foret hover:underline font-medium">PDF</a>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/middleware-auth';
-import { query, rawQuery, toCamelCase } from '@/lib/db';
+import { query, rawQuery } from '@/lib/db';
 import { pushEventToGoogle } from '@/lib/google-calendar';
 import type { ProjectEvent } from '@/lib/types';
 
@@ -10,8 +10,10 @@ export async function POST(request: NextRequest) {
   if (auth instanceof NextResponse) return auth;
   try {
     const rows = await query<ProjectEvent & { projectName: string }>(
-      `SELECT e.*, p.name AS project_name
-       FROM project_events e JOIN projects p ON e.project_id = p.id
+      `SELECT e.*, COALESCE(p.name, f.name) AS project_name
+       FROM project_events e
+       LEFT JOIN projects p ON e.project_id = p.id
+       LEFT JOIN project_folders f ON e.folder_id = f.id
        ORDER BY e.start_at ASC`
     );
     let synced = 0;

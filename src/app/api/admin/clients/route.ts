@@ -100,7 +100,9 @@ export async function POST(request: NextRequest) {
     if (body.sendInvite !== false) {
       try {
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://auformat.com';
-        await betterAuth.api.requestPasswordReset({ body: { email, redirectTo: `${appUrl}/reset-password` } });
+        // « ?invite=1 » : marqueur repris par sendResetPassword (better-auth.ts) pour
+        // envoyer le modèle « Invitation à activer son compte » plutôt que le reset classique
+        await betterAuth.api.requestPasswordReset({ body: { email, redirectTo: `${appUrl}/reset-password?invite=1` } });
         emailed = true;
       } catch (e) {
         console.error('requestPasswordReset (create client) failed:', e);

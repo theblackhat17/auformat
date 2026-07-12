@@ -137,10 +137,11 @@ export interface ProjectDocument {
   createdAt: string;
 }
 
-/** Événement d'agenda rattaché à un projet (RDV client, jour d'atelier…) */
+/** Événement d'agenda rattaché à un projet ou à un dossier (RDV client, jour d'atelier…) */
 export interface ProjectEvent {
   id: string;
-  projectId: string;
+  projectId: string | null;
+  folderId?: string | null;
   type: string;
   title: string | null;
   startAt: string;
